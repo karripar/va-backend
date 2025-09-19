@@ -8,8 +8,8 @@
       "forceConsistentCasingInFileNames": true,
       "noImplicitAny": true,
       "strict": true,
-      "skipLibCheck": true
+      "skipLibCheck": true,
+      "types": ["jest", "node"]
     },
-    "include": ["./*.js", "src/**/*.ts"],
-    "exclude": ["test"]
+    "include": ["./*.js", "src/**/*.ts", "test/**/*.ts"],
   }
