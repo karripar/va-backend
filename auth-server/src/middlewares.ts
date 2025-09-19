@@ -2,7 +2,7 @@
 
 import CustomError from "./classes/CustomError";
 import { NextFunction, Request, Response } from "express";
-
+import { validationResult } from "express-validator";
 
 // Middleware to handle 404 errors
 const notFound = (req: Request, res: Response, next: NextFunction) => {
@@ -19,9 +19,18 @@ const errorHandler = (error: CustomError, req: Request, res: Response, next: Nex
   });
 }
 
+// Middleware to check for validation errors
+const validationErrors = (req: Request, res: Response, next: NextFunction) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    const messages: string = errors.array().map((error) => error.msg).join(', ');
+    next(new CustomError(messages, 400));
+    return;
+  }
+  next();
+}
 
 
 
 
-
-export {notFound, errorHandler};
+export {notFound, errorHandler, validationErrors};
