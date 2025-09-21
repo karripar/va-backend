@@ -1,5 +1,5 @@
 import express, {Request, Response} from 'express';
-
+import testRoute from './routes/testRoute';
 const router = express.Router();
 
 router.get('/', (req: Request, res: Response) => {
@@ -9,6 +9,6 @@ router.get('/', (req: Request, res: Response) => {
 }
 );
 
-// router.use('/favorites', favoritesRouter); // Example of how to add more routes in the future
+router.use('/test', testRoute);
 
 export default router;
