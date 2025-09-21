@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 
+import { validationResult } from "express-validator";
 import CustomError from "./classes/CustomError";
 import { NextFunction, Request, Response } from "express";
 
@@ -19,9 +20,18 @@ const errorHandler = (error: CustomError, req: Request, res: Response, next: Nex
   });
 }
 
+// Middleware to check for validation errors
+const validationErrors = (req: Request, res: Response, next: NextFunction) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    const messages: string = errors.array().map((error) => error.msg).join(', ');
+    next(new CustomError(messages, 400));
+    return;
+  }
+  next();
+}
 
 
 
 
-
-export {notFound, errorHandler};
+export {notFound, errorHandler, validationErrors};
