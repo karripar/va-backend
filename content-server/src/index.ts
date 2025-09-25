@@ -7,7 +7,7 @@ const PORT = process.env.PORT || 3002;
   try {
     await mangustiConnection();
     app.listen(PORT, () => {
-      console.log(`Auth server running on port ${PORT}`);
+      console.log(`Content server running on port ${PORT}`);
     });
   } catch (error) {
     console.error("Failed to start server:", error);
