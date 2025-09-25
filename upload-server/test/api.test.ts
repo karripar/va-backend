@@ -1,4 +1,5 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
+import request from 'supertest';
 import mongoose from 'mongoose';
 import app from '../src/app';
 import {MessageResponse} from '../src/types/MessageTypes';

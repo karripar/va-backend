@@ -1,11 +1,7 @@
 import express from "express";
 import { body } from "express-validator";
 const router = express.Router();
-<<<<<<< HEAD
-import { validationErrors } from "../../middlewares"
-=======
 import { validationErrors } from "../../middlewares";
->>>>>>> main
 
 router.post(
   "/test",
