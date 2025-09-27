@@ -5,6 +5,7 @@ import {MessageResponse} from '../src/types/MessageTypes';
 import randomstring from 'randomstring';
 // import {getFavorites} from '../test/controllers/testFavorites';
 import dotenv from 'dotenv';
+import request from 'supertest';
 
 dotenv.config();
 
@@ -26,9 +27,9 @@ describe('GET /api/v1', () => {
   });
 
   it('Should fetch all destination partner schools from Metropolia', async () => {
-    const res = await fetch('http://localhost:3002/api/v1/data/metropolia/destinations');
+    const res = await request(app).get('/api/v1/data/metropolia/destinations')
     expect(res.status).toBe(200);
-    const data = await res.json();
+    const data = await res.body as {destinations: {name: string, country: string, city: string, partnerId: string}[]};
     expect(data).toHaveProperty('destinations');
     expect(data.destinations).toBeInstanceOf(Object);
     expect(data.destinations.length).toBeGreaterThan(0);
