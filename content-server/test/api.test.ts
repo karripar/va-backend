@@ -29,9 +29,9 @@ describe('GET /api/v1', () => {
   it('Should fetch all destination partner schools from Metropolia', async () => {
     const res = await request(app).get('/api/v1/data/metropolia/destinations')
     expect(res.status).toBe(200);
-    const data = await res.body as {destinations: {name: string, country: string, city: string, partnerId: string}[]};
+    const data = await res.body;
     expect(data).toHaveProperty('destinations');
     expect(data.destinations).toBeInstanceOf(Object);
-    expect(data.destinations.length).toBeGreaterThan(0);
+    expect(Object.keys(data.destinations).length).toBeGreaterThan(0);
   });
 });
