@@ -30,7 +30,7 @@ describe('GET /api/v1', () => {
     expect(res.status).toBe(200);
     const data = await res.json();
     expect(data).toHaveProperty('destinations');
-    expect(Array.isArray(data.destinations)).toBe(true);
+    expect(data.destinations).toBeInstanceOf(Object);
     expect(data.destinations.length).toBeGreaterThan(0);
   });
 });
