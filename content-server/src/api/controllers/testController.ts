@@ -6,6 +6,27 @@ import dotenv from "dotenv";
 dotenv.config();
 
 
+/*
+ #############################################################################################################
+
+ THIS CONTROLLER HAS BEEN FORGOTTEN AND IS NOT IN USE. METROPOLIA API HAS NO MEANINGFUL DATA FOR THIS PROJECT.
+
+
+                                              ______ 
+                                          .-'      `-.
+                                          /            \
+                                        |,  .-.  .-.  ,|
+                                        | )(_o/  \o_)( |
+                                        |/     /\     \|
+                                        (_     ^^     _)
+                                          \__|IIIIII|__/
+                                          | \IIIIII/ |
+                                          \          /
+                                            `--------`
+
+ #############################################################################################################
+*/
+
 const METROPOLIA_API_KEY = process.env.OPENDATA_KEY || "";
 
 if (!METROPOLIA_API_KEY) {

@@ -1,5 +1,6 @@
 import express, {Request, Response} from 'express';
-import testRoute from './routes/testRoute';
+import testRoute from './routes/dataRoute';
+import dataRoute from './routes/dataRoute';
 const router = express.Router();
 
 router.get('/', (req: Request, res: Response) => {
@@ -10,5 +11,7 @@ router.get('/', (req: Request, res: Response) => {
 );
 
 router.use('/test', testRoute);
+
+router.use('/data', dataRoute);
 
 export default router;
