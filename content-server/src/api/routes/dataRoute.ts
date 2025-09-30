@@ -1,8 +1,8 @@
-import express from "express";
-import { body, query } from "express-validator";
+import express from 'express';
+import {body, query} from 'express-validator';
 const router = express.Router();
-import { validationErrors } from "../../middlewares"
-import { getDestinations } from "../controllers/dataController";
+import {validationErrors} from '../../middlewares';
+import {getDestinations} from '../controllers/dataController';
 
 /**
  * @apiDefine DataGroup Data
@@ -25,15 +25,14 @@ import { getDestinations } from "../controllers/dataController";
  */
 
 router.post(
-  "/test",
-  body("message").isString().withMessage("Message must be a string"),
+  '/test',
+  body('message').isString().withMessage('Message must be a string'),
   validationErrors,
   (req, res) => {
-    const { message } = req.body;
-    res.status(200).json({ message: `Received: ${message}` });
-  }
+    const {message} = req.body;
+    res.status(200).json({message: `Received: ${message}`});
+  },
 );
-
 
 router.get(
   /**
@@ -51,7 +50,7 @@ router.get(
    *
    * @apiSuccess {Object[]} destinations List of partner destinations.
    * @apiSuccess {String} destinations.country Country of the partner institution.
-   * @apiSuccess {String} destinations.name Name of the partner institution.
+   * @apiSuccess {String} destinations.title Name of the partner institution.
    * @apiSuccess {String} destinations.link URL link to the partner institution.
    * @apiSuccessExample {json} Success-Response:
    *     HTTP/1.1 200 OK
@@ -59,7 +58,7 @@ router.get(
    *       "destinations": [
    *         {
    *           "country": "Country Name",
-   *           "name": "Institution Name",
+   *           "title": "Institution Name",
    *           "link": "http://institution-link.com"
    *         },
    *         ...
@@ -81,11 +80,19 @@ router.get(
    *     }
    */
 
-  "/metropolia/destinations",
-  query("lang").optional().isString().isIn(['en', 'fi']).withMessage("lang must be either 'en' or 'fi'"),
-  query("field").optional().isString().isIn(['health', 'tech', 'business', 'culture']).withMessage("field must be a string"),
+  '/metropolia/destinations',
+  query('lang')
+    .optional()
+    .isString()
+    .isIn(['en', 'fi'])
+    .withMessage("lang must be either 'en' or 'fi'"),
+  query('field')
+    .optional()
+    .isString()
+    .isIn(['health', 'tech', 'business', 'culture'])
+    .withMessage('field must be a string'),
   validationErrors,
-  getDestinations
-)
+  getDestinations,
+);
 
 export default router;
