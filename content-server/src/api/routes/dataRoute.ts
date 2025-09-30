@@ -47,6 +47,7 @@ router.get(
    * @apiPermission none
    *
    * @apiQuery {String} [lang=en] Language of the destinations list. Either "en" for English or "fi" for Finnish. Default is "en".
+   * @apiQuery {String} [field] Optional field to filter destinations by specific study field. Defaults to technology if not provided. Current options are "tech", "health", "business" and "culture".
    *
    * @apiSuccess {Object[]} destinations List of partner destinations.
    * @apiSuccess {String} destinations.country Country of the partner institution.
@@ -81,7 +82,8 @@ router.get(
    */
 
   "/metropolia/destinations",
-  query("lang").optional().isString().withMessage("lang must be a string"),
+  query("lang").optional().isString().isIn(['en', 'fi']).withMessage("lang must be either 'en' or 'fi'"),
+  query("field").optional().isString().isIn(['health', 'tech', 'business', 'culture']).withMessage("field must be a string"),
   validationErrors,
   getDestinations
 )
