@@ -1,12 +1,19 @@
 import * as cheerio from 'cheerio';
-import { getClosestCountry, getCoordinates } from './countryService';
+import {getClosestCountry, getCoordinates} from './countryService';
 
 export type SectionData = Record<
   string,
-  { country: string; title: string; link: string; coordinates: { lat?: number; lon?: number } }[]
+  {
+    country: string;
+    title: string;
+    link: string;
+    coordinates: {lat?: number; lng?: number};
+  }[]
 >;
 
-export const scrapeDestinations = async (html: string): Promise<SectionData> => {
+export const scrapeDestinations = async (
+  html: string,
+): Promise<SectionData> => {
   const $ = cheerio.load(html);
   const sections: SectionData = {};
 
@@ -29,35 +36,98 @@ export const scrapeDestinations = async (html: string): Promise<SectionData> => 
 
     sections[sectionTitle] = [];
 
-    $(section).find('.accordion-panel').each((_, panel) => {
-      const id = $(panel).attr('aria-labelledby');
-      let country = id ? $(`#${id}`).text().trim() : 'Unknown';
-      if (country) {
-        const parts = country.split(/\s+/);
-        country = [...new Set(parts)].join(' ');
-      }
+    $(section)
+      .find('.accordion-panel')
+      .each((_, panel) => {
+        const id = $(panel).attr('aria-labelledby');
+        let country = id ? $(`#${id}`).text().trim() : 'Unknown';
+        if (country) {
+          const parts = country.split(/\s+/);
+          country = [...new Set(parts)].join(' ');
+        }
 
-      const isoCode = getClosestCountry(country);
-      const jsonCoords = getCoordinates(isoCode);
+        const isoCode = getClosestCountry(country);
+        const jsonCoords = getCoordinates(isoCode);
 
-      const addEntry = (title: string, link: string) => {
-        sections[sectionTitle].push({
-          country,
-          title,
-          link,
-          coordinates: { lat: jsonCoords?.lat, lon: jsonCoords?.lon },
+        // Iterate through each <li> individually to handle <strong> elements
+        let subsectionLabel = '';
+        $(panel).find('li').each((_, li) => {
+          const liChildren = $(li).contents().toArray();
+
+          let previousTitle: string | null = null;
+          liChildren.forEach(el => {
+            // Update global subsection label if <strong> found
+            if (el.type === 'tag' && el.name === 'strong') {
+              subsectionLabel = $(el).text().trim();
+              return;
+            }
+
+            // Handle links
+            if (el.type === 'tag' && el.name === 'a') {
+              const title = $(el).text().trim();
+              const link = $(el).attr('href') ?? '';
+              previousTitle = subsectionLabel ? `${subsectionLabel}: ${title}` : title;
+
+              sections[sectionTitle].push({
+                country,
+                title: previousTitle,
+                link,
+                coordinates: { lat: jsonCoords?.lat, lng: jsonCoords?.lng },
+              });
+              return;
+            }
+
+            // Handle plain text
+            if (el.type === 'text') {
+              let text = $(el).text().trim();
+              if (!text) return;
+
+              // Remove leading commas/whitespace
+              text = text.replace(/^,?\s*/, '');
+              if (text) {
+                // Attach to previous <a> title if exists
+                if (previousTitle) {
+                  sections[sectionTitle][sections[sectionTitle].length - 1].title += `, ${text}`;
+                } else {
+                  sections[sectionTitle].push({
+                    country,
+                    title: subsectionLabel ? `${subsectionLabel}: ${text}` : text,
+                    link: '',
+                    coordinates: { lat: jsonCoords?.lat, lng: jsonCoords?.lng },
+                  });
+                }
+              }
+            }
+          });
         });
-      };
 
-      $(panel).find('a').each((_, link) => {
-        addEntry($(link).text().trim(), $(link).attr('href') ?? '');
+
+        // Fallback: if no <li> exists, grab plain text or <a> tags at panel level
+        if ($(panel).find('li').length === 0) {
+          $(panel)
+            .find('a')
+            .each((_, link) => {
+              sections[sectionTitle].push({
+                country,
+                title: $(link).text().trim(),
+                link: $(link).attr('href') ?? '',
+                coordinates: {lat: jsonCoords?.lat, lng: jsonCoords?.lng},
+              });
+            });
+
+          if ($(panel).find('a').length === 0) {
+            const plainText = $(panel).text().trim();
+            if (plainText) {
+              sections[sectionTitle].push({
+                country,
+                title: plainText,
+                link: '',
+                coordinates: {lat: jsonCoords?.lat, lng: jsonCoords?.lng},
+              });
+            }
+          }
+        }
       });
-
-      if ($(panel).find('a').length === 0) {
-        const plainText = $(panel).text().trim();
-        if (plainText) addEntry(plainText, '');
-      }
-    });
   });
 
   return sections;

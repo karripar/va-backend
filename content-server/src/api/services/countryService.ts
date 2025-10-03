@@ -12,8 +12,10 @@ const aliases: Record<string, string> = {
   US: "United States",
   USA: "United States",
   UAE: "United Arab Emirates",
+  ROK: "South Korea",
   "S. Korea": "South Korea",
   "N. Korea": "North Korea",
+  "Republic of Korea": "South Korea",
 };
 
 export const getClosestCountry = (countryName: string) => {

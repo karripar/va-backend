@@ -8,7 +8,7 @@ interface IDestination {
   link: string;
   coordinates?: {
     lat?: number;
-    lon?: number;
+    lng?: number;
   };
 }
 
