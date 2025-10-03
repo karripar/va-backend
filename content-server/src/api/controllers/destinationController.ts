@@ -24,6 +24,7 @@ const getDestinations = async (
     const cached = await DestinationModel.findOne({ field, lang });
 
     if (cached && cached.lastUpdated > threeDaysAgo) {
+      console.log('Using cached data');
       return res.status(200).json({ destinations: cached.sections });
     }
 
