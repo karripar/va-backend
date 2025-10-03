@@ -2,7 +2,7 @@ import express from 'express';
 import {body, query} from 'express-validator';
 const router = express.Router();
 import {validationErrors} from '../../middlewares';
-import {getDestinations} from '../controllers/dataController';
+import {getDestinations} from '../controllers/destinationController';
 
 /**
  * @apiDefine DataGroup Data
