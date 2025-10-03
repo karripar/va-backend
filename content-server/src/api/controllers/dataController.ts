@@ -1,4 +1,5 @@
 import {Request, Response, NextFunction} from 'express';
+import { ProfileResponse } from "va-hybrid-types/contentTypes";
 import CustomError from '../../classes/CustomError';
 import dotenv from 'dotenv';
 import * as cheerio from 'cheerio';
@@ -103,4 +104,47 @@ const getDestinations = async (
   }
 };
 
-export {getDestinations};
+//----> Profiili data demonstrationnin luonti (mock data):
+let profiles: ProfileResponse[] = [];
+
+// --> Profiilisivun luonnin logiikka:
+
+const createProfile = (req: Request, res: Response) => {
+  const newProfile: ProfileResponse = {
+    id: String(profiles.length + 1),
+    userName: req.body.userName,
+    email: req.body.email,
+    registeredAt: new Date().toISOString(),
+    avatarUrl: req.body.avatarUrl ?? "",
+    favorites: [],
+    documents: [],
+    exchangeBadge: false,
+    linkedinUrl: req.body.linkedinUrl ?? "",
+  };
+  profiles.push(newProfile);
+  res.status(201).json(newProfile);
+};
+// ----> Profiilin haku id:llä logiikka:
+const getProfileSearch = (req: Request, res: Response) => {
+  const profile = profiles.find((p) => p.id === req.params.id);
+  if (!profile) return res.status(404).json({ error: "Profile not found" });
+  res.json(profile);
+};
+const getProfilePage = (req: Request, res: Response) => {
+  const profile = profiles.find((p) => p.id === req.params.id);
+  if (!profile) return res.status(404).json({ error: "Profile not found" });
+  res.json(profile);
+};
+// ----> Profiilisivun päivityksen logiikka:
+
+const updateProfile = (req: Request, res: Response) => {
+  const index = profiles.findIndex((p) => p.id === req.params.id);
+  if (index === -1) {
+    return res.status(404).json({ error: "Profile not found" });
+  }
+
+  profiles[index] = { ...profiles[index], ...req.body };
+  res.json(profiles[index]);
+};
+
+export { getDestinations, getProfilePage, updateProfile, createProfile, getProfileSearch };
