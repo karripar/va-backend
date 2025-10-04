@@ -38,7 +38,7 @@ const getDestinations = async (
 
     const response = await fetch(url);
     const htmlDoc = await response.text();
-    const sections = await scrapeDestinations(htmlDoc);
+    const sections = await scrapeDestinations(htmlDoc, lang as "en" | "fi");
 
     await DestinationModel.findOneAndUpdate(
       { field, lang },

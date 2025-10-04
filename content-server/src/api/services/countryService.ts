@@ -1,11 +1,12 @@
 import { search } from 'fast-fuzzy';
 import coords from '../../utils/coords.json';
 import countryToISO from '../../utils/countryToISO.json';
+import finCountryToISO from '../../utils/finCountryToISO.json';
 
 const normalize = (str: string) =>
   str.trim().toLowerCase().replace(/\s+/g, ' ');
 
-// Handle common abbreviations / aliases that fuzzy search might misinterpret
+// Handle common abbreviations / aliases
 const aliases: Record<string, string> = {
   UK: "United Kingdom",
   GB: "United Kingdom",
@@ -18,15 +19,26 @@ const aliases: Record<string, string> = {
   "Republic of Korea": "South Korea",
 };
 
-export const getClosestCountry = (countryName: string) => {
+// Choose correct country dictionary based on language
+const getCountryDictionary = (lang: "en" | "fi") => {
+  switch (lang) {
+    case "fi":
+      return finCountryToISO;
+    default:
+      return countryToISO;
+  }
+};
+
+export const getClosestCountry = (countryName: string, lang: "en" | "fi" = "en") => {
+  const dictionary = getCountryDictionary(lang);
   const normalizedInput = normalize(countryName);
 
-  // Check alias first (without normalization to preserve keys like "UK")
-  if (aliases[countryName]) {
-    return countryToISO[aliases[countryName] as keyof typeof countryToISO];
+  // Check alias only in English (since aliases like UK, USA are English-specific)
+  if (lang === "en" && aliases[countryName]) {
+    return dictionary[aliases[countryName] as keyof typeof dictionary];
   }
 
-  const countryNames = Object.keys(countryToISO);
+  const countryNames = Object.keys(dictionary);
   const normalizedCandidates = countryNames.map(normalize);
 
   const bestMatch = search(normalizedInput, normalizedCandidates)[0];
@@ -34,7 +46,7 @@ export const getClosestCountry = (countryName: string) => {
 
   const originalName = countryNames.find(name => normalize(name) === bestMatch);
   return originalName
-    ? countryToISO[originalName as keyof typeof countryToISO]
+    ? dictionary[originalName as keyof typeof dictionary]
     : undefined;
 };
 
@@ -44,8 +56,8 @@ export const getCoordinates = (isoCode?: string) => {
     : undefined;
 };
 
-// Shortcut: go directly from country name -> coordinates
-export const getCoordinatesFromName = (countryName: string) => {
-  const isoCode = getClosestCountry(countryName);
+// Shortcut: country name -> coordinates
+export const getCoordinatesFromName = (countryName: string, lang: "en" | "fi" = "en") => {
+  const isoCode = getClosestCountry(countryName, lang);
   return getCoordinates(isoCode);
 };

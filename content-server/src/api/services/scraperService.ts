@@ -13,6 +13,7 @@ export type SectionData = Record<
 
 export const scrapeDestinations = async (
   html: string,
+  lang: "en" | "fi" = "en"
 ): Promise<SectionData> => {
   const $ = cheerio.load(html);
   const sections: SectionData = {};
@@ -46,7 +47,7 @@ export const scrapeDestinations = async (
           country = [...new Set(parts)].join(' ');
         }
 
-        const isoCode = getClosestCountry(country);
+        const isoCode = getClosestCountry(country, lang);
         const jsonCoords = getCoordinates(isoCode);
 
         // Iterate through each <li> individually to handle <strong> elements
