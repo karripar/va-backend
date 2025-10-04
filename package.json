@@ -3,5 +3,8 @@
     "express": "^5.1.0",
     "mongoose": "^8.19.0",
     "react": "^19.2.0"
+  },
+  "devDependencies": {
+    "va-hybrid-types": "github:karripar/va-hybrid-types"
   }
 }
