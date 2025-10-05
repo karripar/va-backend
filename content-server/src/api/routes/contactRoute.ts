@@ -2,6 +2,7 @@ import express from 'express';
 import {body} from 'express-validator';
 import {validationErrors} from '../../middlewares';
 import { postMessage, getMessages, deleteMessage} from '../controllers/contactController';
+import { contactMessageLimiter } from '../../utils/rateLimiters';
 
 const router = express.Router();
 
@@ -66,6 +67,7 @@ router.post(
   body('email').isEmail().withMessage('Email must be a valid email address'),
   body('subject').isString().withMessage('Subject must be a string'),
   body('message').isString().withMessage('Message must be a string'),
+  contactMessageLimiter,
   validationErrors,
   postMessage
 ).get(
