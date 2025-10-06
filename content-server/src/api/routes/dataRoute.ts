@@ -2,7 +2,7 @@ import express from 'express';
 import {body, query} from 'express-validator';
 const router = express.Router();
 import {validationErrors} from '../../middlewares';
-import {getDestinations} from '../controllers/dataController';
+import {getDestinations} from '../controllers/destinationController';
 
 /**
  * @apiDefine DataGroup Data
@@ -52,6 +52,9 @@ router.get(
    * @apiSuccess {String} destinations.country Country of the partner institution.
    * @apiSuccess {String} destinations.title Name of the partner institution.
    * @apiSuccess {String} destinations.link URL link to the partner institution.
+   * @apiSuccess {object} destinations.coordinates Coordinates of the partner institution (if available).
+   * @apiSuccess {Number} destinations.coordinates.lat Latitude of the partner institution.
+   * @apiSuccess {Number} destinations.coordinates.lng Longitude of the partner institution.
    * @apiSuccessExample {json} Success-Response:
    *     HTTP/1.1 200 OK
    *     {
@@ -59,7 +62,11 @@ router.get(
    *         {
    *           "country": "Country Name",
    *           "title": "Institution Name",
-   *           "link": "http://institution-link.com"
+   *           "link": "http://institution-link.com",
+   *           "coordinates": {
+   *            "lat": 60.192059,
+   *            "lng": 24.945831
+   *            }
    *         },
    *         ...
    *       ]
