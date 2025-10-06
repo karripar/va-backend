@@ -3,7 +3,6 @@ import {body, query} from 'express-validator';
 const router = express.Router();
 import {validationErrors} from '../../middlewares';
 import {getDestinations} from '../controllers/dataController';
-import { getProfileSearch, getProfilePage, updateProfile, createProfile } from '../controllers/dataController';
 
 /**
  * @apiDefine DataGroup Data
@@ -95,9 +94,5 @@ router.get(
   validationErrors,
   getDestinations,
 );
-router.post("/", createProfile); // POST /api/profile
-router.get("/:id", getProfilePage); // GET /api/profile/:id
-router.get("/:id", getProfileSearch); // GET /api/profile/:id
-router.put("/:id", updateProfile); // PUT /api/profile/:id
 
 export default router;

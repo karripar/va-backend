@@ -1,4 +1,4 @@
-import { Request, Response } from "express";
+import { Request, Response, NextFunction } from "express";
 import { ProfileResponse } from "va-hybrid-types/contentTypes";
 
 //----> Profiili data demonstrationnin luonti (mock data):
@@ -8,7 +8,7 @@ let profiles: ProfileResponse[] = [
     userName: "Test User",
     email: "test@metropolia.fi",
     registeredAt: new Date().toISOString(),
-    avatarUrl: "/default-avatar.png",
+    avatarUrl: "https://api.dicebear.com/7.x/avataaars/svg?seed=TestUser&mouth=default&eyes=default", // CHANGED
     favorites: ["Espanja - Madrid", "Ranska - Pariisi"],
     documents: ["learning-agreement.pdf"],
     exchangeBadge: true,
@@ -17,7 +17,6 @@ let profiles: ProfileResponse[] = [
 ];
 
 // --> Profiilisivun luonnin logiikka:
-
 const createProfile = (req: Request, res: Response) => {
   const newProfile: ProfileResponse = {
     id: String(profiles.length + 1),
@@ -34,27 +33,26 @@ const createProfile = (req: Request, res: Response) => {
   res.status(201).json(newProfile);
 };
 
-// ----> Profiilin haku id:llä logiikka:
-const getProfileSearch = (req: Request, res: Response) => {
-  const profile = profiles.find((p) => p.id === req.params.id);
-  if (!profile) return res.status(404).json({ error: "Profile not found" });
-  res.json(profile);
-};
-
 const getProfilePage = (req: Request, res: Response) => {
   const profile = profiles.find((p) => p.id === req.params.id);
   if (!profile) return res.status(404).json({ error: "Profile not found" });
   res.json(profile);
 };
 
-// ----> Kaikkien profiilien haku logiikka tai nykyisen käyttäjän profiilin haku:
-const getAllProfiles = (req: Request, res: Response) => {
-  // Return first profile as the current user's profile (for now)
-  // In a real app, this would get the profile based on the authenticated user
-  if (profiles.length === 0) {
-    return res.status(404).json({ error: "No profile found" });
+
+
+
+const getProfile = (req: Request, res: Response, next: NextFunction) => {
+  try {
+    //  Get userId from req.user when authentication is added
+    
+    if (profiles.length === 0) {
+      return res.status(404).json({ message: "No profile found" });
+    }
+    res.json(profiles[0]);
+  } catch (error) {
+    next(error);
   }
-  res.json(profiles[0]); // Return single profile object, not array
 };
 
 // ----> Profiilisivun päivityksen logiikka:
@@ -69,4 +67,97 @@ const updateProfile = (req: Request, res: Response) => {
   res.json(profiles[index]);
 };
 
-export { getProfilePage, updateProfile, createProfile, getProfileSearch, getAllProfiles };
+const addFavorite = (req: Request, res: Response, next: NextFunction) => {
+  try {
+    // Get userId from req.user when authentication is added
+    const { destination } = req.body;
+    
+    if (profiles.length === 0) {
+      return res.status(404).json({ error: "Profile not found" });
+    }
+
+    
+    if (!profiles[0].favorites.includes(destination)) {
+      profiles[0].favorites.push(destination);
+    }
+
+    res.json(profiles[0]);
+  } catch (error) {
+    next(error);
+  }
+};
+
+const removeFavorite = (req: Request, res: Response, next: NextFunction) => {
+  try {
+    // Get userId from req.user when authentication is added
+    const { destination } = req.body;
+
+    if (profiles.length === 0) {
+      return res.status(404).json({ error: "Profile not found" });
+    }
+
+    profiles[0].favorites = profiles[0].favorites.filter(
+      (fav) => fav !== destination
+    );
+
+    res.json(profiles[0]);
+  } catch (error) {
+    next(error);
+  }
+};
+
+
+const addDocument = (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { name, url } = req.body;
+
+    if (profiles.length === 0) {
+      return res.status(404).json({ error: "Profile not found" });
+    }
+
+    const newDoc = {
+      id: Date.now().toString(),
+      name,
+      url,
+      uploadedAt: new Date().toISOString(),
+    };
+
+    
+    profiles[0].documents.push(newDoc as any);
+
+    res.json(newDoc);
+  } catch (error) {
+    next(error);
+  }
+};
+
+const removeDocument = (req: Request, res: Response, next: NextFunction) => {
+  try {
+   
+    const { docId } = req.params;
+
+    if (profiles.length === 0) {
+      return res.status(404).json({ error: "Profile not found" });
+    }
+
+   
+    profiles[0].documents = profiles[0].documents.filter(
+      (doc: any) => doc.id !== docId
+    );
+
+    res.json({ message: "Document removed" });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export {
+  getProfilePage,
+  updateProfile,
+  createProfile,
+  getProfile,
+  addFavorite,
+  removeFavorite,
+  addDocument,
+  removeDocument,
+};
