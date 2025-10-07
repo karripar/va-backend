@@ -5,6 +5,7 @@ import morgan from 'morgan';
 import cookieParser from 'cookie-parser';
 import {errorHandler, notFound} from './middlewares';
 import api from './api';
+import profileRoute from './api/routes/profileRoute';
 
 const app = express();
 
@@ -20,6 +21,8 @@ app.use(
 );
 
 app.use('/api/v1', api);
+
+app.use('/api/v1/profile', profileRoute);
 
 app.use(notFound);
 
