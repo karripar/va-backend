@@ -1,5 +1,5 @@
 import express from "express";
-import { verifyGoogleToken } from "../controllers/authController";
+import { verifyGoogleToken, logout } from "../controllers/authController";
 import { body } from "express-validator";
 const router = express.Router();
 import { validationErrors } from "../../middlewares";
@@ -69,5 +69,7 @@ router.post(
   validationErrors,
   verifyGoogleToken
 );
+
+router.post("/logout", logout);
 
 export default router;

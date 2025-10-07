@@ -7,9 +7,8 @@ const router = express.Router();
 router.get('/', (req: Request, res: Response) => {
   res.json({
     message: 'Auth API v1 - Routes: /auth, /users',
-  })
-}
-);
+  });
+});
 
 router.use('/auth', authRoute);
 router.use('/users', userRoute);

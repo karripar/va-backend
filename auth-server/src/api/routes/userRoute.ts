@@ -1,7 +1,7 @@
 import express from 'express';
 import {getUserProfile, updateUserProfile} from '../controllers/userController';
 import {body} from 'express-validator';
-import {validationErrors} from '../../middlewares';
+import {validationErrors, authenticate} from '../../middlewares';
 
 const router = express.Router();
 
@@ -11,14 +11,14 @@ const router = express.Router();
  */
 
 /**
- * @api {post} /users/profile Get User Profile
+ * @api {get} /users/profile Get User Profile
  * @apiName GetUserProfile
  * @apiGroup UserGroup
  * @apiVersion 1.0.0
- * @apiDescription Get user profile by Google ID.
- * @apiPermission none
+ * @apiDescription Get user profile using JWT authentication.
+ * @apiPermission JWT token required
  *
- * @apiBody {String} googleId User's Google ID.
+ * @apiHeader {String} Authorization Bearer JWT token.
  *
  * @apiSuccess {String} id User's unique identifier.
  * @apiSuccess {String} userName User's display name.
@@ -29,11 +29,11 @@ const router = express.Router();
  * @apiSuccess {Boolean} [exchangeBadge] Exchange student badge status.
  * @apiSuccess {String} [avatarUrl] URL of user's profile picture.
  * @apiSuccess {String} [linkedinUrl] URL of user's LinkedIn profile.
+ * @apiSuccess {String} [user_level_name] User's role level.
  */
-router.post(
+router.get(
   '/profile',
-  body('googleId').isString().notEmpty().withMessage('Google ID is required'),
-  validationErrors,
+  authenticate,
   getUserProfile,
 );
 
@@ -42,10 +42,10 @@ router.post(
  * @apiName UpdateUserProfile
  * @apiGroup UserGroup
  * @apiVersion 1.0.0
- * @apiDescription Update user profile information.
- * @apiPermission none
+ * @apiDescription Update user profile information using JWT authentication.
+ * @apiPermission JWT token required
  *
- * @apiBody {String} googleId User's Google ID.
+ * @apiHeader {String} Authorization Bearer JWT token.
  * @apiBody {String} [userName] User's display name.
  * @apiBody {String} [linkedinUrl] URL of user's LinkedIn profile.
  * @apiBody {Boolean} [exchangeBadge] Exchange student badge status.
@@ -54,7 +54,7 @@ router.post(
  */
 router.put(
   '/profile',
-  body('googleId').isString().notEmpty().withMessage('Google ID is required'),
+  authenticate,
   body('userName')
     .optional()
     .isString()

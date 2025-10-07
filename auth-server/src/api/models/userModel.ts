@@ -1,19 +1,5 @@
 import mongoose from 'mongoose';
-
-// database schema type user info
-type UserInfo = {
-  id: string;
-  googleId: string;
-  userName: string;
-  email: string;
-  registeredAt: Date;
-  favorites: string[];
-  documents: string[];
-  exchangeBadge?: boolean;
-  avatarUrl?: string;
-  linkedinUrl?: string;
-};
-
+import {UserInfo} from '../../types/LocalTypes';
 
 const userSchema = new mongoose.Schema<UserInfo>({
   googleId: {
@@ -58,6 +44,12 @@ const userSchema = new mongoose.Schema<UserInfo>({
   },
   linkedinUrl: {
     type: String,
+    required: false,
+  },
+  user_level_name: {
+    type: String,
+    enum: ["Admin", "User", "Guest"],
+    default: "User",
     required: false,
   },
 });

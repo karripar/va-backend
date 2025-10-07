@@ -1,9 +1,9 @@
-import { Request, Response, NextFunction } from "express";
-import { MessageResponse } from "../../types/MessageTypes";
-import CustomError from "../../classes/CustomError";
-import User from "../models/userModel";
-import { ProfileResponse } from "va-hybrid-types/contentTypes";
-import { v4 as uuidv4 } from "uuid";
+import {Request, Response, NextFunction} from 'express';
+import {MessageResponse} from '../../types/MessageTypes';
+import CustomError from '../../classes/CustomError';
+import User from '../models/userModel';
+import {ProfileResponse} from 'va-hybrid-types/contentTypes';
+import {v4 as uuidv4} from 'uuid';
 
 // add a new user when the Google sign-in is used the first time
 const createUser = async (googleData: {
@@ -23,14 +23,14 @@ const createUser = async (googleData: {
       documents: [],
       exchangeBadge: false,
       avatarUrl: googleData.picture || null,
-      linkedinUrl: null
+      linkedinUrl: null,
+      user_level_name: 'User',
     });
 
     await user.save();
-    console.log("Added a new user:", googleData.email);
     return user;
   } catch (error) {
-    console.error("Error adding a user:", error);
+    console.error('Error adding a user:', error);
     throw error;
   }
 };
@@ -43,14 +43,15 @@ const updateUserFromGoogle = async (
     email: string;
     name: string;
     picture?: string;
-  }
+  },
 ) => {
   try {
-    const user = await User.findOne({ googleId });
+    const user = await User.findOne({googleId});
 
     if (!user) {
-      throw new Error("User not found");
+      throw new Error('User not found');
     }
+
     // update name and picture if changed
     user.userName = googleData.name;
     if (googleData.picture) {
@@ -58,10 +59,9 @@ const updateUserFromGoogle = async (
     }
 
     await user.save();
-    console.log("Updated user from Google:", googleData.email);
     return user;
   } catch (error) {
-    console.error("Error updating user from Google:", error);
+    console.error('Error updating user from Google:', error);
     throw error;
   }
 };
@@ -74,21 +74,21 @@ const findOrCreateUser = async (googleData: {
   picture?: string;
 }) => {
   try {
-    const existingUser = await User.findOne({ googleId: googleData.googleId });
+    const existingUser = await User.findOne({googleId: googleData.googleId});
 
     if (existingUser) {
       // if user exists, update their info
       return await updateUserFromGoogle(googleData.googleId, {
         email: googleData.email,
         name: googleData.name,
-        picture: googleData.picture
+        picture: googleData.picture,
       });
     } else {
       // if user doesn't exist yet, add them
       return await createUser(googleData);
     }
   } catch (error) {
-    console.error("Error in findOrCreateUser:", error);
+    console.error('Error in findOrCreateUser:', error);
     throw error;
   }
 };
@@ -104,6 +104,7 @@ const formatUserProfile = (user: {
   exchangeBadge?: boolean;
   avatarUrl?: string;
   linkedinUrl?: string;
+  user_level_name?: 'Admin' | 'User' | 'Guest';
 }): ProfileResponse => {
   return {
     id: user.id,
@@ -114,77 +115,68 @@ const formatUserProfile = (user: {
     documents: user.documents,
     exchangeBadge: user.exchangeBadge,
     avatarUrl: user.avatarUrl,
-    linkedinUrl: user.linkedinUrl
+    linkedinUrl: user.linkedinUrl,
+    user_level_name: user.user_level_name,
   };
 };
 
-// get user profile by Google ID
+// get user profile from JWT token
 const getUserProfile = async (
-  req: Request<{}, {}, { googleId: string }>,
+  req: Request,
   res: Response<ProfileResponse | MessageResponse>,
-  next: NextFunction
+  next: NextFunction,
 ) => {
   try {
-    const { googleId } = req.body;
-
-    if (!googleId) {
-      next(new CustomError("Google ID not provided", 400));
-      return;
-    }
-
-    const user = await User.findOne({ googleId });
+    const user = res.locals.user;
 
     if (!user) {
-      next(new CustomError("User not found", 404));
+      next(new CustomError('User not found', 404));
       return;
     }
 
     // format and send user profile
     res.status(200).json(formatUserProfile(user));
   } catch (error) {
-    console.error("Error fetching user profile:", error);
-    next(new CustomError("Failed to fetch user profile", 500));
+    console.error('Error fetching user profile:', error);
+    next(new CustomError('Failed to fetch user profile', 500));
   }
 };
 
 // update user profile
 // Email remains the same has to remain as @metropolia.fi
 const updateUserProfile = async (
-  req: Request<{}, {}, Partial<ProfileResponse> & { googleId: string }>,
+  req: Request<{}, {}, Partial<ProfileResponse>>,
   res: Response<ProfileResponse | MessageResponse>,
-  next: NextFunction
+  next: NextFunction,
 ) => {
   try {
-    const { googleId, ...updates } = req.body;
-
-    if (!googleId) {
-      next(new CustomError("Google ID not provided", 400));
-      return;
-    }
-
-    const user = await User.findOne({ googleId });
+    const user = res.locals.user;
+    const updates = req.body;
 
     if (!user) {
-      next(new CustomError("User not found", 404));
+      next(new CustomError('User not found', 404));
       return;
     }
 
-    // Apply updates to allowed fields only
     if (updates.userName) user.userName = updates.userName;
-    if (updates.linkedinUrl !== undefined) user.linkedinUrl = updates.linkedinUrl;
-    if (updates.exchangeBadge !== undefined) user.exchangeBadge = updates.exchangeBadge;
+    if (updates.linkedinUrl !== undefined)
+      user.linkedinUrl = updates.linkedinUrl;
+    if (updates.exchangeBadge !== undefined)
+      user.exchangeBadge = updates.exchangeBadge;
     if (updates.favorites) user.favorites = updates.favorites;
     if (updates.documents) user.documents = updates.documents;
 
     if (updates.email && updates.email !== user.email) {
-      console.warn(`Attempted to change email for user ${googleId}: ${user.email} -> ${updates.email}. Ignored.`);
+      console.warn(
+        `Attempted to change email for user ${user.id}: ${user.email} -> ${updates.email}. Ignored.`,
+      );
     }
 
     await user.save();
     res.status(200).json(formatUserProfile(user));
   } catch (error) {
-    console.error("Error updating user profile:", error);
-    next(new CustomError("Failed to update user profile", 500));
+    console.error('Error updating user profile:', error);
+    next(new CustomError('Failed to update user profile', 500));
   }
 };
 
@@ -192,6 +184,7 @@ export {
   createUser,
   updateUserFromGoogle,
   findOrCreateUser,
+  formatUserProfile,
   getUserProfile,
-  updateUserProfile
+  updateUserProfile,
 };
