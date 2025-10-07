@@ -34,7 +34,7 @@ jobs:
           node-version: ${{ matrix.node-version }}
           cache: 'npm'
           cache-dependency-path: auth-server/package-lock.json
-      - run: npm ci
+      - run: npm install
         working-directory: auth-server
       - run: npm run build --if-present
         working-directory: auth-server
@@ -68,7 +68,7 @@ jobs:
           node-version: ${{ matrix.node-version }}
           cache: 'npm'
           cache-dependency-path: content-server/package-lock.json
-      - run: npm ci
+      - run: npm install
         working-directory: content-server
       - run: npm run build --if-present
         working-directory: content-server
@@ -102,7 +102,7 @@ jobs:
           node-version: ${{ matrix.node-version }}
           cache: 'npm'
           cache-dependency-path: upload-server/package-lock.json
-      - run: npm ci
+      - run: npm install
         working-directory: upload-server
       - run: npm run build --if-present
         working-directory: upload-server
