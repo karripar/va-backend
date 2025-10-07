@@ -69,3 +69,5 @@ router.post(
   validationErrors,
   verifyGoogleToken
 );
+
+export default router;

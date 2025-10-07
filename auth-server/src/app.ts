@@ -1,4 +1,3 @@
-import dotenv from 'dotenv';
 import express from 'express';
 import helmet from 'helmet';
 import cors from 'cors';
@@ -7,7 +6,6 @@ import { errorHandler, notFound } from './middlewares';
 import api from './api';
 
 const app = express();
-dotenv.config();
 
 app.use(express.json())
 app.use(morgan('dev'));
