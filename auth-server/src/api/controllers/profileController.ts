@@ -1,16 +1,16 @@
 import { Request, Response, NextFunction } from "express";
-import { ProfileResponse } from "va-hybrid-types/contentTypes";
+import { ProfileResponse, Document } from "va-hybrid-types/contentTypes";
 
 //----> Profiili data demonstrationnin luonti (mock data):
-let profiles: ProfileResponse[] = [
+const profiles: ProfileResponse[] = [
   {
     id: "1",
     userName: "Test User",
     email: "test@metropolia.fi",
     registeredAt: new Date().toISOString(),
-    avatarUrl: "https://api.dicebear.com/7.x/avataaars/svg?seed=TestUser&mouth=default&eyes=default", // CHANGED
+    avatarUrl:"", // "https://api.dicebear.com/7.x/avataaars/svg?seed=TestUser&mouth=default&eyes=default"
     favorites: ["Espanja - Madrid", "Ranska - Pariisi"],
-    documents: ["learning-agreement.pdf"],
+    documents: [], 
     exchangeBadge: true,
     linkedinUrl: "https://linkedin.com/in/testuser",
   }
@@ -38,9 +38,6 @@ const getProfilePage = (req: Request, res: Response) => {
   if (!profile) return res.status(404).json({ error: "Profile not found" });
   res.json(profile);
 };
-
-
-
 
 const getProfile = (req: Request, res: Response, next: NextFunction) => {
   try {
@@ -89,7 +86,7 @@ const addFavorite = (req: Request, res: Response, next: NextFunction) => {
 
 const removeFavorite = (req: Request, res: Response, next: NextFunction) => {
   try {
-    // Get userId from req.user when authentication is added
+    // userId from req.user when authentication is added
     const { destination } = req.body;
 
     if (profiles.length === 0) {
@@ -97,7 +94,7 @@ const removeFavorite = (req: Request, res: Response, next: NextFunction) => {
     }
 
     profiles[0].favorites = profiles[0].favorites.filter(
-      (fav) => fav !== destination
+      (fav: string) => fav !== destination
     );
 
     res.json(profiles[0]);
@@ -115,15 +112,14 @@ const addDocument = (req: Request, res: Response, next: NextFunction) => {
       return res.status(404).json({ error: "Profile not found" });
     }
 
-    const newDoc = {
+    const newDoc: Document = {
       id: Date.now().toString(),
       name,
       url,
       uploadedAt: new Date().toISOString(),
     };
 
-    
-    profiles[0].documents.push(newDoc as any);
+    profiles[0].documents.push(newDoc);
 
     res.json(newDoc);
   } catch (error) {
@@ -133,16 +129,14 @@ const addDocument = (req: Request, res: Response, next: NextFunction) => {
 
 const removeDocument = (req: Request, res: Response, next: NextFunction) => {
   try {
-   
     const { docId } = req.params;
 
     if (profiles.length === 0) {
       return res.status(404).json({ error: "Profile not found" });
     }
 
-   
     profiles[0].documents = profiles[0].documents.filter(
-      (doc: any) => doc.id !== docId
+      (doc: Document) => doc.id !== docId
     );
 
     res.json({ message: "Document removed" });
