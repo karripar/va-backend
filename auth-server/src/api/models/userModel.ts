@@ -18,10 +18,14 @@ const userSchema = new mongoose.Schema<UserInfo>({
     unique: true,
     match: /^[\w-.]+@([\w-]+\.)+[\w-]{2,4}$/,
   },
-  registeredAt: {
-    type: Date,
+  user_level_id: {
+    type: Number,
     required: true,
-    default: Date.now,
+  },
+  registeredAt: {
+    type: String,
+    required: true,
+    default: () => new Date().toISOString(),
   },
   favorites: {
     type: [String],
@@ -44,12 +48,6 @@ const userSchema = new mongoose.Schema<UserInfo>({
   },
   linkedinUrl: {
     type: String,
-    required: false,
-  },
-  user_level_name: {
-    type: String,
-    enum: ["Admin", "User", "Guest"],
-    default: "User",
     required: false,
   },
 });

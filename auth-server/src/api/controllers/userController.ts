@@ -1,9 +1,26 @@
 import {Request, Response, NextFunction} from 'express';
 import {MessageResponse} from '../../types/MessageTypes';
 import CustomError from '../../classes/CustomError';
-import User from '../models/userModel';
 import {ProfileResponse} from 'va-hybrid-types/contentTypes';
+import {UserInfo} from '../../types/LocalTypes';
+import User from '../models/userModel';
 import {v4 as uuidv4} from 'uuid';
+
+// convert User model type to ProfileResponse
+const formatUserProfile = (user: UserInfo): ProfileResponse => {
+  return {
+    id: user.googleId, // Use googleId as the public ID
+    userName: user.userName,
+    email: user.email,
+    registeredAt: user.registeredAt,
+    user_level_id: user.user_level_id,
+    favorites: user.favorites,
+    documents: [], // Convert string[] to Document[] if needed
+    exchangeBadge: user.exchangeBadge,
+    avatarUrl:  '', // "https://api.dicebear.com/7.x/avataaars/svg?seed=TestUser&mouth=default&eyes=default",,
+    linkedinUrl: user.linkedinUrl,
+  };
+};
 
 // add a new user when the Google sign-in is used the first time
 const createUser = async (googleData: {
@@ -24,7 +41,7 @@ const createUser = async (googleData: {
       exchangeBadge: false,
       avatarUrl: googleData.picture || null,
       linkedinUrl: null,
-      user_level_name: 'User',
+      user_level_id: 1, // Default 1 = User
     });
 
     await user.save();
@@ -54,8 +71,10 @@ const updateUserFromGoogle = async (
 
     // update name and picture if changed
     user.userName = googleData.name;
-    if (googleData.picture) {
-      user.avatarUrl = googleData.picture;
+
+    // Ensure user_level_id is set
+    if (!user.user_level_id) {
+      user.user_level_id = 1; // Default user level ID
     }
 
     await user.save();
@@ -81,7 +100,7 @@ const findOrCreateUser = async (googleData: {
       return await updateUserFromGoogle(googleData.googleId, {
         email: googleData.email,
         name: googleData.name,
-        picture: googleData.picture,
+        picture:  '', // "https://api.dicebear.com/7.x/avataaars/svg?seed=TestUser&mouth=default&eyes=default",
       });
     } else {
       // if user doesn't exist yet, add them
@@ -93,33 +112,6 @@ const findOrCreateUser = async (googleData: {
   }
 };
 
-// format user response that is sent to client
-const formatUserProfile = (user: {
-  id: string;
-  userName: string;
-  email: string;
-  registeredAt: Date;
-  favorites: string[];
-  documents: string[];
-  exchangeBadge?: boolean;
-  avatarUrl?: string;
-  linkedinUrl?: string;
-  user_level_name?: 'Admin' | 'User' | 'Guest';
-}): ProfileResponse => {
-  return {
-    id: user.id,
-    userName: user.userName,
-    email: user.email,
-    registeredAt: user.registeredAt.toISOString(),
-    favorites: user.favorites,
-    documents: user.documents,
-    exchangeBadge: user.exchangeBadge,
-    avatarUrl: user.avatarUrl,
-    linkedinUrl: user.linkedinUrl,
-    user_level_name: user.user_level_name,
-  };
-};
-
 // get user profile from JWT token
 const getUserProfile = async (
   req: Request,
@@ -127,15 +119,15 @@ const getUserProfile = async (
   next: NextFunction,
 ) => {
   try {
-    const user = res.locals.user;
+    const user = res.locals.user as UserInfo;
 
     if (!user) {
       next(new CustomError('User not found', 404));
       return;
     }
 
-    // format and send user profile
-    res.status(200).json(formatUserProfile(user));
+    const profileResponse = formatUserProfile(user);
+    res.status(200).json(profileResponse);
   } catch (error) {
     console.error('Error fetching user profile:', error);
     next(new CustomError('Failed to fetch user profile', 500));
@@ -173,7 +165,7 @@ const updateUserProfile = async (
     }
 
     await user.save();
-    res.status(200).json(formatUserProfile(user));
+    res.status(200).json(user);
   } catch (error) {
     console.error('Error updating user profile:', error);
     next(new CustomError('Failed to update user profile', 500));
@@ -184,7 +176,7 @@ export {
   createUser,
   updateUserFromGoogle,
   findOrCreateUser,
-  formatUserProfile,
   getUserProfile,
   updateUserProfile,
+  formatUserProfile,
 };
