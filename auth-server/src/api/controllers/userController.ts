@@ -9,13 +9,13 @@ import {v4 as uuidv4} from 'uuid';
 // convert User model type to ProfileResponse
 const formatUserProfile = (user: UserInfo): ProfileResponse => {
   return {
-    id: user.googleId, // Use googleId as the public ID
+    id: user.id,
     userName: user.userName,
     email: user.email,
     registeredAt: user.registeredAt,
     user_level_id: user.user_level_id,
     favorites: user.favorites,
-    documents: [], // Convert string[] to Document[] if needed
+    documents: [],
     exchangeBadge: user.exchangeBadge,
     avatarUrl:  '', // "https://api.dicebear.com/7.x/avataaars/svg?seed=TestUser&mouth=default&eyes=default",,
     linkedinUrl: user.linkedinUrl,
@@ -32,7 +32,6 @@ const createUser = async (googleData: {
   try {
     const user = new User({
       id: uuidv4(),
-      googleId: googleData.googleId,
       userName: googleData.name,
       email: googleData.email,
       registeredAt: new Date(),

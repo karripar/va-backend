@@ -1,6 +1,10 @@
 import {Request, Response, NextFunction} from 'express';
 import {ProfileResponse, Document} from 'va-hybrid-types/contentTypes';
+import {v4 as uuidv4} from 'uuid';
+import {UserInfo} from '../../types/LocalTypes';
+import User from '../models/userModel';
 
+/*
 //----> Profiili data demonstrationnin luonti (mock data):
 const profiles: ProfileResponse[] = [
   {
@@ -8,7 +12,7 @@ const profiles: ProfileResponse[] = [
     userName: 'Test User',
     email: 'test@metropolia.fi',
     registeredAt: new Date().toISOString(),
-    user_level_id: 1, // default User 
+    user_level_id: 1, // default User
     avatarUrl: '', // "https://api.dicebear.com/7.x/avataaars/svg?seed=TestUser&mouth=default&eyes=default"
     favorites: ['Espanja - Madrid', 'Ranska - Pariisi'],
     documents: [],
@@ -17,22 +21,55 @@ const profiles: ProfileResponse[] = [
   },
 ];
 
-// --> Profiilisivun luonnin logiikka:
-const createProfile = (req: Request, res: Response) => {
-  const newProfile: ProfileResponse = {
-    id: String(profiles.length + 1),
-    userName: req.body.userName,
-    email: req.body.email,
-    registeredAt: new Date().toISOString(),
-    user_level_id: 1,
-    avatarUrl: req.body.avatarUrl ?? '',
-    favorites: [],
+*/
+
+// convert User model type to ProfileResponse
+const formatUserProfile = (user: UserInfo): ProfileResponse => {
+  return {
+    id: user.id,
+    userName: user.userName,
+    email: user.email,
+    registeredAt: user.registeredAt,
+    user_level_id: user.user_level_id,
+    favorites: user.favorites,
     documents: [],
-    exchangeBadge: true,
-    linkedinUrl: req.body.linkedinUrl ?? '',
+    exchangeBadge: user.exchangeBadge,
+    avatarUrl: '', // "https://api.dicebear.com/7.x/avataaars/svg?seed=TestUser&mouth=default&eyes=default",,
+    linkedinUrl: user.linkedinUrl,
   };
-  profiles.push(newProfile);
-  res.status(201).json(newProfile);
+};
+
+// --> Profiilisivun luonnin logiikka:
+const createProfile = async (
+  req: Request,
+  res: Response,
+  googleData: {
+    googleId: string;
+    email: string;
+    name: string;
+    picture?: string;
+  },
+) => {
+  try {
+    const user = new User({
+      id: uuidv4(),
+      userName: googleData.name,
+      email: googleData.email,
+      registeredAt: new Date().toISOString(),
+      user_level_id: 1,
+      avatarUrl: req.body.avatarUrl ?? '',
+      favorites: [],
+      documents: [],
+      exchangeBadge: true,
+      linkedinUrl: req.body.linkedinUrl ?? '',
+    });
+
+    await user.save();
+    return user;
+  } catch (error) {
+    console.error('Error adding a user:', error);
+    throw error;
+  }
 };
 
 const getProfilePage = (req: Request, res: Response) => {
