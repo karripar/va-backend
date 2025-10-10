@@ -1,7 +1,7 @@
 import {OAuth2Client} from 'google-auth-library';
 import {Request, Response, NextFunction} from 'express';
 import CustomError from '../../classes/CustomError';
-import {findOrCreateUser, formatUserProfile} from './userController';
+import {findOrCreateUser} from './userController';
 import jwt from 'jsonwebtoken';
 import {GoogleResponse} from '../../types/LocalTypes';
 import {TokenContent} from 'va-hybrid-types/DBTypes';
@@ -56,14 +56,10 @@ const verifyGoogleToken = async (
       googleId: payload.sub || '', // payload.sub id does not change so it can be used as database identifier
       email: payload.email || '',
       name: payload.name || '',
-      picture: payload.picture,
     };
 
     // find or add a new user in database
     const user = await findOrCreateUser(googleResponse);
-
-    // Format user profile for response
-    const userProfile = formatUserProfile(user);
 
     const tokenContent: TokenContent = {
       id: user.id,
@@ -75,7 +71,7 @@ const verifyGoogleToken = async (
     res.json({
       message: 'Authentication successful',
       token,
-      user: userProfile,
+      user: user,
     });
   } catch (error) {
     console.error('Error in verifyGoogleToken:', error);

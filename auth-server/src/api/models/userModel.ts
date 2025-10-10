@@ -21,6 +21,7 @@ const userSchema = new mongoose.Schema<UserInfo>({
   user_level_id: {
     type: Number,
     required: true,
+    default: 1, // Default 1 = User (2 = Admin)
   },
   registeredAt: {
     type: String,
@@ -29,12 +30,12 @@ const userSchema = new mongoose.Schema<UserInfo>({
   },
   favorites: {
     type: [String],
-    required: true,
+    required: false,
     default: [],
   },
   documents: {
     type: [String],
-    required: true,
+    required: false,
     default: [],
   },
   exchangeBadge: {
