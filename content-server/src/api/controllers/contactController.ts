@@ -32,13 +32,85 @@ const postMessage = async (
 }
 
 
+const replyToMessage = async (
+  req: Request<{ id: string }, {}, { message: string}>,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const adminId = res.locals.user.user_id;
+    const userLevel = res.locals.user.user_level_id;
+    if (!adminId) {
+      return next(new CustomError("Unauthorized, no id found for replier", 401));
+    }
+
+    if (userLevel !== 2) {
+      return next(new CustomError("Unauthorized, not an admin", 403));
+    }
+
+
+    const { id } = req.params;
+    const { message } = req.body;
+
+    if (!message) {
+      return next(new CustomError("Reply message is required", 400));
+    }
+
+    const updatedMessage = await contactModel.findByIdAndUpdate(
+      id,
+      {
+        $push: {
+          responses: {
+            message,
+            adminId,
+            sentAt: new Date(),
+          },
+        },
+        status: "replied",
+      },
+      { new: true }
+    );
+
+    if (!updatedMessage) {
+      return next(new CustomError("Message not found", 404));
+    }
+
+    res.status(200).json({
+      message: "Reply added successfully",
+      updatedMessage: updatedMessage,
+    });
+  } catch (error) {
+    console.error("Error replying to contact message:", error);
+    next(new CustomError("Failed to reply to message", 500));
+  }
+};
+
+
+
 const getMessages = async (
   req: Request,
   res: Response,
   next: NextFunction
 ) => {
   try {
-    const messages = await contactModel.find().sort({ createdAt: -1 });
+    const messages = await contactModel.aggregate([ // Using aggregation to sort by status and createdAt, new first
+      {
+        $addFields: {
+          statusOrder: {
+            $switch: {
+              branches: [
+                { case: { $eq: ["$status", "new"] }, then: 1 },
+                { case: { $eq: ["$status", "replied"] }, then: 2 },
+                { case: { $eq: ["$status", "closed"] }, then: 3 },
+              ],
+              default: 4,
+            },
+          },
+        },
+      },
+      { $sort: { statusOrder: 1, createdAt: -1 } },
+    ]);
+
     res.status(200).json({ messages });
   } catch (error) {
     console.error('Error fetching contact messages:', error);
@@ -55,6 +127,15 @@ const deleteMessage = async (
   try {
 
     // TODO: Add authentication and authorization to ensure only authorized users can delete messages
+    const user = res.locals.user;
+    if (!user) {
+      return next(new CustomError('Unauthorized, no user found', 401));
+    }
+
+    if (user.user_level_id !== 2) { // assuming 2 is admin level
+      return next(new CustomError('Forbidden, insufficient permissions', 403));
+    }
+
     const { id } = req.params;
     const deletedMessage = await contactModel.findByIdAndDelete(id);
 
@@ -69,7 +150,7 @@ const deleteMessage = async (
   }
 }
 
-export { postMessage, getMessages, deleteMessage };
+export { postMessage, getMessages, deleteMessage, replyToMessage };
 
 
 

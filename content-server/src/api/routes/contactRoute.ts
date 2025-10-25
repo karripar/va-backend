@@ -1,9 +1,8 @@
 import express from 'express';
 import {body} from 'express-validator';
-import {validationErrors} from '../../middlewares';
-import { postMessage, getMessages, deleteMessage} from '../controllers/contactController';
+import {validationErrors, authenticate} from '../../middlewares';
+import { postMessage, getMessages, deleteMessage, replyToMessage} from '../controllers/contactController';
 import { contactMessageLimiter } from '../../utils/rateLimiters';
-
 const router = express.Router();
 
 /**
@@ -69,6 +68,7 @@ router.post(
   body('message').isString().withMessage('Message must be a string'),
   contactMessageLimiter,
   validationErrors,
+  authenticate,
   postMessage
 ).get(
   /**
@@ -118,6 +118,7 @@ router.post(
    *     }
    */
   '/messages',
+  authenticate,
   getMessages
 ).delete(
   /**
@@ -160,7 +161,60 @@ router.post(
    *     }
    */
   '/message/:id',
+  authenticate,
   deleteMessage
+);
+
+router.post(
+  /**
+   * @api {post} /contact/message/reply/:id Reply to a contact message
+   * @apiName ReplyToContactMessage
+   * @apiGroup ContactGroup
+   * @apiVersion 1.0.0
+   *
+   * @apiDescription Adds a reply to a specific contact message by its ID.
+   * @apiPermission token
+   *
+   * @apiParam {String} id Unique ID of the contact message to reply to.
+   *
+   * @apiBody {String} message Content of the reply message.
+   *
+   * @apiSuccess {String} message Success message indicating that the reply was added successfully.
+   * @apiSuccessExample {json} Success-Response:
+   *    HTTP/1.1 200 OK
+   *   {
+   *    "message": "Reply added successfully",
+   *    "updatedMessage": {...} // The updated contact message object
+   *   }
+   * @apiError (400 Bad Request) BadRequest Missing reply message or invalid data.
+   * @apiErrorExample {json} BadRequest-Response:
+   *    HTTP/1.1 400 Bad Request
+   *  {
+   *    "message": "Reply message is required"
+   *  }
+   * @apiError (404 Not Found) NotFound Contact message with the specified ID was not found.
+   * @apiErrorExample {json} NotFound-Response:
+   *   HTTP/1.1 404 Not Found
+   *  {
+   *   "message": "Message not found"
+   *  }
+   * @apiError (500 Internal Server Error) InternalServerError Server error while processing the request.
+   * @apiErrorExample {json} InternalServerError-Response:
+   *   HTTP/1.1 500 Internal Server Error
+   * {
+   *  "message": "Failed to reply to message"
+   * }
+   * @apiError (403 Unauthorized) Unauthorized Missing or invalid authentication token.
+   * @apiErrorExample {json} Unauthorized-Response:
+   *   HTTP/1.1 403 Unauthorized
+   * {
+   *  "message": "Unauthorized"
+   * }
+   */
+  '/message/reply/:id',
+  body('replyMessage').isString().withMessage('Reply message must be a string'),
+  authenticate,
+  replyToMessage
 );
 
 export default router;
