@@ -38,7 +38,8 @@ const replyToMessage = async (
   next: NextFunction
 ) => {
   try {
-    const adminId = res.locals.user.user_id;
+    const adminId = res.locals.user._id;
+    console.log('Admin ID from token:', adminId);
     const userLevel = res.locals.user.user_level_id;
     if (!adminId) {
       return next(new CustomError("Unauthorized, no id found for replier", 401));
@@ -125,14 +126,12 @@ const deleteMessage = async (
   next: NextFunction
 ) => {
   try {
-
-    // TODO: Add authentication and authorization to ensure only authorized users can delete messages
     const user = res.locals.user;
     if (!user) {
       return next(new CustomError('Unauthorized, no user found', 401));
     }
 
-    if (user.user_level_id !== 2) { // assuming 2 is admin level
+    if (user.user_level_id !== 2) { // 2 is admin level
       return next(new CustomError('Forbidden, insufficient permissions', 403));
     }
 
@@ -143,7 +142,7 @@ const deleteMessage = async (
       return next(new CustomError('Message not found', 404));
     }
 
-    res.status(200).json({ message: 'Message deleted successfully' });
+    res.status(200).json({ success: true, message: 'Message deleted successfully' });
   } catch (error) {
     console.error('Error deleting contact message:', error);
     next(new CustomError('Failed to delete message', 500));

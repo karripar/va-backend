@@ -136,6 +136,7 @@ router.post(
    * @apiSuccessExample {json} Success-Response:
    *     HTTP/1.1 200 OK
    *     {
+   *       "success": true,
    *       "message": "Message deleted successfully"
    *     }
    *
@@ -143,6 +144,7 @@ router.post(
    * @apiErrorExample {json} NotFound-Response:
    *     HTTP/1.1 404 Not Found
    *     {
+   *       "success": false,
    *       "message": "Message not found"
    *     }
    *
@@ -150,6 +152,7 @@ router.post(
    * @apiErrorExample {json} InternalServerError-Response:
    *     HTTP/1.1 500 Internal Server Error
    *     {
+   *       "success": false,
    *       "message": "Failed to delete message"
    *     }
    *
@@ -157,6 +160,7 @@ router.post(
    * @apiErrorExample {json} Unauthorized-Response:
    *     HTTP/1.1 401 Unauthorized
    *     {
+   *       "success": false,
    *       "message": "Unauthorized"
    *     }
    */
