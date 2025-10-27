@@ -1,0 +1,457 @@
+import { Request, Response, NextFunction } from "express";
+import {ApplicationsResponse, ApplicationDocument} from "va-hybrid-types/contentTypes";
+import { ProfileResponse, Document } from "va-hybrid-types/contentTypes";
+
+//----> Profiili data demonstrationnin luonti (mock data):
+const profiles: ProfileResponse[] = [
+  {
+    id: "1",
+    userName: "Test User",
+    email: "test@metropolia.fi",
+    registeredAt: new Date().toISOString(),
+    avatarUrl:"", // "https://api.dicebear.com/7.x/avataaars/svg?seed=TestUser&mouth=default&eyes=default"
+    favorites: ["Espanja - Madrid", "Ranska - Pariisi"],
+    documents: [], 
+    exchangeBadge: true,
+    linkedinUrl: "https://linkedin.com/in/testuser",
+  }
+];
+
+// Mock data storage for applications
+const applications: ApplicationsResponse[] = [];
+
+// --> Profiilisivun luonnin logiikka:
+const createProfile = (req: Request, res: Response) => {
+  const newProfile: ProfileResponse = {
+    id: String(profiles.length + 1),
+    userName: req.body.userName,
+    email: req.body.email,
+    registeredAt: new Date().toISOString(),
+    avatarUrl: req.body.avatarUrl ?? "",
+    favorites: [],
+    documents: [],
+    exchangeBadge: true,
+    linkedinUrl: req.body.linkedinUrl ?? "",
+  };
+  profiles.push(newProfile);
+  res.status(201).json(newProfile);
+};
+
+const getProfilePage = (req: Request, res: Response) => {
+  const profile = profiles.find((p) => p.id === req.params.id);
+  if (!profile) return res.status(404).json({ error: "Profile not found" });
+  res.json(profile);
+};
+
+const getProfile = (req: Request, res: Response, next: NextFunction) => {
+  try {
+    //  Get userId from req.user when authentication is added
+    
+    if (profiles.length === 0) {
+      return res.status(404).json({ message: "No profile found" });
+    }
+    res.json(profiles[0]);
+  } catch (error) {
+    next(error);
+  }
+};
+
+// ----> Profiilisivun päivityksen logiikka:
+
+const updateProfile = (req: Request, res: Response) => {
+  const index = profiles.findIndex((p) => p.id === req.params.id);
+  if (index === -1) {
+    return res.status(404).json({ error: "Profile not found" });
+  }
+
+  profiles[index] = { ...profiles[index], ...req.body };
+  res.json(profiles[index]);
+};
+
+const addFavorite = (req: Request, res: Response, next: NextFunction) => {
+  try {
+    // Get userId from req.user when authentication is added
+    const { destination } = req.body;
+    
+    if (profiles.length === 0) {
+      return res.status(404).json({ error: "Profile not found" });
+    }
+
+    
+    if (!profiles[0].favorites.includes(destination)) {
+      profiles[0].favorites.push(destination);
+    }
+
+    res.json(profiles[0]);
+  } catch (error) {
+    next(error);
+  }
+};
+
+const removeFavorite = (req: Request, res: Response, next: NextFunction) => {
+  try {
+    // userId from req.user when authentication is added
+    const { destination } = req.body;
+
+    if (profiles.length === 0) {
+      return res.status(404).json({ error: "Profile not found" });
+    }
+
+    profiles[0].favorites = profiles[0].favorites.filter(
+      (fav: string) => fav !== destination
+    );
+
+    res.json(profiles[0]);
+  } catch (error) {
+    next(error);
+  }
+};
+
+
+const addDocument = (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { name, url } = req.body;
+
+    if (profiles.length === 0) {
+      return res.status(404).json({ error: "Profile not found" });
+    }
+
+    const newDoc: Document = {
+      id: Date.now().toString(),
+      name,
+      url,
+      uploadedAt: new Date().toISOString(),
+    };
+
+    profiles[0].documents.push(newDoc);
+
+    res.json(newDoc);
+  } catch (error) {
+    next(error);
+  }
+};
+
+const removeDocument = (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { docId } = req.params;
+
+    if (profiles.length === 0) {
+      return res.status(404).json({ error: "Profile not found" });
+    }
+
+    profiles[0].documents = profiles[0].documents.filter(
+      (doc: Document) => doc.id !== docId
+    );
+
+    res.json({ message: "Document removed" });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// ===== APPLICATION FUNCTIONS (HAKEMUKSET) =====
+
+// GET /api/profile/applications - Get current user's applications
+const getApplications = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    // TODO: Get userId from req.user when authentication is added
+    const userId = "1"; // Mock user ID
+
+    const userApplications = applications.filter(
+      (app) => app.userId === userId
+    );
+
+    if (userApplications.length === 0) {
+      return res.json({
+        userId,
+        applications: [],
+        currentPhase: null,
+      });
+    }
+
+    res.json(userApplications[0]);
+  } catch (error) {
+    next(error);
+  }
+};
+
+// POST /api/profile/applications - Create new application
+const createApplication = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    // TODO: Get userId from req.user when authentication is added
+    const userId = "1"; // Mock user ID
+    const { phase, data } = req.body;
+
+    const newApplication: ApplicationsResponse = {
+      userId,
+      applications: [
+        {
+          phase,
+          data,
+          documents: [],
+          submittedAt: null,
+          status: "draft",
+        },
+      ],
+      currentPhase: phase,
+    };
+
+    applications.push(newApplication);
+    res.status(201).json(newApplication);
+  } catch (error) {
+    next(error);
+  }
+};
+
+// PUT /api/profile/applications/:phase - Update application phase
+const updateApplicationPhase = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const userId = "1"; // Mock user ID
+    const { phase } = req.params;
+    const data = req.body;
+
+    const userApp = applications.find((app) => app.userId === userId);
+
+    if (!userApp) {
+      return res.status(404).json({ error: "Application not found" });
+    }
+
+    const phaseIndex = userApp.applications.findIndex(
+      (app) => app.phase === phase
+    );
+
+    if (phaseIndex === -1) {
+      // Create new phase
+      userApp.applications.push({
+        phase,
+        data,
+        documents: [],
+        submittedAt: null,
+        status: "draft",
+      });
+    } else {
+      // Update existing phase
+      userApp.applications[phaseIndex] = {
+        ...userApp.applications[phaseIndex],
+        data: { ...userApp.applications[phaseIndex].data, ...data },
+      };
+    }
+
+    res.json(userApp);
+  } catch (error) {
+    next(error);
+  }
+};
+
+// GET /api/profile/applications/:phase/documents - Get documents for specific phase
+const getApplicationDocuments = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const userId = "1"; // Mock user ID
+    const { phase } = req.params;
+
+    const userApp = applications.find((app) => app.userId === userId);
+
+    if (!userApp) {
+      return res.status(404).json({ error: "Application not found" });
+    }
+
+    const phaseApp = userApp.applications.find((app) => app.phase === phase);
+
+    if (!phaseApp) {
+      return res.status(404).json({ error: "Phase not found" });
+    }
+
+    res.json(phaseApp.documents);
+  } catch (error) {
+    next(error);
+  }
+};
+
+// POST /api/profile/applications/documents - Upload document (metadata only, actual file handled by upload-server)
+const addApplicationDocument = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const userId = "1"; // Mock user ID
+    const { phase, documentType, fileName, fileUrl, fileSize, mimeType } =
+      req.body;
+
+    const userApp = applications.find((app) => app.userId === userId);
+
+    if (!userApp) {
+      return res.status(404).json({ error: "Application not found" });
+    }
+
+    const phaseApp = userApp.applications.find((app) => app.phase === phase);
+
+    if (!phaseApp) {
+      return res.status(404).json({ error: "Phase not found" });
+    }
+
+    const newDocument: ApplicationDocument = {
+      id: Date.now().toString(),
+      applicationPhase: phase,
+      documentType,
+      fileName,
+      fileUrl,
+      fileSize,
+      mimeType,
+      uploadedAt: new Date().toISOString(),
+      uploadedBy: userId,
+    };
+
+    phaseApp.documents.push(newDocument);
+    res.status(201).json(newDocument);
+  } catch (error) {
+    next(error);
+  }
+};
+
+// DELETE /api/profile/applications/documents/:documentId - Delete document
+const removeApplicationDocument = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const userId = "1"; // Mock user ID
+    const { documentId } = req.params;
+
+    const userApp = applications.find((app) => app.userId === userId);
+
+    if (!userApp) {
+      return res.status(404).json({ error: "Application not found" });
+    }
+
+    let documentFound = false;
+
+    for (const phaseApp of userApp.applications) {
+      const docIndex = phaseApp.documents.findIndex(
+        (doc) => doc.id === documentId
+      );
+
+      if (docIndex !== -1) {
+        phaseApp.documents.splice(docIndex, 1);
+        documentFound = true;
+        break;
+      }
+    }
+
+    if (!documentFound) {
+      return res.status(404).json({ error: "Document not found" });
+    }
+
+    res.status(204).send();
+  } catch (error) {
+    next(error);
+  }
+};
+
+// POST /api/profile/applications/:phase/submit - Submit application phase
+const submitApplicationPhase = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const userId = "1"; // Mock user ID
+    const { phase } = req.params;
+
+    const userApp = applications.find((app) => app.userId === userId);
+
+    if (!userApp) {
+      return res.status(404).json({ error: "Application not found" });
+    }
+
+    const phaseApp = userApp.applications.find((app) => app.phase === phase);
+
+    if (!phaseApp) {
+      return res.status(404).json({ error: "Phase not found" });
+    }
+
+    // TODO: Validate required documents
+
+    phaseApp.submittedAt = new Date().toISOString();
+    phaseApp.status = "submitted";
+
+    // TODO: Send notification emails
+
+    res.json(userApp);
+  } catch (error) {
+    next(error);
+  }
+};
+
+// Admin endpoints
+// POST /api/profile/applications/:id/approve - Approve application (admin only)
+const approveApplication = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const { id } = req.params;
+    const { reviewNotes, phase } = req.body;
+    const reviewerId = "admin1"; // TODO: Get from req.user
+
+    const userApp = applications.find((app) => app.userId === id);
+
+    if (!userApp) {
+      return res.status(404).json({ error: "Application not found" });
+    }
+
+    const phaseApp = userApp.applications.find((app) => app.phase === phase);
+
+    if (!phaseApp) {
+      return res.status(404).json({ error: "Phase not found" });
+    }
+
+    phaseApp.status = "approved";
+    phaseApp.reviewedBy = reviewerId;
+    phaseApp.reviewNotes = reviewNotes;
+    phaseApp.reviewedAt = new Date().toISOString();
+
+    // TODO: Send approval notification
+
+    res.json(userApp);
+  } catch (error) {
+    next(error);
+  }
+};
+
+export {
+  getProfilePage,
+  updateProfile,
+  createProfile,
+  getProfile,
+  addFavorite,
+  removeFavorite,
+  addDocument,
+  removeDocument,
+  getApplications,
+  createApplication,
+  updateApplicationPhase,
+  getApplicationDocuments,
+  addApplicationDocument,
+  removeApplicationDocument,
+  submitApplicationPhase,
+  approveApplication,
+};

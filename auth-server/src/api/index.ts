@@ -10,6 +10,10 @@ router.get('/', (req: Request, res: Response) => {
   })
 }
 );
+router.get<{}, {message: string}>('/ping', (_req: Request, res) => {
+  res.json({message: 'pong'});
+});
+
 
 // router.use('/users', userRoute); import users route when available
 // router.use('/auth', authRoute); import auth route when available

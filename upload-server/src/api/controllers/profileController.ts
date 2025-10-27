@@ -55,4 +55,23 @@ const uploadDocument = async (req: Request, res: Response, next: NextFunction) =
   }
 };
 
-export {upload, uploadAvatar, uploadDocument};
+const uploadApplicationDocument = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({message: 'No file uploaded'});
+    }
+
+    const fileUrl = `${process.env.BASE_URL}/uploads/${req.file.filename}`;
+
+    res.json({
+      fileUrl,
+      originalName: req.file.originalname,
+      fileSize: req.file.size,
+      mimeType: req.file.mimetype,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export {upload, uploadAvatar, uploadDocument, uploadApplicationDocument};
