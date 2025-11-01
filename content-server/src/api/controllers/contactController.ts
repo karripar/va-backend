@@ -2,6 +2,8 @@ import { Request, Response, NextFunction } from "express";
 import contactModel from "../models/contactModel";
 import {ContactMessage} from "va-hybrid-types/contentTypes";
 import CustomError from '../../classes/CustomError';
+import { sendAdminNotification } from "../../utils/emailService";
+import { getAdminEmails } from "./adminController";
 
 const postMessage = async (
   req: Request<{}, {}, ContactMessage>,
@@ -23,6 +25,23 @@ const postMessage = async (
     });
 
     await newMessage.save();
+    try {
+      const adminEmails = await getAdminEmails();
+
+      if (adminEmails.length > 0) {
+      await sendAdminNotification(
+        name,
+        email,
+        subject,
+        message,
+        adminEmails
+      );
+      } else {
+        console.log('No admin emails found to send notification', adminEmails);
+      }
+    } catch (emailError) {
+      console.error('Failed to send admin notification email:', emailError);
+    }
 
     res.status(201).json({ message: 'Message sent successfully' });
   } catch (error) {
