@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 import userModel from "../models/userModel";
 
+
 /**
  * @module controllers/adminController
  * @description Controller functions for managing admin users.
