@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import contactModel from "../models/contactModel";
-import { ContactMessage } from "va-hybrid-types/contentTypes";
+import { ContactMessageInput } from "va-hybrid-types/contentTypes";
 import CustomError from "../../classes/CustomError";
 import { sendAdminNotification } from "../../utils/emailService";
 import { getAdminEmails } from "./adminController";
@@ -16,7 +16,7 @@ import { getAdminEmails } from "./adminController";
  * @description Handles posting of new contact messages from users.
  * Saves the message to the database and sends a notification email to all admins.
  *
- * @param {Request<{}, {}, ContactMessage>} req - Express request object containing `name`, `email`, `subject`, and `message` in `req.body`.
+ * @param {Request<{}, {}, ContactMessageInput>} req - Express request object containing `name`, `email`, `subject`, and `message` in `req.body`.
  * @param {Response} res - Express response object used to send JSON responses.
  * @param {NextFunction} next - Express next middleware function for error handling.
  *
@@ -31,7 +31,7 @@ import { getAdminEmails } from "./adminController";
  * postMessage(req, res, next);
  */
 const postMessage = async (
-  req: Request<{}, {}, ContactMessage>,
+  req: Request<{}, {}, ContactMessageInput>,
   res: Response,
   next: NextFunction
 ) => {
