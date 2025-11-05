@@ -17,15 +17,32 @@ import {
   submitApplicationPhase,
   approveApplication,
   getRequiredDocuments,
-  uploadApplicationDocument,
+  // Budget Management
+  getBudgetCategories,
+  createOrUpdateBudgetEstimate,
+  getBudgetEstimate,
+  // Erasmus+ Grants
+  getErasmusGrantTypes,
+  applyForErasmusGrant,
+  updateErasmusGrant,
+  getUserErasmusGrants,
+  // Kela Support
+  applyForKelaSupport,
+  updateKelaSupport,
+  getKelaSupport,
+  // Grant Calculator & Search
+  calculateTotalGrants,
+  searchGrants,
+  getAllGrantsSummary,
 } from "../controllers/profileController";
 
 const router = Router();
 
+// Profile routes
 router.get("/", getProfile);
 router.post("/", createProfile);
 
-// Specific routes MUST come before parameterized routes
+// Application routes
 router.get("/applications", getApplications);
 router.post("/applications", createApplication);
 router.put("/applications/:phase", updateApplicationPhase);
@@ -36,29 +53,32 @@ router.delete("/applications/documents/:documentId", removeApplicationDocument);
 router.post("/applications/:phase/submit", submitApplicationPhase);
 router.post("/applications/:id/approve", approveApplication);
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-router.post("/applications/upload", uploadApplicationDocument as any, (req, res) => {
-  try {
-    if (!req.file) {
-      return res.status(400).json({ error: 'No file uploaded' });
-    }
+// Budget Management routes
+router.get("/grants/budget/categories", getBudgetCategories);
+router.post("/grants/budget/estimate", createOrUpdateBudgetEstimate);
+router.get("/grants/budget/estimate", getBudgetEstimate);
 
-    res.json({
-      fileName: req.file.filename,
-      originalName: req.file.originalname,
-      fileSize: req.file.size,
-      mimeType: req.file.mimetype,
-      fileUrl: `/uploads/documents/${req.file.filename}`,
-      message: 'File uploaded successfully'
-    });
-  } catch {
-  res.status(500).json({ error: 'Failed to uplaod the file' });
-  }
-});
+// Erasmus+ Grant routes
+router.get("/grants/erasmus/types", getErasmusGrantTypes);
+router.post("/grants/erasmus/apply", applyForErasmusGrant);
+router.put("/grants/erasmus/:grantId", updateErasmusGrant);
+router.get("/grants/erasmus", getUserErasmusGrants);
 
+// Kela Support routes
+router.post("/grants/kela/apply", applyForKelaSupport);
+router.put("/grants/kela/:kelaId", updateKelaSupport);
+router.get("/grants/kela", getKelaSupport);
+
+// Grant Calculator & Search routes
+router.post("/grants/calculator", calculateTotalGrants);
+router.get("/grants/search", searchGrants);
+router.get("/grants/summary", getAllGrantsSummary);
+
+// Favorites routes
 router.post("/favorites", addFavorite);
 router.delete("/favorites", removeFavorite);
 
+// Document routes (link-based system)
 router.post("/documents", addDocument);
 router.delete("/documents/:docId", removeDocument);
 
