@@ -20,6 +20,8 @@ if (!process.env.AUTH_SERVER || !process.env.CONTENT_SERVER || !process.env.UPLO
   throw new Error("Missing AUTH_SERVER, CONTENT_SERVER, or UPLOAD_SERVER in environment variables");
 }
 
+// USE api2.test.ts TO CREATE MORE TESTS, makes this file less cluttered because there are more coming
+
 describe("Admin Contact Information API Tests", () => {
   let testUser: UserInfo;
   let testToken: string;
