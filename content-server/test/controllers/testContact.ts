@@ -1,127 +1,143 @@
-import request from 'supertest';
-import { Application } from 'express';
-import { MessageResponse } from '../../src/types/MessageTypes';
-import { ContactMessageInput, ContactMessageResponse } from 'va-hybrid-types/contentTypes';
+import request from "supertest";
+import { Application } from "express";
+//import { MessageResponse } from "../../src/types/MessageTypes";
 
-type ContactReplyResponse = {
+type AdminContactInput = {
+  name: string;
+  title: string;
+  email: string;
+};
+
+type AdminContactResponse = {
+  _id: string;
+  name: string;
+  title: string;
+  email: string;
+  createdAt: string;
+  updatedAt: string;
+};
+
+type GetContactsResponse = {
+  contacts: AdminContactResponse[];
+};
+
+type AddContactResponse = {
   message: string;
-  updatedMessage: ContactMessageResponse;
-}
+  contact: AdminContactResponse;
+};
+
+type UpdateContactResponse = {
+  message: string;
+  contact: AdminContactResponse;
+};
 
 type DeleteContactResponse = {
   success: boolean;
   message: string;
-}
+};
 
 /**
- * POST /api/v1/contact/message
- * Creates a new contact message.
+ * GET /api/v1/contact/contacts
+ * Retrieves all admin contact entries.
  */
-const postMessage = (
+const getContacts = (
   url: string | Application,
-  data: ContactMessageInput,
   token: string
-): Promise<MessageResponse> => {
+): Promise<GetContactsResponse> => {
   return new Promise((resolve, reject) => {
     request(url)
-      .post('/api/v1/contact/message')
-      .set('Authorization', `Bearer ${token}`)
-      .send(data)
-      .expect(201, (err, response) => {
-        if (err) {
-          reject(err);
-        } else {
-          const message: MessageResponse = response.body;
-          expect(message.message).toBe('Message sent successfully');
-          resolve(message);
-        }
+      .get("/api/v1/contact/contacts")
+      .set("Authorization", `Bearer ${token}`)
+      .expect(200, (err, response) => {
+        if (err) return reject(err);
+        const data: GetContactsResponse = response.body;
+        expect(Array.isArray(data.contacts)).toBe(true);
+        data.contacts.forEach((c) => {
+          expect(c.name).toBeDefined();
+          expect(c.email).toBeDefined();
+          expect(c.title).toBeDefined();
+        });
+        resolve(data);
       });
   });
 };
 
 /**
- * PUT /api/v1/contact/message/reply/:id
- * Admin replies to a contact message.
+ * POST /api/v1/contact/contacts
+ * Adds a new admin contact (admin only).
  */
-const replyToMessage = (
+const addContact = (
+  url: string | Application,
+  data: AdminContactInput,
+  token: string
+): Promise<AddContactResponse> => {
+  return new Promise((resolve, reject) => {
+    request(url)
+      .post("/api/v1/contact/contacts")
+      .set("Authorization", `Bearer ${token}`)
+      .send(data)
+      .expect(201, (err, response) => {
+        if (err) return reject(err);
+        const result: AddContactResponse = response.body;
+        expect(result.message).toBe("Admin contact added successfully");
+        expect(result.contact).toBeDefined();
+        expect(result.contact.name).toBe(data.name);
+        expect(result.contact.email).toBe(data.email);
+        expect(result.contact.title).toBe(data.title);
+        resolve(result);
+      });
+  });
+};
+
+/**
+ * PUT /api/v1/contact/contacts/:id
+ * Updates an existing admin contact (admin only).
+ */
+const updateContact = (
   url: string | Application,
   id: string,
   token: string,
-  message: string
-): Promise<ContactReplyResponse> => {
+  data: Partial<AdminContactInput>
+): Promise<UpdateContactResponse> => {
   return new Promise((resolve, reject) => {
     request(url)
-      .post(`/api/v1/contact/message/reply/${id}`)
-      .set('Authorization', `Bearer ${token}`)
-      .send({ message })
+      .put(`/api/v1/contact/contacts/${id}`)
+      .set("Authorization", `Bearer ${token}`)
+      .send(data)
       .expect(200, (err, response) => {
-        if (err) {
-          reject(err);
-        } else {
-          const msgResponse: ContactReplyResponse = response.body;
-          expect(msgResponse.message).toBe('Reply added successfully');
-          expect(msgResponse.updatedMessage).toBeDefined();
-          expect(msgResponse.updatedMessage.status).toBe('replied');
-          resolve(msgResponse);
-        }
+        if (err) return reject(err);
+        const result: UpdateContactResponse = response.body;
+        expect(result.message).toBe("Contact updated successfully");
+        expect(result.contact).toBeDefined();
+        Object.entries(data).forEach(([key, val]) =>
+          expect(result.contact[key as keyof AdminContactResponse]).toBe(val)
+        );
+        resolve(result);
       });
   });
 };
 
 /**
- * GET /api/v1/contact/messages
- * Fetches all contact messages.
+ * DELETE /api/v1/contact/contacts/:id
+ * Deletes an admin contact (admin only).
  */
-const getMessages = (
-  url: string | Application,
-  token: string
-): Promise<{ messages: ContactMessageResponse[] }> => {
-  return new Promise((resolve, reject) => {
-    request(url)
-      .get('/api/v1/contact/messages')
-      .set('Authorization', `Bearer ${token}`)
-      .expect(200, (err, response) => {
-        if (err) {
-          reject(err);
-        } else {
-          const data = response.body;
-          expect(Array.isArray(data.messages)).toBe(true);
-          data.messages.forEach((msg: ContactMessageResponse) => {
-            expect(msg.name).toBeDefined();
-            expect(msg.email).toBeDefined();
-            expect(msg.subject).toBeDefined();
-            expect(msg.message).toBeDefined();
-          });
-          resolve(data);
-        }
-      });
-  });
-};
-
-/**
- * DELETE /api/v1/contact/message/:id
- * Deletes a contact message (admin only).
- */
-const deleteMessage = (
+const deleteContact = (
   url: string | Application,
   id: string,
   token: string
 ): Promise<DeleteContactResponse> => {
   return new Promise((resolve, reject) => {
     request(url)
-      .delete(`/api/v1/contact/message/${id}`)
-      .set('Authorization', `Bearer ${token}`)
+      .delete(`/api/v1/contact/contacts/${id}`)
+      .set("Authorization", `Bearer ${token}`)
       .expect(200, (err, response) => {
-        if (err) {
-          reject(err);
-        } else {
-          const message: DeleteContactResponse = response.body;
-          expect(message.success).toBe(true);
-          expect(message.message).toBe('Message deleted successfully');
-          resolve(message);
-        }
+        if (err) return reject(err);
+        const result: DeleteContactResponse = response.body;
+        expect(result.success).toBe(true);
+        expect(result.message).toBe("Contact deleted successfully");
+        resolve(result);
       });
   });
 };
 
-export { postMessage, replyToMessage, getMessages, deleteMessage };
+export { getContacts, addContact, updateContact, deleteContact };
