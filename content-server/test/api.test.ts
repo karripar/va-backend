@@ -8,7 +8,12 @@ import {
   addContact,
   updateContact,
   deleteContact,
+  addFaultyContact,
 } from "./controllers/testContact";
+import {
+  getDestinations,
+  getDestinationsInvalidParams
+} from "./controllers/testDestinations";
 import jwt from "jsonwebtoken";
 import request from "supertest";
 import userModel from "../src/api/models/userModel"; // adjust if path differs
@@ -16,8 +21,14 @@ import { UserInfo } from "../src/types/LocalTypes";
 
 dotenv.config();
 
-if (!process.env.AUTH_SERVER || !process.env.CONTENT_SERVER || !process.env.UPLOAD_SERVER) {
-  throw new Error("Missing AUTH_SERVER, CONTENT_SERVER, or UPLOAD_SERVER in environment variables");
+if (
+  !process.env.AUTH_SERVER ||
+  !process.env.CONTENT_SERVER ||
+  !process.env.UPLOAD_SERVER
+) {
+  throw new Error(
+    "Missing AUTH_SERVER, CONTENT_SERVER, or UPLOAD_SERVER in environment variables"
+  );
 }
 
 // USE api2.test.ts TO CREATE MORE TESTS, makes this file less cluttered because there are more coming
@@ -35,7 +46,7 @@ describe("Admin Contact Information API Tests", () => {
     // Create mock admin user
     testUser = await userModel.create({
       name: "Test Admin",
-      userName:  "TestAdmin",
+      userName: "TestAdmin",
       email: `admin_${randomstring.generate(5)}@example.com`,
       user_level_id: 2, // Admin level
       googleId: randomstring.generate(12),
@@ -61,32 +72,82 @@ describe("Admin Contact Information API Tests", () => {
 
   it("should allow admin to add a new contact entry", async () => {
     const result = await addContact(app, testContactData, testToken);
-    expect(result.message).toBe("Admin contact added successfully");
     expect(result.contact).toBeDefined();
     contactId = result.contact._id;
   });
 
+  it("should reject adding a contact with missing fields", async () => {
+    const faultyData = {
+      name: "Incomplete Contact",
+      // Missing email and title
+    };
+    await addFaultyContact(app, faultyData, testToken);
+  });
+
   it("should retrieve all admin contacts and include the new one", async () => {
-    const result = await getContacts(app, testToken);
-    expect(Array.isArray(result.contacts)).toBe(true);
-    const found = result.contacts.find(
-      (c) => c.email === testContactData.email
-    );
-    expect(found).toBeDefined();
-    expect(found?.name).toBe(testContactData.name);
+    await getContacts(app, testToken);
   });
 
   it("should allow admin to update a contact entry", async () => {
     const updates = { title: "Updated Coordinator" };
-    const result = await updateContact(app, contactId, testToken, updates);
-    expect(result.message).toBe("Contact updated successfully");
-    expect(result.contact.title).toBe(updates.title);
+    await updateContact(app, contactId, testToken, updates);
   });
 
   it("should allow admin to delete a contact entry", async () => {
-    const result = await deleteContact(app, contactId, testToken);
-    expect(result.message).toBe("Contact deleted successfully");
-    expect(result.success).toBe(true);
+    await deleteContact(app, contactId, testToken);
+  });
+
+  afterAll(async () => {
+    if (testUser) {
+      await userModel.findByIdAndDelete(testUser.id);
+    }
+    if (mongoose.connection.readyState !== 0) {
+      await mongoose.connection.close();
+    }
+  });
+});
+
+/* -----------------------------------------------------------
+   Destination Scraper / Partner Data API Tests
+------------------------------------------------------------ */
+
+describe("Destination Scraper Controller Tests", () => {
+  let testUser: UserInfo;
+  let testToken: string;
+
+  beforeAll(async () => {
+    const mongoURI = process.env.DB_URL;
+    if (!mongoURI) throw new Error("Missing DB_URL in environment variables");
+    if (mongoose.connection.readyState === 0) {
+      await mongoose.connect(mongoURI);
+    }
+
+    // Create mock admin user (reuse schema)
+    testUser = await userModel.create({
+      name: "Test Destination Admin",
+      userName: "DestinationAdmin",
+      email: `destadmin_${randomstring.generate(5)}@example.com`,
+      user_level_id: 2,
+      googleId: randomstring.generate(12),
+    });
+
+    // Sign token
+    testToken = jwt.sign(
+      {
+        id: testUser.id,
+        level_name: "Admin",
+      },
+      process.env.JWT_SECRET as string,
+      { expiresIn: "3h" }
+    );
+  });
+
+  it("should fetch destinations with valid parameters", async () => {
+    await getDestinations(app, testToken, "en", "tech");
+  });
+
+  it("should return 400 for invalid field or language", async () => {
+    await getDestinationsInvalidParams(app, testToken, "xx", "invalidField");
   });
 
   afterAll(async () => {

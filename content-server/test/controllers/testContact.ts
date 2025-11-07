@@ -89,6 +89,24 @@ const addContact = (
   });
 };
 
+
+const addFaultyContact = (
+  url: string | Application,
+  data: Partial<AdminContactInput>,
+  token: string
+): Promise<request.Response> => {
+  return new Promise((resolve, reject) => {
+    request(url)
+      .post("/api/v1/contact/contacts")
+      .set("Authorization", `Bearer ${token}`)
+      .send(data)
+      .expect(400, (err, response) => {
+        if (err) return reject(err);
+        resolve(response);
+      });
+  });
+};
+
 /**
  * PUT /api/v1/contact/contacts/:id
  * Updates an existing admin contact (admin only).
@@ -140,4 +158,4 @@ const deleteContact = (
   });
 };
 
-export { getContacts, addContact, updateContact, deleteContact };
+export { getContacts, addContact, updateContact, deleteContact, addFaultyContact };
