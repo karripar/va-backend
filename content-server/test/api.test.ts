@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 import mongoose from "mongoose";
 import app from "../src/app";
 import dotenv from "dotenv";
@@ -15,7 +14,6 @@ import {
   getDestinationsInvalidParams
 } from "./controllers/testDestinations";
 import jwt from "jsonwebtoken";
-import request from "supertest";
 import userModel from "../src/api/models/userModel"; // adjust if path differs
 import { UserInfo } from "../src/types/LocalTypes";
 

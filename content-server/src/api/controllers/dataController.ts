@@ -5,6 +5,91 @@ import * as cheerio from 'cheerio';
 
 dotenv.config();
 
+/**
+ * Controller: getDestinations
+ *
+ * Fetches and parses destination partner data from Metropolia’s public websites.
+ *
+ * The function reads the query parameters `lang` and `field` to determine which
+ * environment variable contains the corresponding URL. It then fetches that HTML page,
+ * parses it using Cheerio, and extracts structured information about international
+ * exchange destinations (e.g., Erasmus, Nordplus, Bilateral Agreements, etc.).
+ *
+ * ---
+ * **Environment Variables**
+ * - Each combination of `field` and `lang` must be defined as an environment variable, e.g.:
+ *   - `TECH_PARTNERS_EN`
+ *   - `HEALTH_PARTNERS_FI`
+ *   - `BUSINESS_PARTNERS_EN`
+ *   - `CULTURE_PARTNERS_FI`
+ *
+ * ---
+ * **Request Query Parameters**
+ * @param {string} [lang='en'] - The language code (e.g. `'en'` or `'fi'`).
+ * @param {string} [field='tech'] - The study field (`'tech'`, `'health'`, `'business'`, or `'culture'`).
+ *
+ * ---
+ * **Responses**
+ * - **200 OK**
+ *   ```json
+ *   {
+ *     "destinations": {
+ *       "Erasmus": [
+ *         { "country": "SWEDEN", "title": "KTH Royal Institute of Technology", "link": "https://kth.se" },
+ *         { "country": "GERMANY", "title": "Technische Universität Berlin", "link": "https://tu-berlin.de" }
+ *       ],
+ *       "Nordplus": [
+ *         { "country": "DENMARK", "title": "Copenhagen School of Design and Technology", "link": "https://kea.dk" }
+ *       ],
+ *       "Bilateral Agreements": [
+ *         { "country": "JAPAN", "title": "Tokyo Metropolitan University", "link": "https://tmu.ac.jp" }
+ *       ],
+ *       "Other exchange destinations": [
+ *         { "country": "CANADA", "title": "University of Ottawa", "link": "https://uottawa.ca" }
+ *       ]
+ *     }
+ *   }
+ *   ```
+ *
+ * - **400 Bad Request**
+ *   - Returned when query parameters are invalid or no matching environment variable is found.
+ *
+ * - **500 Internal Server Error**
+ *   - Returned when fetching or parsing data fails (e.g., network error, missing content, or invalid HTML).
+ *
+ * ---
+ * **Throws**
+ * - `CustomError('Invalid field or language parameter', 400)` if query validation fails.
+ * - `CustomError('Failed to fetch destinations', 500)` if a network or parsing error occurs.
+ *
+ * ---
+ * **Example**
+ * ```http
+ * GET /api/v1/data/metropolia/destinations?lang=en&field=tech
+ * Authorization: Bearer <token>
+ * ```
+ *
+ * **Example Output**
+ * ```json
+ * {
+ *   "destinations": {
+ *     "Erasmus": [...],
+ *     "Nordplus": [...],
+ *     "Bilateral Agreements": [...],
+ *     "Other exchange destinations": [...]
+ *   }
+ * }
+ * ```
+ *
+ * ---
+ * @function getDestinations
+ * @async
+ * @param {Request} req - Express request object with optional `lang` and `field` query parameters.
+ * @param {Response} res - Express response object used to return parsed destination data.
+ * @param {NextFunction} next - Express middleware function for error handling.
+ * @returns {Promise<void>} JSON response containing categorized destination sections or an error.
+ */
+
 const getDestinations = async (
   req: Request<{}, {}, {lang?: string; field?: string}>,
   res: Response,
