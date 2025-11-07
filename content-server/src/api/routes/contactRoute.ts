@@ -33,7 +33,7 @@ const router = express.Router();
 router
   .get(
     /**
-     * @api {get} /contacts Get all admin contacts
+     * @api {get} /contact/contacts Get all admin contacts
      * @apiName GetAdminContacts
      * @apiGroup AdminContactGroup
      * @apiVersion 1.0.0
@@ -74,7 +74,7 @@ router
   )
   .post(
     /**
-     * @api {post} /contacts Add a new admin contact
+     * @api {post} /contact/contacts Add a new admin contact
      * @apiName AddAdminContact
      * @apiGroup AdminContactGroup
      * @apiVersion 1.0.0
@@ -137,7 +137,7 @@ router
   )
   .put(
     /**
-     * @api {put} /contacts/:id Update an admin contact
+     * @api {put} /contact/contacts/:id Update an admin contact
      * @apiName UpdateAdminContact
      * @apiGroup AdminContactGroup
      * @apiVersion 1.0.0
@@ -198,7 +198,7 @@ router
   )
   .delete(
     /**
-     * @api {delete} /contacts/:id Delete an admin contact
+     * @api {delete} /contact/contacts/:id Delete an admin contact
      * @apiName DeleteAdminContact
      * @apiGroup AdminContactGroup
      * @apiVersion 1.0.0

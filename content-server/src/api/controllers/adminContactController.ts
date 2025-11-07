@@ -21,7 +21,7 @@ import CustomError from "../../classes/CustomError";
  * - 500: If fetching fails.
  *
  * @example
- * // GET /api/v1/contacts
+ * // GET /api/v1/contact/contacts
  * getContacts(req, res, next);
  */
 const getContacts = async (req: Request, res: Response, next: NextFunction) => {
@@ -49,7 +49,7 @@ const getContacts = async (req: Request, res: Response, next: NextFunction) => {
  * - 500: If saving fails.
  *
  * @example
- * // POST /api/v1/contacts
+ * // POST /api/v1/contact/contacts
  * // Body: { name: "Admin One", title: "Exchange Coordinator", email: "admin1@example.com" }
  * addContact(req, res, next);
  */
@@ -97,7 +97,7 @@ const addContact = async (
  * - 500: On server errors.
  *
  * @example
- * // PUT /api/v1/contacts/:id
+ * // PUT /api/v1/contact/contacts/:id
  * // Body: { title: "Program Advisor" }
  * updateContact(req, res, next);
  */
@@ -149,7 +149,7 @@ const updateContact = async (
  * - 500: On server error.
  *
  * @example
- * // DELETE /api/v1/contacts/:id
+ * // DELETE /api/v1/contact/contacts/:id
  * deleteContact(req, res, next);
  */
 const deleteContact = async (
