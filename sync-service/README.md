@@ -1,43 +1,60 @@
 # Vector Store Sync Service
 
-Automaattinen palvelu, joka synkronoi SharePoint-kansion tiedostot OpenAI Vector Storeen.
+Automaattinen palvelu, joka synkronoi Google Drive -kansion tiedostot OpenAI Vector Storeen.
 
 ## Ominaisuudet
 
 - ✅ Automaattinen synkronointi määritetyin väliajoin (cron)
-- ✅ Lataa uudet tiedostot SharePointista
-- ✅ Poistaa tiedostot jotka on poistettu SharePointista
+- ✅ Lataa uudet tiedostot Google Drivesta
+- ✅ Poistaa tiedostot jotka on poistettu Google Drivesta
 - ✅ Tukee useita tiedostomuotoja (.pdf, .docx, .txt, .md)
-- ✅ Tiedostokoon rajoitus
-- ✅ Azure AD autentikointi
+- ✅ Tiedostokoon rajoitus (512 MB per tiedosto)
+- ✅ Google Service Account autentikointi (ei OAuth!)
+- ✅ Ei vaadi Azure AD tai Microsoft 365 -lisenssejä
 
 ## Asennus
 
-1. **Luo Azure AD App Registration:**
+### 1. Luo Google Cloud Project ja Service Account
 
-   - Mene Azure Portaliin → Azure Active Directory → App registrations
-   - Luo uusi app registration
-   - API permissions → Add permission → Microsoft Graph → Application permissions
-   - Lisää: `Files.Read.All`, `Sites.Read.All`
-   - Grant admin consent
+1. **Mene Google Cloud Consoleen:** https://console.cloud.google.com
+2. **Luo uusi projekti** (tai käytä olemassaolevaa)
+3. **Aktivoi Google Drive API:**
+   - APIs & Services → Enable APIs and Services
+   - Etsi "Google Drive API" ja aktivoi
+4. **Luo Service Account:**
+   - IAM & Admin → Service Accounts → Create Service Account
+   - Anna nimi (esim. "va-ai-sync")
+   - Luo ja lataa JSON-avain
+5. **Kopioi Service Account email** (esim. `va-ai-sync@project-id.iam.gserviceaccount.com`)
 
-2. **Kopioi .env tiedosto:**
+### 2. Luo Google Drive -kansio
+
+1. Mene Google Driveen: https://drive.google.com
+2. Luo uusi kansio AI-tiedostoille
+3. **Jaa kansio Service Account:lle:**
+   - Kansion Share → Lisää Service Account email
+   - Anna "Viewer" tai "Editor" -oikeudet
+4. **Kopioi kansion ID** URL:sta:
+   - `https://drive.google.com/drive/folders/KANSIO_ID_TÄSSÄ`
+
+### 3. Konfiguroi environment
+
+1. **Kopioi .env-template:**
 
    ```bash
-   cp .env.example .env
+   cp .env.googledrive-example .env
    ```
 
-3. **Täytä .env tiedostoon:**
+2. **Täytä .env tiedostoon:**
 
    - `OPENAI_API_KEY`: OpenAI API-avain
    - `VECTOR_STORE_ID`: Vector store ID (vs_xxx)
-   - `AZURE_TENANT_ID`: Azure tenant ID
-   - `AZURE_CLIENT_ID`: Azure app client ID
-   - `AZURE_CLIENT_SECRET`: Azure app client secret
-   - `SHAREPOINT_SITE_ID`: SharePoint site ID
-   - `SHAREPOINT_FOLDER_PATH`: Polku kansioon (esim. `/Shared Documents/AI`)
+   - `GOOGLE_DRIVE_FOLDER_ID`: Google Drive kansion ID
+   - `GOOGLE_SERVICE_ACCOUNT_EMAIL`: Service Account email
+   - `GOOGLE_PRIVATE_KEY`: Service Account private key (JSON-tiedostosta)
+   - `GOOGLE_PROJECT_ID`: Google Cloud project ID
 
-4. **Asenna riippuvuudet:**
+3. **Asenna riippuvuudet:**
    ```bash
    npm install
    ```
@@ -47,7 +64,7 @@ Automaattinen palvelu, joka synkronoi SharePoint-kansion tiedostot OpenAI Vector
 ### Kertaluontoinen synkronointi:
 
 ```bash
-npm run sync
+npm run sync:googledrive
 ```
 
 ### Automaattinen synkronointi (daemon):
@@ -62,6 +79,17 @@ Tai development-tilassa:
 npm run dev
 ```
 
+### Mitä synkronoinnissa tapahtuu:
+
+1. ✅ Yhdistetään Google Driveen Service Account:lla
+2. ✅ Haetaan kaikki tiedostot määritetystä kansiosta
+3. ✅ Haetaan Vector Store:n nykyiset tiedostot
+4. ✅ Verrataan tiedostoja:
+   - Uudet tiedostot → Ladataan ja lähetetään Vector Storeen
+   - Poistetut tiedostot → Poistetaan Vector Storesta
+   - Muuttamattomat → Ei toimintoja
+5. ✅ Tulostetaan synkronoinnin yhteenveto
+
 ### Cron-aikataulu:
 
 Muokkaa `.env` tiedostossa `SYNC_SCHEDULE` arvoa (cron format):
@@ -75,20 +103,6 @@ SYNC_SCHEDULE=0 2 * * *
 
 # Joka tunti
 SYNC_SCHEDULE=0 * * * *
-```
-
-## SharePoint Site ID löytäminen
-
-```powershell
-# PowerShellillä Microsoft Graph:
-Connect-MgGraph -Scopes "Sites.Read.All"
-Get-MgSite -Search "YourSiteName"
-```
-
-Tai käytä Graph Explorer: https://developer.microsoft.com/graph/graph-explorer
-
-```
-GET https://graph.microsoft.com/v1.0/sites?search=YourSiteName
 ```
 
 ## Tuotantokäyttö
@@ -129,17 +143,28 @@ pm2 logs vector-sync
 
 ## Vianmääritys
 
-### "Invalid credentials":
+### "Invalid credentials" / "Authentication failed":
 
-- Tarkista Azure AD app permissions
-- Varmista että admin consent on annettu
+- Tarkista että Service Account JSON-avain on oikein
+- Varmista että `GOOGLE_PRIVATE_KEY` sisältää koko private keyn (mukaan lukien `-----BEGIN PRIVATE KEY-----`)
+- Testaa Service Account: `npm run sync:googledrive`
 
-### "File not found":
+### "Folder not found" / "No files found":
 
-- Tarkista `SHAREPOINT_FOLDER_PATH`
-- Varmista että app:lla on oikeudet kansioon
+- Tarkista `GOOGLE_DRIVE_FOLDER_ID` (URL:sta kansion ID)
+- Varmista että olet jakanut kansion Service Account emailille
+- Tarkista että Service Account:lla on vähintään "Viewer" -oikeudet
+
+### "Vector Store API not available":
+
+- Varmista että käytät OpenAI SDK v6.8.1 tai uudempaa
+- Tarkista että `VECTOR_STORE_ID` on oikein
+- Testaa Vector Store API: `npm run sync:googledrive`
 
 ### "Rate limit exceeded":
 
-- Vähennä synkronointitaajuutta
-- Tarkista OpenAI API quota
+### Synkronointi ei löydä tiedostoja:
+
+- Tarkista tiedostomuoto (tuetut: .pdf, .docx, .txt, .md)
+- Varmista että tiedostot eivät ole roskakorissa
+- Tarkista tiedostokoko (max 512 MB)
