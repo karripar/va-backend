@@ -1,9 +1,11 @@
+import { TokenContent } from 'va-hybrid-types/DBTypes';
 /* eslint-disable @typescript-eslint/no-unused-vars */
 
 import { validationResult } from "express-validator";
 import CustomError from "./classes/CustomError";
 import { NextFunction, Request, Response } from "express";
-
+import jwt from "jsonwebtoken";
+import User from "./api/models/userModel";
 
 // Middleware to handle 404 errors
 const notFound = (req: Request, res: Response, next: NextFunction) => {
@@ -32,6 +34,36 @@ const validationErrors = (req: Request, res: Response, next: NextFunction) => {
   next();
 }
 
+// Middleware to authenticate the user
+const authenticate = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const token = req.headers.authorization?.split(' ')[1];
+
+    console.log('Authenticating token:', token);
+    if (!token) {
+      next(new CustomError('Unauthorized, no token provided', 401));
+      return;
+    }
+
+  // decode the user_id from the token
+  const decoded = jwt.verify(token, process.env.JWT_SECRET as string) as TokenContent; //
+  //console.log(decoded);
+
+  const user = await User.findById(decoded.id);
+  //console.log('Authenticated user:', user);
+  if (!user) {
+    next(new CustomError('Unauthorized, user not found', 401));
+    return;
+  }
+
+  res.locals.user = user;
+  next();
+  } catch (error) {
+    console.error('Authentication error:', error);
+    next(new CustomError((error as Error).message, 401));
+  }
+}
 
 
-export {notFound, errorHandler, validationErrors};
+
+export {notFound, errorHandler, validationErrors, authenticate};

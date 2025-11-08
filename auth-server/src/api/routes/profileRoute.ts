@@ -13,8 +13,6 @@ import {
 
 const router = Router();
 
-
-
 router.post("/", createProfile);
 router.get("/:id", getProfilePage);
 router.get("/", getProfile);
