@@ -19,8 +19,14 @@ router.post('/applications/upload', upload.single('file'), uploadApplicationDocu
 
 
 router.get('/documents/platforms', getPlatformInstructions);
-router.post('/documents/link', addDocumentLink);
 router.post('/documents/validate', validateDocumentLink);
+
+// Document routes - support both /link and standard paths for compatibility
+router.post('/documents/link', addDocumentLink);
+router.post('/documents', addDocumentLink); // Standard path (same as auth-server)
+
+// Application document routes - support both /link and standard paths for compatibility
 router.post('/applications/documents/link', addApplicationDocumentLink);
+router.post('/applications/documents', addApplicationDocumentLink); // Standard path (same as auth-server)
 
 export default router;
