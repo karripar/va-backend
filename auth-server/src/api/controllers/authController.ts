@@ -102,7 +102,7 @@ const verifyGoogleToken = async (
 
     const tokenContent: TokenContent = {
       id: user.id,
-      level_name: user.user_level_name || 'User',
+      user_level_id: user.user_level_id,
     };
 
     const token = jwt.sign(tokenContent, JWT_SECRET, { expiresIn: '3h' });
