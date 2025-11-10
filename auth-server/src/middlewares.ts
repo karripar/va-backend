@@ -42,29 +42,35 @@ const validationErrors = (req: Request, res: Response, next: NextFunction) => {
 };
 
 // Middleware to authenticate the user
-const authenticate = async (req: Request, res: Response, next: NextFunction) => {
+const authenticate = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
   try {
     const token = req.headers.authorization?.split(' ')[1];
     if (!token) {
       next(new CustomError('Unauthorized, no token provided', 401));
       return;
-  }
+    }
 
-  // decode the user_id from the token
-  const decoded = jwt.verify(token, process.env.JWT_SECRET as string) as TokenContent; //
-  console.log(decoded);
+    // decode the user_id from the token
+    const decoded = jwt.verify(
+      token,
+      process.env.JWT_SECRET as string,
+    ) as TokenContent;
 
-  const user = await User.findById(decoded.id);
-  if (!user) {
-    next(new CustomError('Unauthorized, user not found', 401));
-    return;
-  }
+    const user = await User.findById(decoded.id);
+    if (!user) {
+      next(new CustomError('Unauthorized, user not found', 401));
+      return;
+    }
 
-  res.locals.user = user;
-  next();
+    res.locals.user = user;
+    next();
   } catch (error) {
     next(new CustomError((error as Error).message, 401));
   }
-}
+};
 
 export {notFound, errorHandler, validationErrors, authenticate};

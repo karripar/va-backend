@@ -3,6 +3,7 @@ import express from 'express';
 import helmet from 'helmet';
 import cors from 'cors';
 import morgan from 'morgan';
+import path from 'path';
 import { errorHandler, notFound } from './middlewares';
 import api from './api';
 
@@ -13,6 +14,10 @@ app.use(express.json())
 app.use(morgan('dev'));
 app.use(helmet());
 app.use(cors());
+
+// Serve uploaded files from /uploads (folder at project root content-server/uploads)
+const uploadsPath = path.join(process.cwd(), 'uploads');
+app.use('/uploads', express.static(uploadsPath));
 
 app.use('/api/v1', api);
 

@@ -2,7 +2,6 @@ const fetchData = async <T>(
   url: string,
   options: RequestInit = {},
 ): Promise<T> => {
-  console.log('fetching data from url: ', url);
   const response = await fetch(url, options);
 
   let data: unknown = null;
@@ -16,7 +15,6 @@ const fetchData = async <T>(
   }
 
   if (!response.ok) {
-    console.log('errorJson', data);
     if (data && typeof data === "object" && "message" in data) {
       throw new Error((data as { message: string }).message);
     }
