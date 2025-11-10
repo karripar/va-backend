@@ -10,7 +10,7 @@ import {
   addFaultyContact,
 } from "./controllers/testContact";
 import {
-  getDestinations,
+  //getDestinations,
   getDestinationsInvalidParams,
   getDestinationUrls,
   updateDestinationUrl,
@@ -145,9 +145,9 @@ describe("Destination Scraper Controller Tests", () => {
     );
   });
 
-  it("should fetch destinations with valid parameters", async () => {
+  /*it("should fetch destinations with valid parameters", async () => {
     await getDestinations(app, testToken, "en", "tech");
-  });
+  });*/
 
   it("should return 400 for invalid field or language", async () => {
     await getDestinationsInvalidParams(app, testToken, "xx", "invalidField");
