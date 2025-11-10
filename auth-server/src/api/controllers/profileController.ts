@@ -8,9 +8,10 @@ const profiles: ProfileResponse[] = [
     userName: "Test User",
     email: "test@metropolia.fi",
     registeredAt: new Date().toISOString(),
+    user_level_id: 1,
     avatarUrl:"", // "https://api.dicebear.com/7.x/avataaars/svg?seed=TestUser&mouth=default&eyes=default"
     favorites: ["Espanja - Madrid", "Ranska - Pariisi"],
-    documents: [], 
+    documents: [],
     exchangeBadge: true,
     linkedinUrl: "https://linkedin.com/in/testuser",
   }
@@ -23,6 +24,7 @@ const createProfile = (req: Request, res: Response) => {
     userName: req.body.userName,
     email: req.body.email,
     registeredAt: new Date().toISOString(),
+    user_level_id: 1,
     avatarUrl: req.body.avatarUrl ?? "",
     favorites: [],
     documents: [],
@@ -42,7 +44,7 @@ const getProfilePage = (req: Request, res: Response) => {
 const getProfile = (req: Request, res: Response, next: NextFunction) => {
   try {
     //  Get userId from req.user when authentication is added
-    
+
     if (profiles.length === 0) {
       return res.status(404).json({ message: "No profile found" });
     }
@@ -68,12 +70,12 @@ const addFavorite = (req: Request, res: Response, next: NextFunction) => {
   try {
     // Get userId from req.user when authentication is added
     const { destination } = req.body;
-    
+
     if (profiles.length === 0) {
       return res.status(404).json({ error: "Profile not found" });
     }
 
-    
+
     if (!profiles[0].favorites.includes(destination)) {
       profiles[0].favorites.push(destination);
     }

@@ -1,14 +1,18 @@
-import express from 'express';
-import {body} from 'express-validator';
-import {validationErrors} from '../../middlewares';
-import { postMessage, getMessages, deleteMessage} from '../controllers/contactController';
-import { contactMessageLimiter } from '../../utils/rateLimiters';
+import express from "express";
+import { body } from "express-validator";
+import { validationErrors, authenticate } from "../../middlewares";
+import {
+  getContacts,
+  addContact,
+  updateContact,
+  deleteContact,
+} from "../controllers/adminContactController";
 
 const router = express.Router();
 
 /**
- * @apiDefine ContactGroup Contact
- * APIs for handling contact messages.
+ * @apiDefine AdminContactGroup Admin Contact
+ * APIs for managing admin contact information displayed on the Contact page.
  */
 
 /**
@@ -22,145 +26,227 @@ const router = express.Router();
  */
 
 /**
- * @apiDefine token Autenthication required in the form of Bearer token in Authorization header.
+ * @apiDefine token Authentication required in the form of Bearer token in Authorization header.
  * @apiHeader {String} Authorization Bearer token.
  */
 
-router.post(
-  /**
-   * @api {post} /contact/message Send a contact message
-   * @apiName PostContactMessage
-   * @apiGroup ContactGroup
-   * @apiVersion 1.0.0
-   *
-   * @apiDescription Sends a contact message. All fields are required.
-   * @apiPermission none
-   *
-   * @apiBody {String} name Name of the sender.
-   * @apiBody {String} email Email address of the sender.
-   * @apiBody {String} subject Subject of the message.
-   * @apiBody {String} message Content of the message.
-   *
-   * @apiSuccess {String} message Success message indicating that the contact message was sent successfully.
-   * @apiSuccessExample {json} Success-Response:
-   *     HTTP/1.1 201 Created
-   *     {
-   *       "message": "Message sent successfully"
-   *     }
-   *
-   * @apiError (400 Bad Request) BadRequest Missing required fields or invalid data.
-   * @apiErrorExample {json} BadRequest-Response:
-   *     HTTP/1.1 400 Bad Request
-   *     {
-   *       "message": "All fields are required"
-   *     }
-   *
-   * @apiError (500 Internal Server Error) InternalServerError Server error while processing the request.
-   * @apiErrorExample {json} InternalServerError-Response:
-   *     HTTP/1.1 500 Internal Server Error
-   *     {
-   *       "message": "Failed to post message"
-   *     }
-   */
-  '/message',
-  body('name').isString().withMessage('Name must be a string'),
-  body('email').isEmail().withMessage('Email must be a valid email address'),
-  body('subject').isString().withMessage('Subject must be a string'),
-  body('message').isString().withMessage('Message must be a string'),
-  contactMessageLimiter,
-  validationErrors,
-  postMessage
-).get(
-  /**
-   * @api {get} /contact/messages Get all contact messages
-   * @apiName GetContactMessages
-   * @apiGroup ContactGroup
-   * @apiVersion 1.0.0
-   *
-   * @apiDescription Retrieves all contact messages, sorted by creation date in descending order.
-   * @apiPermission token
-   *
-   * @apiSuccess {Object[]} messages List of contact messages.
-   * @apiSuccess {String} messages._id Unique ID of the message.
-   * @apiSuccess {String} messages.name Name of the sender.
-   * @apiSuccess {String} messages.email Email address of the sender.
-   * @apiSuccess {String} messages.subject Subject of the message.
-   * @apiSuccess {String} messages.message Content of the message.
-   * @apiSuccess {String} messages.createdAt Timestamp when the message was created.
-   * @apiSuccessExample {json} Success-Response:
-   *     HTTP/1.1 200 OK
-   *     {
-   *       "messages": [
-   *         {
-   *           "_id": "unique_message_id",
-   *           "name": "Sender Name",
-   *           "email": "test@email.com",
-   *           "subject": "Message Subject",
-   *           "message": "Message content",
-   *           "createdAt": "2024-01-01T00:00:00.000Z"
-   *         },
-   *         ...
-   *       ]
-   *     }
-   *
-   * @apiError (500 Internal Server Error) InternalServerError Server error while processing the request.
-   * @apiErrorExample {json} InternalServerError-Response:
-   *     HTTP/1.1 500 Internal Server Error
-   *     {
-   *       "message": "Failed to fetch messages"
-   *     }
-   *
-   * @apiError (401 Unauthorized) Unauthorized Missing or invalid authentication token.
-   * @apiErrorExample {json} Unauthorized-Response:
-   *     HTTP/1.1 401 Unauthorized
-   *     {
-   *       "message": "Unauthorized"
-   *     }
-   */
-  '/messages',
-  getMessages
-).delete(
-  /**
-   * @api {delete} /contact/message/:id Delete a contact message
-   * @apiName DeleteContactMessage
-   * @apiGroup ContactGroup
-   * @apiVersion 1.0.0
-   *
-   * @apiDescription Deletes a specific contact message by its ID.
-   * @apiPermission token
-   *
-   * @apiParam {String} id Unique ID of the contact message to delete.
-   *
-   * @apiSuccess {String} message Success message indicating that the contact message was deleted successfully.
-   * @apiSuccessExample {json} Success-Response:
-   *     HTTP/1.1 200 OK
-   *     {
-   *       "message": "Message deleted successfully"
-   *     }
-   *
-   * @apiError (404 Not Found) NotFound Contact message with the specified ID was not found.
-   * @apiErrorExample {json} NotFound-Response:
-   *     HTTP/1.1 404 Not Found
-   *     {
-   *       "message": "Message not found"
-   *     }
-   *
-   * @apiError (500 Internal Server Error) InternalServerError Server error while processing the request.
-   * @apiErrorExample {json} InternalServerError-Response:
-   *     HTTP/1.1 500 Internal Server Error
-   *     {
-   *       "message": "Failed to delete message"
-   *     }
-   *
-   * @apiError (401 Unauthorized) Unauthorized Missing or invalid authentication token.
-   * @apiErrorExample {json} Unauthorized-Response:
-   *     HTTP/1.1 401 Unauthorized
-   *     {
-   *       "message": "Unauthorized"
-   *     }
-   */
-  '/message/:id',
-  deleteMessage
-);
+router
+  .get(
+    /**
+     * @api {get} /contact/contacts Get all admin contacts
+     * @apiName GetAdminContacts
+     * @apiGroup AdminContactGroup
+     * @apiVersion 1.0.0
+     *
+     * @apiDescription Retrieves all admin contact entries.
+     * @apiPermission none
+     *
+     * @apiSuccess {Object[]} contacts List of admin contacts.
+     * @apiSuccess {String} contacts._id Unique ID of the contact.
+     * @apiSuccess {String} contacts.name Full name of the admin contact.
+     * @apiSuccess {String} contacts.title Title or role of the admin.
+     * @apiSuccess {String} contacts.email Contact email address.
+     * @apiSuccess {String} contacts.createdAt Timestamp of creation.
+     *
+     * @apiSuccessExample {json} Success-Response:
+     *     HTTP/1.1 200 OK
+     *     {
+     *       "contacts": [
+     *         {
+     *           "_id": "unique_contact_id",
+     *           "name": "John Doe",
+     *           "title": "Exchange Coordinator",
+     *           "email": "john@example.com",
+     *           "createdAt": "2024-01-01T00:00:00.000Z"
+     *         }
+     *       ]
+     *     }
+     *
+     * @apiError (500 Internal Server Error) InternalServerError Server error while processing the request.
+     * @apiErrorExample {json} InternalServerError-Response:
+     *     HTTP/1.1 500 Internal Server Error
+     *     {
+     *       "message": "Failed to fetch contacts"
+     *     }
+     */
+    "/contacts",
+    getContacts
+  )
+  .post(
+    /**
+     * @api {post} /contact/contacts Add a new admin contact
+     * @apiName AddAdminContact
+     * @apiGroup AdminContactGroup
+     * @apiVersion 1.0.0
+     *
+     * @apiDescription Adds a new admin contact entry. Only accessible to admins.
+     * @apiPermission token
+     *
+     * @apiBody {String} name Full name of the admin contact.
+     * @apiBody {String} title Title or role of the admin.
+     * @apiBody {String} email Contact email address.
+     *
+     * @apiSuccess {String} message Success message indicating that the contact was added successfully.
+     * @apiSuccessExample {json} Success-Response:
+     *     HTTP/1.1 201 Created
+     *     {
+     *       "message": "Admin contact added successfully",
+     *       "contact": {
+     *         "_id": "unique_contact_id",
+     *         "name": "John Doe",
+     *         "title": "Coordinator",
+     *         "email": "john@example.com"
+     *       }
+     *     }
+     *
+     * @apiError (400 Bad Request) BadRequest Missing required fields.
+     * @apiErrorExample {json} BadRequest-Response:
+     *     HTTP/1.1 400 Bad Request
+     *     {
+     *       "message": "All fields are required"
+     *     }
+     *
+     * @apiError (401 Unauthorized) Unauthorized Missing or invalid authentication token.
+     * @apiErrorExample {json} Unauthorized-Response:
+     *     HTTP/1.1 401 Unauthorized
+     *     {
+     *       "message": "Unauthorized"
+     *     }
+     *
+     * @apiError (403 Forbidden) Forbidden User not authorized to perform this action.
+     * @apiErrorExample {json} Forbidden-Response:
+     *     HTTP/1.1 403 Forbidden
+     *     {
+     *       "message": "Forbidden, not an admin"
+     *     }
+     *
+     * @apiError (500 Internal Server Error) InternalServerError Server error while processing the request.
+     * @apiErrorExample {json} InternalServerError-Response:
+     *     HTTP/1.1 500 Internal Server Error
+     *     {
+     *       "message": "Failed to add contact"
+     *     }
+     */
+    "/contacts",
+    body("name").isString().withMessage("Name must be a string"),
+    body("title").isString().withMessage("Title must be a string"),
+    body("email").isEmail().withMessage("Email must be a valid email address"),
+    validationErrors,
+    authenticate,
+    addContact
+  )
+  .put(
+    /**
+     * @api {put} /contact/contacts/:id Update an admin contact
+     * @apiName UpdateAdminContact
+     * @apiGroup AdminContactGroup
+     * @apiVersion 1.0.0
+     *
+     * @apiDescription Updates an existing admin contact by ID. Only accessible to admins.
+     * @apiPermission token
+     *
+     * @apiParam {String} id Unique ID of the contact to update.
+     *
+     * @apiBody {String} [name] Updated name of the contact.
+     * @apiBody {String} [title] Updated title or role of the contact.
+     * @apiBody {String} [email] Updated email address.
+     *
+     * @apiSuccess {String} message Success message indicating that the contact was updated successfully.
+     * @apiSuccessExample {json} Success-Response:
+     *     HTTP/1.1 200 OK
+     *     {
+     *       "message": "Contact updated successfully",
+     *       "contact": {
+     *         "_id": "unique_contact_id",
+     *         "name": "Jane Doe",
+     *         "title": "Program Advisor",
+     *         "email": "jane@example.com"
+     *       }
+     *     }
+     *
+     * @apiError (404 Not Found) NotFound Contact not found.
+     * @apiErrorExample {json} NotFound-Response:
+     *     HTTP/1.1 404 Not Found
+     *     {
+     *       "message": "Contact not found"
+     *     }
+     *
+     * @apiError (403 Forbidden) Forbidden User not authorized to perform this action.
+     * @apiErrorExample {json} Forbidden-Response:
+     *     HTTP/1.1 403 Forbidden
+     *     {
+     *       "message": "Forbidden, not an admin"
+     *     }
+     *
+     * @apiError (500 Internal Server Error) InternalServerError Server error while processing the request.
+     * @apiErrorExample {json} InternalServerError-Response:
+     *     HTTP/1.1 500 Internal Server Error
+     *     {
+     *       "message": "Failed to update contact"
+     *     }
+     */
+    "/contacts/:id",
+    body("name").optional().isString().withMessage("Name must be a string"),
+    body("title").optional().isString().withMessage("Title must be a string"),
+    body("email")
+      .optional()
+      .isEmail()
+      .withMessage("Email must be a valid email address"),
+    validationErrors,
+    authenticate,
+    updateContact
+  )
+  .delete(
+    /**
+     * @api {delete} /contact/contacts/:id Delete an admin contact
+     * @apiName DeleteAdminContact
+     * @apiGroup AdminContactGroup
+     * @apiVersion 1.0.0
+     *
+     * @apiDescription Deletes a specific admin contact by its ID. Only accessible to admins.
+     * @apiPermission token
+     *
+     * @apiParam {String} id Unique ID of the contact to delete.
+     *
+     * @apiSuccess {String} message Success message indicating that the contact was deleted successfully.
+     * @apiSuccessExample {json} Success-Response:
+     *     HTTP/1.1 200 OK
+     *     {
+     *       "success": true,
+     *       "message": "Contact deleted successfully"
+     *     }
+     *
+     * @apiError (404 Not Found) NotFound Contact not found.
+     * @apiErrorExample {json} NotFound-Response:
+     *     HTTP/1.1 404 Not Found
+     *     {
+     *       "message": "Contact not found"
+     *     }
+     *
+     * @apiError (401 Unauthorized) Unauthorized Missing or invalid authentication token.
+     * @apiErrorExample {json} Unauthorized-Response:
+     *     HTTP/1.1 401 Unauthorized
+     *     {
+     *       "message": "Unauthorized"
+     *     }
+     *
+     * @apiError (403 Forbidden) Forbidden User not authorized to perform this action.
+     * @apiErrorExample {json} Forbidden-Response:
+     *     HTTP/1.1 403 Forbidden
+     *     {
+     *       "message": "Forbidden, not an admin"
+     *     }
+     *
+     * @apiError (500 Internal Server Error) InternalServerError Server error while processing the request.
+     * @apiErrorExample {json} InternalServerError-Response:
+     *     HTTP/1.1 500 Internal Server Error
+     *     {
+     *       "message": "Failed to delete contact"
+     *     }
+     */
+    "/contacts/:id",
+    authenticate,
+    deleteContact
+  );
 
 export default router;
