@@ -39,11 +39,24 @@ const makeUserAdmin = async (
       return res.status(403).json({error: 'Unauthorized, not an admin'});
     }
 
+    if (adminUser.email === email) {
+      return res
+        .status(400)
+        .json({error: 'Admins cannot change their own admin status'});
+    }
+
     if (!email || typeof email !== 'string') {
       return res.status(400).json({error: 'Invalid email parameter'});
     }
 
     const user = await userModel.findOne({email: email});
+
+    if (user?.user_level_id === 2) {
+      return res
+        .status(400)
+        .json({error: 'User is already an admin'});
+    }
+
     if (!user) {
       return res.status(404).json({error: 'User not found'});
     }

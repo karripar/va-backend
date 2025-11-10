@@ -42,12 +42,13 @@ const authenticate = async (req: Request, res: Response, next: NextFunction) => 
     if (!token) {
       next(new CustomError('Unauthorized, no token provided', 401));
       return;
-  }
+    }
 
   // decode the user_id from the token
   const decoded = jwt.verify(token, process.env.JWT_SECRET as string) as TokenContent;
 
   const user = await User.findById(decoded.id);
+  //console.log('Authenticated user:', user);
   if (!user) {
     next(new CustomError('Unauthorized, user not found', 401));
     return;
@@ -56,6 +57,7 @@ const authenticate = async (req: Request, res: Response, next: NextFunction) => 
   res.locals.user = user;
   next();
   } catch (error) {
+    console.error('Authentication error:', error);
     next(new CustomError((error as Error).message, 401));
   }
 }
