@@ -1,20 +1,20 @@
-import { Request, Response, NextFunction } from "express";
-import { ProfileResponse, Document } from "va-hybrid-types/contentTypes";
+import {Request, Response, NextFunction} from 'express';
+import {ProfileResponse, Document} from 'va-hybrid-types/contentTypes';
 
 //----> Profiili data demonstrationnin luonti (mock data):
 const profiles: ProfileResponse[] = [
   {
-    id: "1",
-    userName: "Test User",
-    email: "test@metropolia.fi",
+    id: '1',
+    userName: 'Test User',
+    email: 'test@metropolia.fi',
     registeredAt: new Date().toISOString(),
     user_level_id: 1,
-    avatarUrl:"", // "https://api.dicebear.com/7.x/avataaars/svg?seed=TestUser&mouth=default&eyes=default"
-    favorites: ["Espanja - Madrid", "Ranska - Pariisi"],
+    avatarUrl: '', // "https://api.dicebear.com/7.x/avataaars/svg?seed=TestUser&mouth=default&eyes=default"
+    favorites: ['Espanja - Madrid', 'Ranska - Pariisi'],
     documents: [],
     exchangeBadge: true,
-    linkedinUrl: "https://linkedin.com/in/testuser",
-  }
+    linkedinUrl: 'https://linkedin.com/in/testuser',
+  },
 ];
 
 // --> Profiilisivun luonnin logiikka:
@@ -25,11 +25,11 @@ const createProfile = (req: Request, res: Response) => {
     email: req.body.email,
     registeredAt: new Date().toISOString(),
     user_level_id: 1,
-    avatarUrl: req.body.avatarUrl ?? "",
+    avatarUrl: req.body.avatarUrl ?? '',
     favorites: [],
     documents: [],
     exchangeBadge: true,
-    linkedinUrl: req.body.linkedinUrl ?? "",
+    linkedinUrl: req.body.linkedinUrl ?? '',
   };
   profiles.push(newProfile);
   res.status(201).json(newProfile);
@@ -37,7 +37,7 @@ const createProfile = (req: Request, res: Response) => {
 
 const getProfilePage = (req: Request, res: Response) => {
   const profile = profiles.find((p) => p.id === req.params.id);
-  if (!profile) return res.status(404).json({ error: "Profile not found" });
+  if (!profile) return res.status(404).json({error: 'Profile not found'});
   res.json(profile);
 };
 
@@ -46,7 +46,7 @@ const getProfile = (req: Request, res: Response, next: NextFunction) => {
     //  Get userId from req.user when authentication is added
 
     if (profiles.length === 0) {
-      return res.status(404).json({ message: "No profile found" });
+      return res.status(404).json({message: 'No profile found'});
     }
     res.json(profiles[0]);
   } catch (error) {
@@ -59,22 +59,21 @@ const getProfile = (req: Request, res: Response, next: NextFunction) => {
 const updateProfile = (req: Request, res: Response) => {
   const index = profiles.findIndex((p) => p.id === req.params.id);
   if (index === -1) {
-    return res.status(404).json({ error: "Profile not found" });
+    return res.status(404).json({error: 'Profile not found'});
   }
 
-  profiles[index] = { ...profiles[index], ...req.body };
+  profiles[index] = {...profiles[index], ...req.body};
   res.json(profiles[index]);
 };
 
 const addFavorite = (req: Request, res: Response, next: NextFunction) => {
   try {
     // Get userId from req.user when authentication is added
-    const { destination } = req.body;
+    const {destination} = req.body;
 
     if (profiles.length === 0) {
-      return res.status(404).json({ error: "Profile not found" });
+      return res.status(404).json({error: 'Profile not found'});
     }
-
 
     if (!profiles[0].favorites.includes(destination)) {
       profiles[0].favorites.push(destination);
@@ -89,14 +88,14 @@ const addFavorite = (req: Request, res: Response, next: NextFunction) => {
 const removeFavorite = (req: Request, res: Response, next: NextFunction) => {
   try {
     // userId from req.user when authentication is added
-    const { destination } = req.body;
+    const {destination} = req.body;
 
     if (profiles.length === 0) {
-      return res.status(404).json({ error: "Profile not found" });
+      return res.status(404).json({error: 'Profile not found'});
     }
 
     profiles[0].favorites = profiles[0].favorites.filter(
-      (fav: string) => fav !== destination
+      (fav: string) => fav !== destination,
     );
 
     res.json(profiles[0]);
@@ -105,7 +104,7 @@ const removeFavorite = (req: Request, res: Response, next: NextFunction) => {
   }
 };
 
-
+/*
 const addDocument = (req: Request, res: Response, next: NextFunction) => {
   try {
     const { name, url } = req.body;
@@ -129,6 +128,7 @@ const addDocument = (req: Request, res: Response, next: NextFunction) => {
   }
 };
 
+*/
 const removeDocument = (req: Request, res: Response, next: NextFunction) => {
   try {
     const { docId } = req.params;
@@ -146,7 +146,6 @@ const removeDocument = (req: Request, res: Response, next: NextFunction) => {
     next(error);
   }
 };
-
 export {
   getProfilePage,
   updateProfile,
@@ -154,6 +153,6 @@ export {
   getProfile,
   addFavorite,
   removeFavorite,
-  addDocument,
+  //addDocument,
   removeDocument,
 };
