@@ -28,6 +28,7 @@ jobs:
       DB_URL: mongodb://localhost:27017/vaihtoaktivaattori
       GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
       JWT_SECRET: ${{ secrets.JWT_SECRET }}
+      
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -63,6 +64,9 @@ jobs:
       DB_URL: mongodb://localhost:27017/vaihtoaktivaattori
       GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
       JWT_SECRET: ${{ secrets.JWT_SECRET }}
+      AUTH_SERVER: ${{ secrets.AUTH_SERVER }}
+      CONTENT_SERVER: ${{ secrets.CONTENT_SERVER }}
+      UPLOAD_SERVER: ${{ secrets.UPLOAD_SERVER }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
