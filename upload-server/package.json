@@ -52,13 +52,7 @@
     "react": "^19.2.0",
     "sharp": "^0.34.4",
     "supertest": "^7.1.4",
-<<<<<<< HEAD
-    "ts-jest": "^29.4.4",
-    "uuid": "^13.0.0",
-    "va-hybrid-types": "github:karripar/va-hybrid-types"
-=======
     "ts-jest": "^29.4.4"
->>>>>>> dev-test
   },
   "devDependencies": {
     "@types/bcryptjs": "^2.4.6",
