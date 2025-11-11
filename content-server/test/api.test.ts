@@ -11,7 +11,11 @@ import {
 } from "./controllers/testContact";
 import {
   getDestinations,
-  getDestinationsInvalidParams
+  getDestinationsInvalidParams,
+  getDestinationUrls,
+  updateDestinationUrl,
+  deleteDestinationUrl,
+  DestinationUrlEntry
 } from "./controllers/testDestinations";
 import jwt from "jsonwebtoken";
 import userModel from "../src/api/models/userModel"; // adjust if path differs
@@ -112,6 +116,7 @@ describe("Admin Contact Information API Tests", () => {
 describe("Destination Scraper Controller Tests", () => {
   let testUser: UserInfo;
   let testToken: string;
+  let testDestinationUrlId: string;
 
   beforeAll(async () => {
     const mongoURI = process.env.DB_URL;
@@ -146,6 +151,35 @@ describe("Destination Scraper Controller Tests", () => {
 
   it("should return 400 for invalid field or language", async () => {
     await getDestinationsInvalidParams(app, testToken, "xx", "invalidField");
+  });
+
+  it("should fetch all destination URLs", async () => {
+    const urls: DestinationUrlEntry[] = await getDestinationUrls(app, testToken);
+    expect(urls.length).toBeGreaterThanOrEqual(0);
+
+    // Save one ID for update/delete tests
+    if (urls.length > 0) {
+      testDestinationUrlId = urls[0]._id;
+    }
+  });
+
+  it("should create/update a destination URL entry", async () => {
+    const field = "tech";
+    const lang = "en";
+    const url = `https://example.com/${randomstring.generate(5)}`;
+    const updatedEntry = await updateDestinationUrl(app, testToken, field, lang, url);
+
+    expect(updatedEntry).toBeDefined();
+    expect(updatedEntry.url).toBe(url);
+
+    // Save the new entry ID for deletion test
+    testDestinationUrlId = updatedEntry._id;
+  });
+
+  it("should delete a destination URL entry", async () => {
+    if (!testDestinationUrlId) return;
+
+    await deleteDestinationUrl(app, testToken, testDestinationUrlId);
   });
 
   afterAll(async () => {

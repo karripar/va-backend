@@ -6,10 +6,10 @@ import {
   addFavorite,
   getProfile,
   removeFavorite,
-  addDocument,
+  //addDocument,
   removeDocument,
 } from "../controllers/profileController";
-// import {authenticate} from '../middlewares/authentication'; 
+// import {authenticate} from '../middlewares/authentication';
 
 const router = Router();
 
@@ -23,7 +23,7 @@ router.post("/favorites", addFavorite);
 router.delete("/favorites", removeFavorite);
 
 
-router.post("/documents", addDocument);
+//router.post("/documents", addDocument);
 router.delete("/documents/:docId", removeDocument);
 
 export default router;

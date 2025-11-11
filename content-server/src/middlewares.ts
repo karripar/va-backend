@@ -39,15 +39,13 @@ const authenticate = async (req: Request, res: Response, next: NextFunction) => 
   try {
     const token = req.headers.authorization?.split(' ')[1];
 
-    console.log('Authenticating token:', token);
     if (!token) {
       next(new CustomError('Unauthorized, no token provided', 401));
       return;
     }
 
   // decode the user_id from the token
-  const decoded = jwt.verify(token, process.env.JWT_SECRET as string) as TokenContent; //
-  //console.log(decoded);
+  const decoded = jwt.verify(token, process.env.JWT_SECRET as string) as TokenContent;
 
   const user = await User.findById(decoded.id);
   //console.log('Authenticated user:', user);

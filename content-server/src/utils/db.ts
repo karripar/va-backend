@@ -11,7 +11,7 @@ const mangustiConnection = async () => {
     }
 
     const connection = await mongoose.connect(process.env.DB_URL);
-    console.log("MongoDB connected:", connection.connection.host);
+    console.log("MongoDB connected successfully to", process.env.DB_URL.split('@')[1]?.split('/')[0] || 'database');
     return connection;
   } catch (error) {
     console.error("MongoDB connection error:", error);

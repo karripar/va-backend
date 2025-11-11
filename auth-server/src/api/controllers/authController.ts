@@ -1,10 +1,10 @@
-import { OAuth2Client } from 'google-auth-library';
-import { Request, Response, NextFunction } from 'express';
+import {OAuth2Client} from 'google-auth-library';
+import {Request, Response, NextFunction} from 'express';
 import CustomError from '../../classes/CustomError';
-import { findOrCreateUser } from './userController';
+import {findOrCreateUser} from './userController';
 import jwt from 'jsonwebtoken';
-import { GoogleResponse } from '../../types/LocalTypes';
-import { TokenContent } from 'va-hybrid-types/DBTypes';
+import {GoogleResponse} from '../../types/LocalTypes';
+import {TokenContent} from 'va-hybrid-types/DBTypes';
 
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID || '';
 const client = new OAuth2Client(GOOGLE_CLIENT_ID);
@@ -54,13 +54,11 @@ const JWT_SECRET = process.env.JWT_SECRET || '';
  * }
  */
 const verifyGoogleToken = async (
-  req: Request<{}, {}, { idToken: string }>,
+  req: Request<{}, {}, {idToken: string}>,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ): Promise<void> => {
   try {
-    console.log('verifyGoogleToken called with body:', req.body);
-
     if (!GOOGLE_CLIENT_ID) {
       console.error('Google client ID not set in environment variables');
       next(new CustomError('Google client ID not set', 500));
@@ -102,10 +100,10 @@ const verifyGoogleToken = async (
 
     const tokenContent: TokenContent = {
       id: user.id,
-      level_name: user.user_level_name || 'User',
+      user_level_id: user.user_level_id,
     };
 
-    const token = jwt.sign(tokenContent, JWT_SECRET, { expiresIn: '3h' });
+    const token = jwt.sign(tokenContent, JWT_SECRET, {expiresIn: '3h'});
 
     res.json({
       message: 'Authentication successful',
@@ -118,4 +116,4 @@ const verifyGoogleToken = async (
   }
 };
 
-export { verifyGoogleToken };
+export {verifyGoogleToken};
