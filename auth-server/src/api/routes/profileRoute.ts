@@ -8,6 +8,7 @@ import {
   removeFavorite,
   addDocument,
   removeDocument,
+  getApplicationStages,
   getApplications,
   createApplication,
   updateApplicationPhase,
@@ -17,6 +18,7 @@ import {
   submitApplicationPhase,
   approveApplication,
   getRequiredDocuments,
+  updateStageStatus,
   // Budget Management
   getBudgetCategories,
   createOrUpdateBudgetEstimate,
@@ -43,6 +45,8 @@ router.get("/", getProfile);
 router.post("/", createProfile);
 
 // Application routes
+router.get("/applications/stages", getApplicationStages);
+router.put("/applications/stages/:stageId", updateStageStatus);
 router.get("/applications", getApplications);
 router.post("/applications", createApplication);
 router.put("/applications/:phase", updateApplicationPhase);
@@ -55,8 +59,8 @@ router.post("/applications/:id/approve", approveApplication);
 
 // Budget Management routes
 router.get("/grants/budget/categories", getBudgetCategories);
-router.post("/grants/budget/estimate", createOrUpdateBudgetEstimate);
-router.get("/grants/budget/estimate", getBudgetEstimate);
+router.post("/budget-estimate", createOrUpdateBudgetEstimate);
+router.get("/budget-estimate", getBudgetEstimate);
 
 // Erasmus+ Grant routes
 router.get("/grants/erasmus/types", getErasmusGrantTypes);
