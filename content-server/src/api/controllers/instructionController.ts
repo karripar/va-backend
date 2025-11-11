@@ -5,7 +5,8 @@ import {
 } from '../models/instructionModel';
 import CustomError from '../../classes/CustomError';
 
-const uploadServerUrl = process.env.PUBLIC_UPLOADS_URL || 'http://localhost:3003/uploads';
+const uploadServerUrl =
+  process.env.PUBLIC_UPLOADS_URL || 'http://localhost:3003/uploads';
 
 interface AuthRequest extends Request {
   user?: {
@@ -29,21 +30,24 @@ const getInstructionLinks = async (
         // step 0
         {
           stepIndex: 0,
-          label: 'Vaihtokohteet',
+          labelFi: 'Vaihtokohteet',
+          labelEn: 'Destinations',
           href: '/destinations',
           isExternal: false,
           isFile: false,
         },
         {
           stepIndex: 0,
-          label: 'Kokemukset ja vinkit',
+          labelFi: 'Kokemukset ja vinkit',
+          labelEn: 'Tips & experiences',
           href: '/tips',
           isExternal: false,
           isFile: false,
         },
         {
           stepIndex: 0,
-          label: 'Raporttiportaali',
+          labelFi: 'Raporttiportaali',
+          labelEn: 'Exchange Reports',
           href: 'https://www.service4mobility.com/europe/MobilitySearchServlet?identifier=HELSINK41&kz_bew_pers=S&kz_bew_art=OUT&sprache=en',
           isExternal: true,
           isFile: false,
@@ -51,7 +55,8 @@ const getInstructionLinks = async (
         // step 1
         {
           stepIndex: 1,
-          label: 'Oma portaali',
+          labelFi: 'Oma portaali',
+          labelEn: 'Student Portal',
           href: 'https://opiskelija.oma.metropolia.fi/group/pakki/kv-etusivu',
           isExternal: true,
           isFile: false,
@@ -59,14 +64,16 @@ const getInstructionLinks = async (
         // step 2
         {
           stepIndex: 2,
-          label: 'Säännöt ja periaatteet',
-          href: `${uploadServerUrl}/1762521946833-saannotjaperiaatteet.pdf`,
+          labelFi: 'Säännöt ja periaatteet',
+          labelEn: 'Rules and Principles',
+          href: `${uploadServerUrl}/saannotjaperiaatteet_1762801709026.pdf`,
           isExternal: true,
           isFile: true,
         },
         {
           stepIndex: 2,
-          label: 'Ota yhteyttä',
+          labelFi: 'Ota yhteyttä',
+          labelEn: 'Contact',
           href: '/contact',
           isExternal: false,
           isFile: false,
@@ -74,7 +81,8 @@ const getInstructionLinks = async (
         // step 3
         {
           stepIndex: 3,
-          label: 'Mobility Online',
+          labelFi: 'Mobility Online',
+          labelEn: 'Mobility Online',
           href: 'https://www.service4mobility.com/europe/LoginServlet?org_id=28&sprache=en&loginType=S&identifier=HELSINK41',
           isExternal: true,
           isFile: false,
@@ -82,7 +90,8 @@ const getInstructionLinks = async (
         // step 4
         {
           stepIndex: 4,
-          label: 'Mobility Online',
+          labelFi: 'Mobility Online',
+          labelEn: 'Mobility Online',
           href: 'https://www.service4mobility.com/europe/LoginServlet?org_id=28&sprache=en&loginType=S&identifier=HELSINK41',
           isExternal: true,
           isFile: false,
@@ -90,36 +99,41 @@ const getInstructionLinks = async (
         // step 5
         {
           stepIndex: 5,
-          label: 'Learning agreement',
-          href: `${uploadServerUrl}/1762438452250-Learning-Agreement-instructions--9-.pdf`,
+          labelFi: 'Learning agreement',
+          labelEn: 'Learning agreement',
+          href: `${uploadServerUrl}/Learning Agreement instructions (11)_1762783848601.pdf`,
           isExternal: true,
           isFile: true,
         },
         // step 6
         {
           stepIndex: 6,
-          label: 'Opintosuoritusote',
+          labelFi: 'Opintosuoritusote',
+          labelEn: 'Transcript',
           href: 'https://opiskelija.oma.metropolia.fi/group/pakki/opintosuoritukset',
           isExternal: true,
           isFile: false,
         },
         {
           stepIndex: 6,
-          label: 'Vakuutustodistus',
-          href: `${uploadServerUrl}/1762438384588-Insurance_information_in_english_protector_2020_P--ivitetty-15.2.2025--7-.ppt`,
+          labelFi: 'Vakuutustodistus',
+          labelEn: 'Insurance Certificate',
+          href: `${uploadServerUrl}/Insurance_information_in_english_protector_2020_PÃ¤ivitetty 15.2.2025 (6)_1762801630903.ppt`,
+          isExternal: false,
+          isFile: true,
+        },
+        {
+          stepIndex: 6,
+          labelFi: 'Kielitodistus pohja',
+          labelEn: 'Language Certificate',
+          href: `${uploadServerUrl}/Language_certificate_template (11)_1762801647586.pdf`,
           isExternal: true,
           isFile: true,
         },
         {
           stepIndex: 6,
-          label: 'Kielitodistus pohja',
-          href: `${uploadServerUrl}/1762438432817-Language_certificate_template--11-.pdf`,
-          isExternal: true,
-          isFile: true,
-        },
-        {
-          stepIndex: 6,
-          label: 'OLS-kielitesti',
+          labelFi: 'OLS-kielitesti',
+          labelEn: 'OLS Language Test',
           href: 'https://academy.europa.eu/local/euacademy/pages/course/community-overview.php',
           isExternal: true,
           isFile: false,
@@ -127,7 +141,8 @@ const getInstructionLinks = async (
         // step 7
         {
           stepIndex: 7,
-          label: 'Ota yhteyttä',
+          labelFi: 'Ota yhteyttä',
+          labelEn: 'Contact',
           href: '/contact',
           isExternal: false,
           isFile: false,
@@ -135,21 +150,24 @@ const getInstructionLinks = async (
         // step 8
         {
           stepIndex: 8,
-          label: 'Apurahat ja kustannukset',
+          labelFi: 'Apurahat ja kustannukset',
+          labelEn: 'Grants and Costs',
           href: '/grants',
           isExternal: false,
           isFile: false,
         },
         {
           stepIndex: 8,
-          label: 'Muuttoilmoitus',
+          labelFi: 'Muuttoilmoitus',
+          labelEn: 'Change of Address',
           href: 'https://www.posti.fi/muuttaminen/muuttoilmoitus',
           isExternal: true,
           isFile: false,
         },
         {
           stepIndex: 8,
-          label: 'Matkustusilmoitus',
+          labelFi: 'Matkustusilmoitus',
+          labelEn: 'Travel Notification',
           href: 'https://um.fi/matka-ilmoitus',
           isExternal: true,
           isFile: false,

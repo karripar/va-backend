@@ -2,7 +2,8 @@ import {Schema, model} from 'mongoose';
 
 interface IInstructionLink {
   stepIndex: number;
-  label: string;
+  labelFi?: string;
+  labelEn?: string;
   href: string;
   isExternal: boolean; // true = external link, false = internal route
   isFile: boolean; // true = PDF, etc. file, false = link
@@ -15,9 +16,13 @@ const instructionLinksSchema = new Schema<IInstructionLink>(
       type: Number,
       required: true,
     },
-    label: {
+    labelFi: {
       type: String,
-      required: true,
+      required: false,
+    },
+    labelEn: {
+      type: String,
+      required: false,
     },
     href: {
       type: String,
