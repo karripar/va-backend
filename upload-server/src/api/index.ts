@@ -1,13 +1,16 @@
 import express, {Request, Response} from 'express';
-import fileRoute from './routes/fileRoute';
+import testRoute from './routes/testRoute';
+import storyPhotoRoute from './routes/storyPhotoRoute';
 const router = express.Router();
 
 router.get('/', (req: Request, res: Response) => {
   res.json({
-    message: 'routes: upload, delete, list',
-  });
-});
+    message: 'Routes in use: /test, /upload',
+  })
+}
+);
 
-router.use('/uploads', fileRoute);
+router.use('/test', testRoute);
+router.use('/upload', storyPhotoRoute);
 
 export default router;
