@@ -1,8 +1,8 @@
-import express from "express";
-import { verifyGoogleToken } from "../controllers/authController";
-import { body } from "express-validator";
+import express from 'express';
+import {verifyGoogleToken} from '../controllers/authController';
+import {body} from 'express-validator';
 const router = express.Router();
-import { validationErrors } from "../../middlewares";
+import {validationErrors} from '../../middlewares';
 
 /**
  * @apiDefine AuthGroup Authentication
@@ -62,10 +62,14 @@ router.post(
    *   "message": "Failed to verify token"
    * }
    */
-  "/google/verify",
-  body("idToken")
-    .notEmpty().withMessage("Token must not be empty")
-    .isString().withMessage("Token must be a string"),
+  '/google/verify',
+  body('idToken')
+    .notEmpty()
+    .withMessage('Token must not be empty')
+    .isString()
+    .withMessage('Token must be a string'),
   validationErrors,
-  verifyGoogleToken
+  verifyGoogleToken,
 );
+
+export default router;

@@ -1,4 +1,6 @@
 import express, {Request, Response} from 'express';
+import authRoute from './routes/authRoute';
+import userRoute from './routes/userRoute';
 import profileRoute from './routes/profileRoute';
 import tipsRoute from './routes/tipsRoute';
 
@@ -16,8 +18,8 @@ router.get<{}, {message: string}>('/ping', (_req: Request, res) => {
 });
 
 
-// router.use('/users', userRoute); import users route when available
-// router.use('/auth', authRoute); import auth route when available
+router.use('/auth', authRoute);
+router.use('/users', userRoute);
 router.use('/profile', profileRoute);
 router.use('/tips', tipsRoute);
 

@@ -1,5 +1,5 @@
 import * as cheerio from 'cheerio';
-import {getClosestCountry, getCoordinates} from './countryService';
+import { getClosestCountry, getCoordinates } from './countryService';
 
 export type SectionData = Record<
   string,
@@ -7,13 +7,37 @@ export type SectionData = Record<
     country: string;
     title: string;
     link: string;
-    coordinates: {lat?: number; lng?: number};
+    coordinates: { lat?: number; lng?: number };
   }[]
 >;
 
+// --- Utility function to normalize colon/semicolon entries ---
+const cleanEntry = (text: string) => {
+  text = text.replace(/\s+/g, ' ').trim();
+
+  // Remove trailing colons
+  text = text.replace(/:$/g, '');
+
+  // Replace multiple colons/semicolons with comma except the first colon
+  const parts = text.split(':').map(p => p.trim());
+  if (parts.length > 1) {
+    const first = parts[0];
+    const rest = parts.slice(1).join(', ');
+    text = `${first}: ${rest}`;
+  }
+
+  // Replace remaining semicolons with commas
+  text = text.replace(/;/g, ', ');
+
+  // Clean up multiple commas and spaces
+  text = text.replace(/\s+,/g, ',').replace(/,+/g, ',').trim();
+
+  return text;
+};
+
 export const scrapeDestinations = async (
   html: string,
-  lang: "en" | "fi" = "en"
+  lang: 'en' | 'fi' = 'en'
 ): Promise<SectionData> => {
   const $ = cheerio.load(html);
   const sections: SectionData = {};
@@ -50,80 +74,71 @@ export const scrapeDestinations = async (
         const isoCode = getClosestCountry(country, lang);
         const jsonCoords = getCoordinates(isoCode);
 
-        // Iterate through each <li> individually to handle <strong> elements
-        let subsectionLabel = '';
-        $(panel).find('li').each((_, li) => {
-          const liChildren = $(li).contents().toArray();
+        // --- Process each <li> ---
+        $(panel)
+          .find('li')
+          .each((_, li) => {
+            const liContent = $(li).contents().toArray();
 
-          let previousTitle: string | null = null;
-          liChildren.forEach(el => {
-            // Update global subsection label if <strong> found
-            if (el.type === 'tag' && el.name === 'strong') {
-              subsectionLabel = $(el).text().trim();
-              return;
-            }
+            const combinedParts: string[] = [];
 
-            // Handle links
-            if (el.type === 'tag' && el.name === 'a') {
-              const title = $(el).text().trim();
-              const link = $(el).attr('href') ?? '';
-              previousTitle = subsectionLabel ? `${subsectionLabel}: ${title}` : title;
-
-              sections[sectionTitle].push({
-                country,
-                title: previousTitle,
-                link,
-                coordinates: { lat: jsonCoords?.lat, lng: jsonCoords?.lng },
-              });
-              return;
-            }
-
-            // Handle plain text
-            if (el.type === 'text') {
-              let text = $(el).text().trim();
-              if (!text) return;
-
-              // Remove leading commas/whitespace
-              text = text.replace(/^,?\s*/, '');
-              if (text) {
-                // Attach to previous <a> title if exists
-                if (previousTitle) {
-                  sections[sectionTitle][sections[sectionTitle].length - 1].title += `, ${text}`;
-                } else {
-                  sections[sectionTitle].push({
-                    country,
-                    title: subsectionLabel ? `${subsectionLabel}: ${text}` : text,
-                    link: '',
-                    coordinates: { lat: jsonCoords?.lat, lng: jsonCoords?.lng },
-                  });
-                }
+            liContent.forEach(node => {
+              if (node.type === 'text') {
+                const txt = $(node).text().trim();
+                if (txt) combinedParts.push(txt);
+              } else if (node.type === 'tag' && node.name === 'a') {
+                const title = $(node).text().trim();
+                const href = $(node).attr('href') ?? '';
+                combinedParts.push(title);
+                combinedParts.push(`__LINK__${href}__`);
               }
+            });
+
+            // Join all text parts
+            let fullText = combinedParts
+              .map(p => p.replace(/^:|:$/g, '').trim())
+              .join(': ');
+
+            // Extract link
+            let link = '';
+            const linkMatch = fullText.match(/__LINK__(.*?)__/);
+            if (linkMatch) {
+              link = linkMatch[1];
+              fullText = fullText.replace(/__LINK__.*?__/, '').trim();
             }
+
+            fullText = cleanEntry(fullText);
+
+            sections[sectionTitle].push({
+              country,
+              title: fullText,
+              link,
+              coordinates: { lat: jsonCoords?.lat, lng: jsonCoords?.lng },
+            });
           });
-        });
 
-
-        // Fallback: if no <li> exists, grab plain text or <a> tags at panel level
+        // --- Fallback if no <li> exists ---
         if ($(panel).find('li').length === 0) {
           $(panel)
             .find('a')
-            .each((_, link) => {
+            .each((_, linkEl) => {
+              const title = cleanEntry($(linkEl).text().trim());
               sections[sectionTitle].push({
                 country,
-                title: $(link).text().trim(),
-                link: $(link).attr('href') ?? '',
-                coordinates: {lat: jsonCoords?.lat, lng: jsonCoords?.lng},
+                title,
+                link: $(linkEl).attr('href') ?? '',
+                coordinates: { lat: jsonCoords?.lat, lng: jsonCoords?.lng },
               });
             });
 
           if ($(panel).find('a').length === 0) {
-            const plainText = $(panel).text().trim();
+            const plainText = cleanEntry($(panel).text().trim());
             if (plainText) {
               sections[sectionTitle].push({
                 country,
                 title: plainText,
                 link: '',
-                coordinates: {lat: jsonCoords?.lat, lng: jsonCoords?.lng},
+                coordinates: { lat: jsonCoords?.lat, lng: jsonCoords?.lng },
               });
             }
           }

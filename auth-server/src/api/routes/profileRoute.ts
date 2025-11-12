@@ -6,7 +6,7 @@ import {
   addFavorite,
   getProfile,
   removeFavorite,
-  addDocument,
+  //addDocument,
   removeDocument,
   getApplicationStages,
   getApplications,
