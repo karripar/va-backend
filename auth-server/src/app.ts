@@ -6,6 +6,7 @@ import cors from 'cors';
 import helmet from 'helmet';
 import {corsSettings} from './lib/functions';
 import api from './api';
+import { errorHandler, notFound } from './middlewares';
 
 const app = express();
 
