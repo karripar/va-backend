@@ -145,10 +145,6 @@ describe("Destination Scraper Controller Tests", () => {
     );
   });
 
-  it("should fetch destinations with valid parameters", async () => {
-    await getDestinations(app, testToken, "en", "tech");
-  });
-
   it("should return 400 for invalid field or language", async () => {
     await getDestinationsInvalidParams(app, testToken, "xx", "invalidField");
   });
@@ -174,6 +170,10 @@ describe("Destination Scraper Controller Tests", () => {
 
     // Save the new entry ID for deletion test
     testDestinationUrlId = updatedEntry._id;
+  });
+
+  it("should fetch destinations with valid parameters", async () => {
+    await getDestinations(app, testToken, "en", "tech");
   });
 
   it("should delete a destination URL entry", async () => {
