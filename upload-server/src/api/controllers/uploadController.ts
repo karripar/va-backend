@@ -4,6 +4,13 @@ import fs from 'fs';
 import path from 'path';
 import {MessageResponse} from 'va-hybrid-types/MessageTypes';
 
+/**
+ * @module controllers/uploadController
+ * @description Controller functions for handling file uploads, deletions, and listings.
+ * All operations require admin authentication (user_level_id === 2).
+ * Supports PDF, DOC, DOCX, PPT, and PPTX file types with a 20MB size limit.
+ */
+
 const UPLOAD_DIR = process.env.UPLOAD_PATH || './uploads';
 
 // create uploads directory if it doesn't exist
@@ -18,7 +25,27 @@ type UploadResponse = MessageResponse & {
   };
 };
 
-// upload a document (admin only)
+/**
+ * @function uploadDocument
+ * @description Uploads a document file to the server. Only accessible to admin users.
+ * Accepts PDF, PPT, PPTX, DOC, DOCX files up to 20MB.
+ * Files are saved with a timestamp suffix to prevent naming conflicts.
+ *
+ * @param {Request} req - Express request object with file in req.file (from multer).
+ * @param {Response<UploadResponse>} res - Express response object.
+ * @param {NextFunction} next - Express next middleware for error handling.
+ *
+ * @returns {Promise<void>} Responds with:
+ * - 200: Upload successful with file details (filename, url, media_type, filesize).
+ * - 400: If no file provided or invalid file extension.
+ * - 403: If user is not an admin.
+ * - 413: If file size exceeds 20MB limit.
+ *
+ * @example
+ * // POST /api/v1/uploads/upload
+ * // Requires: Authorization header with admin token, file in multipart/form-data
+ * uploadDocument(req, res, next);
+ */
 const uploadDocument = async (
   req: Request,
   res: Response<UploadResponse>,
@@ -67,10 +94,26 @@ const uploadDocument = async (
 };
 
 /**
- * delete uploaded document
- * admins only
+ * @function deleteUploadedDocument
+ * @description Deletes an uploaded document by filename. Only accessible to admin users.
+ * Removes the file from the file system permanently.
+ *
+ * @param {Request<{filename: string}>} req - Express request object with filename in params.
+ * @param {Response<MessageResponse>} res - Express response object.
+ * @param {NextFunction} next - Express next middleware for error handling.
+ *
+ * @returns {Promise<void>} Responds with:
+ * - 200: File deleted successfully.
+ * - 400: If filename is not provided.
+ * - 403: If user is not an admin.
+ * - 404: If file does not exist.
+ * - 500: On file system errors.
+ *
+ * @example
+ * // DELETE /api/v1/uploads/delete/:filename
+ * // Requires: Authorization header with admin token
+ * deleteUploadedDocument(req, res, next);
  */
-
 const deleteUploadedDocument = async (
   req: Request<{filename: string}>,
   res: Response<MessageResponse>,
@@ -111,6 +154,18 @@ const deleteUploadedDocument = async (
   }
 };
 
+/**
+ * @function cleanup
+ * @description Helper function to clean up temporary files in case of upload errors.
+ * Attempts to delete each file in the provided array if it exists.
+ *
+ * @param {string[]} files - Array of file paths to delete.
+ *
+ * @returns {void}
+ *
+ * @example
+ * cleanup(['/tmp/file1.pdf', '/tmp/file2.doc']);
+ */
 const cleanup = (files: string[]) => {
   files.forEach((file) => {
     try {
@@ -123,7 +178,25 @@ const cleanup = (files: string[]) => {
   });
 };
 
-// Get all documents (admin only)
+/**
+ * @function listDocuments
+ * @description Retrieves a list of all uploaded documents with their metadata.
+ * Only accessible to admin users. Returns file details including name, URL, MIME type, size, and upload date.
+ *
+ * @param {Request} req - Express request object.
+ * @param {Response} res - Express response object.
+ * @param {NextFunction} next - Express next middleware for error handling.
+ *
+ * @returns {Promise<void>} Responds with:
+ * - 200: Array of document objects with filename, url, media_type, filesize, and uploadedAt.
+ * - 403: If user is not an admin.
+ * - 500: On file system or server errors.
+ *
+ * @example
+ * // GET /api/v1/uploads/list
+ * // Requires: Authorization header with admin token
+ * listDocuments(req, res, next);
+ */
 const listDocuments = async (
   req: Request,
   res: Response,
