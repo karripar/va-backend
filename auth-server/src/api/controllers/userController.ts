@@ -4,7 +4,32 @@ import CustomError from '../../classes/CustomError';
 import {ProfileResponse} from 'va-hybrid-types/contentTypes';
 import User from '../models/userModel';
 
-// Find or add user to the database
+/**
+ * @module controllers/userController
+ * @description Controller functions for handling user authentication and profile management,
+ * including Google OAuth integration, user creation, and profile retrieval.
+ */
+
+/**
+ * @function findOrCreateUser
+ * @description Finds an existing user by Google ID or creates a new user if not found.
+ * If the user exists, updates their email and name from Google data.
+ *
+ * @param {Object} googleData - Google authentication data.
+ * @param {string} googleData.googleId - Unique Google user ID.
+ * @param {string} googleData.email - User's email from Google.
+ * @param {string} googleData.name - User's name from Google.
+ *
+ * @returns {Promise<User>} The found or newly created user document.
+ * @throws {Error} If database operation fails.
+ *
+ * @example
+ * const user = await findOrCreateUser({
+ *   googleId: '123456',
+ *   email: 'user@example.com',
+ *   name: 'John Doe'
+ * });
+ */
 const findOrCreateUser = async (googleData: {
   googleId: string;
   email: string;
@@ -38,7 +63,25 @@ const findOrCreateUser = async (googleData: {
   }
 };
 
-// update user's info if name has been changed in Google
+/**
+ * @function updateUserFromGoogle
+ * @description Updates an existing user's information (name and email) based on their Google profile data.
+ * This ensures the local user data stays in sync with Google account changes.
+ *
+ * @param {string} googleId - The unique Google user ID.
+ * @param {Object} googleData - Updated user data from Google.
+ * @param {string} googleData.email - User's current email from Google.
+ * @param {string} googleData.name - User's current name from Google.
+ *
+ * @returns {Promise<User>} The updated user document.
+ * @throws {Error} If user is not found or database operation fails.
+ *
+ * @example
+ * const updatedUser = await updateUserFromGoogle('123456', {
+ *   email: 'newemail@example.com',
+ *   name: 'Jane Doe'
+ * });
+ */
 const updateUserFromGoogle = async (
   googleId: string,
   googleData: {
@@ -64,7 +107,25 @@ const updateUserFromGoogle = async (
   }
 };
 
-// get user profile from JWT token
+/**
+ * @function getUserProfile
+ * @description Retrieves the authenticated user's profile from the JWT token stored in res.locals.
+ * The user data is populated by the authentication middleware.
+ *
+ * @param {Request} req - Express request object.
+ * @param {Response<ProfileResponse | MessageResponse>} res - Express response object.
+ * @param {NextFunction} next - Express next middleware for error handling.
+ *
+ * @returns {Promise<void>} Responds with:
+ * - 200: User profile object with user details.
+ * - 404: If user is not found.
+ * - 500: On server errors.
+ *
+ * @example
+ * // GET /api/v1/users/profile
+ * // Requires authentication middleware
+ * getUserProfile(req, res, next);
+ */
 const getUserProfile = async (
   req: Request,
   res: Response<ProfileResponse | MessageResponse>,
