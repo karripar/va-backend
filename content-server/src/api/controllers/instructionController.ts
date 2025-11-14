@@ -5,6 +5,12 @@ import {
 } from '../models/instructionModel';
 import CustomError from '../../classes/CustomError';
 
+/**
+ * @module controllers/instructionController
+ * @description Controller functions for handling instruction links and visibility settings,
+ * including fetching, updating links, and toggling step visibility for admin users.
+ */
+
 const uploadServerUrl =
   process.env.PUBLIC_UPLOADS_URL || 'http://localhost:3003/uploads';
 
@@ -15,7 +21,23 @@ interface AuthRequest extends Request {
   };
 }
 
-// get all instruction links
+/**
+ * @function getInstructionLinks
+ * @description Retrieves all instruction links from the database, sorted by stepIndex.
+ * If no links exist, initializes the database with default bilingual links for all 9 steps.
+ *
+ * @param {Request} req - Express request object.
+ * @param {Response} res - Express response object returning an array of instruction links.
+ * @param {NextFunction} next - Express next middleware for error handling.
+ *
+ * @returns {Promise<void>} Responds with:
+ * - 200: Array of instruction links with labelFi, labelEn, href, isExternal, isFile, and stepIndex.
+ * - 500: If fetching fails.
+ *
+ * @example
+ * // GET /api/v1/instructions/links
+ * getInstructionLinks(req, res, next);
+ */
 const getInstructionLinks = async (
   req: Request,
   res: Response,
@@ -188,7 +210,27 @@ const getInstructionLinks = async (
   }
 };
 
-// update a specific instruction link (admin only)
+/**
+ * @function updateInstructionLink
+ * @description Updates an existing instruction link by ID. Only accessible to admin users.
+ * Allows updating href of the link/document.
+ *
+ * @param {AuthRequest} req - Express request object containing linkId in params and href, isExternal, isFile in body.
+ * @param {Response} res - Express response object.
+ * @param {NextFunction} next - Express next middleware for error handling.
+ *
+ * @returns {Promise<void>} Responds with:
+ * - 200: When the link is successfully updated.
+ * - 400: If href is not provided.
+ * - 403: If the user is not an admin.
+ * - 404: If the link does not exist.
+ * - 500: On server errors.
+ *
+ * @example
+ * // PUT /api/v1/instructions/links/:linkId
+ * // Body: { href: "/new-path", isExternal: false, isFile: false }
+ * updateInstructionLink(req, res, next);
+ */
 const updateInstructionLink = async (
   req: AuthRequest,
   res: Response,
@@ -235,7 +277,23 @@ const updateInstructionLink = async (
   }
 };
 
-// get all instruction visibility settings
+/**
+ * @function getInstructionVisibility
+ * @description Retrieves visibility settings for all instruction steps.
+ * If no settings exist, initializes the database with default visibility (all steps visible) for 9 steps.
+ *
+ * @param {Request} req - Express request object.
+ * @param {Response} res - Express response object returning an array of visibility settings.
+ * @param {NextFunction} next - Express next middleware for error handling.
+ *
+ * @returns {Promise<void>} Responds with:
+ * - 200: Array of visibility objects with stepIndex and isVisible properties.
+ * - 500: If fetching fails.
+ *
+ * @example
+ * // GET /api/v1/instructions/visibility
+ * getInstructionVisibility(req, res, next);
+ */
 const getInstructionVisibility = async (
   req: Request,
   res: Response,
@@ -265,7 +323,25 @@ const getInstructionVisibility = async (
   }
 };
 
-// toggle visibility of a specific step (admin only)
+/**
+ * @function toggleInstructionVisibility
+ * @description Toggles the visibility of a specific instruction step by stepIndex.
+ * Only accessible to admin users. If the step doesn't exist, creates it with isVisible=false.
+ *
+ * @param {AuthRequest} req - Express request object containing stepIndex in params.
+ * @param {Response} res - Express response object.
+ * @param {NextFunction} next - Express next middleware for error handling.
+ *
+ * @returns {Promise<void>} Responds with:
+ * - 200: When visibility is successfully toggled.
+ * - 400: If stepIndex is invalid.
+ * - 403: If the user is not an admin.
+ * - 500: On server errors.
+ *
+ * @example
+ * // PUT /api/v1/instructions/visibility/:stepIndex
+ * toggleInstructionVisibility(req, res, next);
+ */
 const toggleInstructionVisibility = async (
   req: AuthRequest,
   res: Response,
