@@ -7,11 +7,12 @@
     "start": "node dist/upload-server/src/index.js",
     "dev": "nodemon src/index.ts",
     "build": "tsc",
-    "postbuild": "npm run apidoc",
+    "postbuild": "npm run docs",
     "lint": "eslint --fix src test",
     "test": "jest --detectOpenHandles --forceExit",
-    "apidoc": "apidoc -i src/ -o apidocs/",
-    "jsdoc": "jsdoc -c jsdoc.json"
+    "apidoc": "apidoc -i src/api/routes/ -o apidocs/",
+    "typedoc": "typedoc --options typedoc.json",
+    "docs": "npm run apidoc && npm run typedoc"
   },
   "apidoc": {
     "name": "Vaihtoaktivaattori Upload API",
