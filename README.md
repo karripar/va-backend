@@ -1,32 +1,146 @@
-# VA Backend
+# VA Backend Documentation 
 
-Backend repository for the **Vaihtoaktivaattori** project (Media Service Project course).
+Backend repository for the **Vaihtoaktivaattori** project (Media Service Project course). <br>
 
-## Overview
+**[Frontend Repository](https://github.com/karripar/va-frontend)** 
 
-This repository contains the backend logic for Vaihtoaktivaattori, including authentication, user management, and content handling using **Node.js**, **Express**, and **MongoDB**.
+---
 
-## Features
+## Tech Stack & Overview
 
-- User authentication (Google Sign-In & custom login)
-- Role-based access (students & teachers as admins)
-- Profile and content endpoints
-- Metropolia Exhange destination webscraping with coordinates attached from a static json file.
-- API documentation and testing setup
+This project is built using a **microservices**-inspired architecture, divided into three core servers and two auxiliary services.
 
-## Development Notes
+* **Core Technologies:** **Node.js**, **Express**, and **MongoDB** (Mongoose ORM).
+* **Authentication:** Google Sign-In (OAuth 2.0) and custom local authentication.
+* **Testing:** Vitest + Supertest.
 
-- Follow the structure from the **content-server** project for consistency.
-- Update **ApiDocs** as new routes are implemented.
-- Write tests for endpoints as they are developed to avoid last-minute testing overload.
+### Core Servers (Microservices)
 
-## Example Reference
+| Server | Primary Function | Port (Example) |
+| :--- | :--- | :--- |
+| `auth-server` | User authentication, session management, and role-based access control. | 3001 |
+| `content-server` | Core application logic, destination data scraping, and content storage. | 3002 |
+| `upload-server` | File and image handling, storage, and serving static files. | 3003 |
 
-See:  
-`content-server/src/api/routes/contactRoute.ts` for ApiDoc reference.
+### Auxiliary Services
 
-## Security
+| Service | Function | Note |
+| :--- | :--- | :--- |
+| `proxy-server` | Handles requests for AI/OpenAI features (e.g., vector store access). | **Paid/Credit Card Required** |
+| `sync-service` | Responsible for synchronizing data, such as refreshing the OpenAI vector store. | **Paid/Credit Card Required** |
 
-- Thorough validation with **express-validator**
-- Rate limiting with **express-rate-limit**
-- Scraping data is limited to once every week and databased cached data is used otherwise.
+---
+
+## Server Features & API Routes
+
+All primary API routes are prefixed by **`/api/v1/`**.
+
+### Auth Server
+
+* **Purpose:** User management and access control.
+* **Key Features:** User authentication (Google Sign-In & custom login), **Role-based access** (Exchange coordinators as admins), Profile-specific content.
+
+| Route Group | Description |
+| :--- | :--- |
+| `/auth` | Login, logout, and token handling. |
+| `/users` | User creation and general user management. |
+| `/profile` | Fetching and updating the current user's profile and related info. |
+| `/admin` | Admin-specific user and role actions. |
+| `/tips` | TODO: Add a better description here |
+
+### Content Server
+
+* **Purpose:** Core data handling and business logic.
+* **Key Features:**
+    * **Metropolia Exchange destination webscraping** (with coordinate data attached from a static JSON file).
+    * Partner university data scraping logic and a **caching mechanism** (scraped weekly).
+    * Application instructions and contact information management.
+    * Exchange stories and user experiences.
+    * Admin actions related to the above features.
+
+| Route Group | Description |
+| :--- | :--- |
+| `/destinations` | Accessing and managing exchange destination data and scraping url storage |
+| `/instructions` | Application instructions |
+| `/contact` | Contact information storage and modification. |
+
+### Upload Server
+
+* **Purpose:** Handling file persistence.
+* **Key Features:** Image and file upload logic using **Multer**. File modification and deletion.
+* **Static Serving:** Files are served statically from the `uploads` folder.
+    * **Base URL:** `http://localhost:3003/uploads/[filename]`
+
+| Route Group | Description |
+| :--- | :--- |
+| `/upload` | Single file upload endpoints |
+| `/uploads` | File listing and management endpoints. |
+
+---
+
+## Project Documentation
+
+In addition to this `.md` documentation, the project includes two types of automatically generated documentation:
+
+| Documentation Type | Content Focus | Generation Command | Access Path (Local) |
+| :--- | :--- | :--- | :--- |
+| **ApiDoc** | Documents the available **API routes** (endpoints). | `npm run apidoc` | `/docs/api` |
+| **TypeDoc** | Documents **controllers** and core code (e.g., CRUD operations). | `npm run typedoc` | `/docs/typedoc` |
+
+* To generate all documentation and build the server, run: `npm run build`
+* **TODO:** Add live links to the documentation here when the application is launched.
+
+---
+
+## Project Installation Guide
+
+**Note:** This guide must be followed for **each server subfolder** (`auth-server`, `content-server`, `upload-server`, etc.). Do not run commands from the repository root.
+
+### 1. Prerequisites
+
+1.  **Repository:** Clone the repository to your desired directory.
+2.  **Node.js & NPM:** Ensure a stable release version is installed.
+
+### 2. MongoDB Setup
+
+Choose **one** of the following options:
+
+1.  **Local Community Server (Recommended):**
+    * Install the MongoDB Community Server [here](https://www.mongodb.com/try/download/community). This includes the graphical tool **MongoDB Compass**.
+    * Paste the local connection string (e.g., `mongodb://localhost:27017/dbname`) into the environment variables.
+2.  **MongoDB Atlas (Cloud-Hosted):**
+    * Use the free basic tier on MongoDB Atlas [here](https://www.mongodb.com/products/platform/atlas-database).
+    * Create a cluster, generate a connection string, and paste it into the environment variables.
+
+### 3. Server Setup
+
+1.  Open **separate terminals** for each server subfolder you wish to run.
+2.  In each terminal, install the required dependencies: `npm install`
+3.  Fill in the required **Environment Variables** (see the next section).
+4.  Once MongoDB is running or connected, start the server in development mode: `npm run dev`
+
+* All available commands are found in the respective `package.json` file.
+
+---
+
+## Environment Variables
+
+### Core Configuration
+
+* **`.env` File:** Required variables are found in the **`.env.sample`** file in *each server's subfolder*.
+    * Copy the content of the sample file and create a new **`.env`** file.
+    * ***IMPORTANT:*** Each server has its own unique set of required variables.
+
+### Google API Client
+
+* To enable the Google OAuth 2.0 flow and authentication, you need to create a Client ID.
+* Follow the instructions found [here](https://developers.google.com/identity/oauth2/web/guides/get-google-api-clientid).
+* Place the acquired **Client ID** in the appropriate environment variables. This ID is also required for the front-end application.
+
+---
+
+## Security Measures
+
+* **Validation:** Thorough validation on all inputs using **`express-validator`**.
+* **Rate Limiting:** Implemented with **`express-rate-limit`** to mitigate abuse and denial-of-service vectors.
+* **Data Caching:** Scraping data is aggressively cached, limited to running **once per week** maximum, to reduce external load and increase response speed.

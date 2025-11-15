@@ -12,7 +12,7 @@ const router = express.Router();
 
 router.get('/', (req: Request, res: Response) => {
   res.json({
-    message: 'Routes in use: /api/profile, /api/applications, /api/budgets, /api/grants, /api/tips',
+    message: 'Routes in use: /api/profile, /api/applications, /api/budgets, /api/grants, /api/tips, /api/auth, /api/users, /api/admin',
   });
 });
 router.get<{}, {message: string}>('/ping', (_req: Request, res) => {

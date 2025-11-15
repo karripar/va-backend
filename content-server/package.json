@@ -7,11 +7,12 @@
     "start": "node dist/index.js",
     "dev": "nodemon src/index.ts",
     "build": "tsc",
-    "postbuild": "npm run apidoc",
+    "postbuild": "npm run docs",
     "lint": "eslint --fix src test",
     "test": "jest",
     "apidoc": "apidoc -i src/api/routes/ -o apidocs/",
-    "typedoc": "typedoc --options typedoc.json"
+    "typedoc": "typedoc --options typedoc.json",
+    "docs": "npm run apidoc && npm run typedoc"
   },
   "apidoc": {
     "name": "Vaihtoaktivaattori Content API",
