@@ -52,7 +52,7 @@ You can do one of the following:
 
 1. Install the MongoDB Community Server from [here](https://www.mongodb.com/try/download/community) and follow the on-screen instructions. Paste the connection string to your database into the environment variables.
 
-2. Use an Atlas database hosted online [here](https://www.mongodb.com/products/platform/atlas-database) Create a cluster, generate a connection string, and paste it into the environment variables. The free basic tier provides limited but sufficient capacity.
+2. Use an Atlas database hosted online [here](https://www.mongodb.com/products/platform/atlas-database) and create a cluster, generate a connection string, and paste it into the environment variables. The free basic tier provides limited but sufficient capacity.
 
 Local Community Server installation is recommended for security and it provides the MongoDB Compass graphical database management application.
 
