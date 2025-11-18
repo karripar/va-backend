@@ -35,8 +35,8 @@ const makeUserAdmin = async (
     const {email} = req.params;
 
     const adminUser = res.locals.user;
-    if (adminUser.user_level_id !== 2) {
-      return res.status(403).json({error: 'Unauthorized, not an admin'});
+    if (adminUser.user_level_id !== 3) {
+      return res.status(403).json({error: 'Unauthorized, not an elevated admin'});
     }
 
     if (adminUser.email === email) {
@@ -51,7 +51,7 @@ const makeUserAdmin = async (
 
     const user = await userModel.findOne({email: email});
 
-    if (user?.user_level_id === 2) {
+    if (user?.user_level_id === 2 || user?.user_level_id === 3) {
       return res
         .status(400)
         .json({error: 'User is already an admin'});
@@ -133,7 +133,7 @@ const removeAdminStatus = async (
     const adminUser = res.locals.user;
 
     if (adminUser.user_level_id !== 3) {
-      return res.status(403).json({error: 'Unauthorized, not an admin'});
+      return res.status(403).json({error: 'Unauthorized, not an elevated admin'});
     }
 
     if (!email || typeof email !== 'string') {

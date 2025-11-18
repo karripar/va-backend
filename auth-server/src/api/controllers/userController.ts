@@ -3,14 +3,20 @@ import {MessageResponse} from '../../types/MessageTypes';
 import CustomError from '../../classes/CustomError';
 import {ProfileResponse} from 'va-hybrid-types/contentTypes';
 import User from '../models/userModel';
-import { ADMIN_EMAILS } from '../utils/admins';
+import { ADMIN_EMAILS, ELEVATED_ADMIN_EMAILS } from '../utils/admins';
 
 const USER_LEVEL_DEFAULT = 1;
 const USER_LEVEL_ADMIN = 2;
-//const USER_LEVEL_SUPERADMIN = 3;
+const USER_LEVEL_SUPERADMIN = 3;
 
-const isEmailAdmin = (email: string): boolean => {
-  return ADMIN_EMAILS.has(email);
+const getUserLevelFromEmail = (email: string): number => {
+  if (ELEVATED_ADMIN_EMAILS.has(email)) {
+    return USER_LEVEL_SUPERADMIN;
+  }
+  if (ADMIN_EMAILS.has(email)) {
+    return USER_LEVEL_ADMIN;
+  }
+  return USER_LEVEL_DEFAULT;
 };
 
 /**
@@ -43,10 +49,11 @@ const findOrCreateUser = async (googleData: {
   googleId: string;
   email: string;
   name: string;
+  picture?: string;
 }) => {
   try {
-    const isAdmin = isEmailAdmin(googleData.email);
-    const userLevelId = isAdmin ? USER_LEVEL_ADMIN : USER_LEVEL_DEFAULT;
+
+    const userLevelId = getUserLevelFromEmail(googleData.email);
 
     const existingUser = await User.findOne({googleId: googleData.googleId});
 
@@ -56,6 +63,7 @@ const findOrCreateUser = async (googleData: {
         email: googleData.email,
         name: googleData.name,
         user_level_id: userLevelId,
+        avatarUrl: googleData.picture,
       });
     } else {
       // if user doesn't exist yet, create them
@@ -64,6 +72,7 @@ const findOrCreateUser = async (googleData: {
         email: googleData.email,
         userName: googleData.name,
         user_level_id: userLevelId, // default user level is 1
+        avatarUrl: googleData.picture,
         registeredAt: new Date(),
       });
 
@@ -101,6 +110,7 @@ const updateUserFromGoogle = async (
     email: string;
     name: string;
     user_level_id: number;
+    avatarUrl?: string;
   },
 ) => {
   try {

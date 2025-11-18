@@ -96,6 +96,7 @@ const verifyGoogleToken = async (
       googleId: payload.sub || '',
       email: payload.email || '',
       name: payload.name || '',
+      picture: payload.picture || '',
     };
 
     const user = await findOrCreateUser(googleResponse);
