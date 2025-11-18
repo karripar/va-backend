@@ -92,7 +92,7 @@ const makeUserAdmin = async (
 const getAdmins = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const adminUser = res.locals.user;
-    if (adminUser.user_level_id !== 2) {
+    if (![2, 3].includes(adminUser.user_level_id)) {
       return res.status(403).json({error: 'Unauthorized, not an admin'});
     }
 

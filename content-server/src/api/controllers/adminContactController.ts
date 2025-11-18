@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from "express";
 import AdminContact from "../models/adminContactModel";
 import CustomError from "../../classes/CustomError";
 
+
 /**
  * @module controllers/adminContactController
  * @description Controller functions for handling admin contact information displayed on the Contact page.
@@ -61,7 +62,7 @@ const addContact = async (
   try {
     const user = res.locals.user;
     if (!user) return next(new CustomError("Unauthorized, no user found", 401));
-    if (user.user_level_id !== 2)
+    if (![2, 3].includes(user.user_level_id))
       return next(new CustomError("Forbidden, not an admin", 403));
 
     const { name, title, email } = req.body;
@@ -109,7 +110,7 @@ const updateContact = async (
   try {
     const user = res.locals.user;
     if (!user) return next(new CustomError("Unauthorized, no user found", 401));
-    if (user.user_level_id !== 2)
+    if (![2, 3].includes(user.user_level_id))
       return next(new CustomError("Forbidden, not an admin", 403));
 
     const { id } = req.params;
@@ -160,7 +161,7 @@ const deleteContact = async (
   try {
     const user = res.locals.user;
     if (!user) return next(new CustomError("Unauthorized, no user found", 401));
-    if (user.user_level_id !== 2)
+    if (![2, 3].includes(user.user_level_id))
       return next(new CustomError("Forbidden, not an admin", 403));
 
     const { id } = req.params;

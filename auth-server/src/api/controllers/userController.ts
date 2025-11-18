@@ -9,6 +9,7 @@ const USER_LEVEL_DEFAULT = 1;
 const USER_LEVEL_ADMIN = 2;
 const USER_LEVEL_SUPERADMIN = 3;
 
+// helper function to determine user level based on email
 const getUserLevelFromEmail = (email: string): number => {
   if (ELEVATED_ADMIN_EMAILS.has(email)) {
     return USER_LEVEL_SUPERADMIN;
