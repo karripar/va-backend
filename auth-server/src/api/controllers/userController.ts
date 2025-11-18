@@ -123,6 +123,10 @@ const updateUserFromGoogle = async (
 
     // update name if changed
     user.userName = googleData.name;
+    user.email = googleData.email;
+    if (googleData.avatarUrl) {
+      user.avatarUrl = googleData.avatarUrl;
+    }
 
     await user.save();
     return user;
