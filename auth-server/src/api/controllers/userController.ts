@@ -3,22 +3,7 @@ import {MessageResponse} from '../../types/MessageTypes';
 import CustomError from '../../classes/CustomError';
 import {ProfileResponse} from 'va-hybrid-types/contentTypes';
 import User from '../models/userModel';
-import { ADMIN_EMAILS, ELEVATED_ADMIN_EMAILS } from '../utils/admins';
 
-const USER_LEVEL_DEFAULT = 1;
-const USER_LEVEL_ADMIN = 2;
-const USER_LEVEL_SUPERADMIN = 3;
-
-// helper function to determine user level based on email
-const getUserLevelFromEmail = (email: string): number => {
-  if (ELEVATED_ADMIN_EMAILS.has(email)) {
-    return USER_LEVEL_SUPERADMIN;
-  }
-  if (ADMIN_EMAILS.has(email)) {
-    return USER_LEVEL_ADMIN;
-  }
-  return USER_LEVEL_DEFAULT;
-};
 
 /**
  * @module controllers/userController
@@ -53,38 +38,54 @@ const findOrCreateUser = async (googleData: {
   picture?: string;
 }) => {
   try {
+    // First, try to find user by Google ID
+    let user = await User.findOne({ googleId: googleData.googleId });
 
-    const userLevelId = getUserLevelFromEmail(googleData.email);
-
-    const existingUser = await User.findOne({googleId: googleData.googleId});
-
-    if (existingUser) {
-      // if user exists, update their info
+    if (user) {
+      // Existing user: update profile info, preserve role
       return await updateUserFromGoogle(googleData.googleId, {
         email: googleData.email,
         name: googleData.name,
-        user_level_id: userLevelId,
         avatarUrl: googleData.picture,
       });
-    } else {
-      // if user doesn't exist yet, create them
-      const newUser = new User({
-        googleId: googleData.googleId,
-        email: googleData.email,
-        userName: googleData.name,
-        user_level_id: userLevelId, // default user level is 1
-        avatarUrl: googleData.picture,
-        registeredAt: new Date(),
-      });
-
-      await newUser.save();
-      return newUser;
     }
+
+    // Next, check if a placeholder admin exists by email
+    user = await User.findOne({ email: googleData.email });
+
+    if (user ) {
+      // Link Google ID to the existing placeholder account
+      if (!user.googleId) user.googleId = googleData.googleId;
+
+      await user.save();
+
+      // Update other profile info if needed, preserve user_level_id
+      return await updateUserFromGoogle(user.googleId!, {
+        email: googleData.email,
+        name: googleData.name,
+        avatarUrl: googleData.picture,
+      });
+    }
+
+    // Otherwise, create a new regular user
+    const newUser = new User({
+      googleId: googleData.googleId,
+      email: googleData.email,
+      userName: googleData.name,
+      user_level_id: 1, // default level
+      avatarUrl: googleData.picture,
+      registeredAt: new Date(),
+    });
+
+    await newUser.save();
+    return newUser;
+
   } catch (error) {
     console.error('Error in findOrCreateUser:', error);
     throw error;
   }
 };
+
 
 /**
  * @function updateUserFromGoogle
@@ -110,7 +111,6 @@ const updateUserFromGoogle = async (
   googleData: {
     email: string;
     name: string;
-    user_level_id: number;
     avatarUrl?: string;
   },
 ) => {
@@ -123,7 +123,6 @@ const updateUserFromGoogle = async (
 
     // update name if changed
     user.userName = googleData.name;
-    user.user_level_id = googleData.user_level_id;
 
     await user.save();
     return user;

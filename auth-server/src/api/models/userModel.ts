@@ -4,8 +4,9 @@ import {UserInfo} from '../../types/LocalTypes';
 const userSchema = new mongoose.Schema<UserInfo>({
   googleId: {
     type: String,
-    required: true,
+    sparse: true,
     unique: true,
+    required: false,
   },
   userName: {
     type: String,

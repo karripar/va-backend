@@ -2,6 +2,7 @@ import mongoose from "mongoose";
 import dotenv from "dotenv";
 import CustomError from "../classes/CustomError";
 import { initializeUserLevels } from "../api/utils/initUserLevels";
+import { initializeAdmins } from "../api/utils/initAdmins";
 
 dotenv.config();
 
@@ -16,6 +17,7 @@ const mangustiConnection = async () => {
 
     // Initialize user levels
     await initializeUserLevels();
+    await initializeAdmins();
 
     return connection;
   } catch (error) {
