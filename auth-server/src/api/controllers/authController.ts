@@ -90,6 +90,8 @@ const verifyGoogleToken = async (
       return;
     }
 
+    console.log('Google payload:', payload);
+
     const googleResponse: GoogleResponse = {
       googleId: payload.sub || '',
       email: payload.email || '',

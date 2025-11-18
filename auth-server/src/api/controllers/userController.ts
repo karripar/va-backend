@@ -3,6 +3,15 @@ import {MessageResponse} from '../../types/MessageTypes';
 import CustomError from '../../classes/CustomError';
 import {ProfileResponse} from 'va-hybrid-types/contentTypes';
 import User from '../models/userModel';
+import { ADMIN_EMAILS } from '../utils/admins';
+
+const USER_LEVEL_DEFAULT = 1;
+const USER_LEVEL_ADMIN = 2;
+//const USER_LEVEL_SUPERADMIN = 3;
+
+const isEmailAdmin = (email: string): boolean => {
+  return ADMIN_EMAILS.has(email);
+};
 
 /**
  * @module controllers/userController
@@ -36,6 +45,9 @@ const findOrCreateUser = async (googleData: {
   name: string;
 }) => {
   try {
+    const isAdmin = isEmailAdmin(googleData.email);
+    const userLevelId = isAdmin ? USER_LEVEL_ADMIN : USER_LEVEL_DEFAULT;
+
     const existingUser = await User.findOne({googleId: googleData.googleId});
 
     if (existingUser) {
@@ -43,6 +55,7 @@ const findOrCreateUser = async (googleData: {
       return await updateUserFromGoogle(googleData.googleId, {
         email: googleData.email,
         name: googleData.name,
+        user_level_id: userLevelId,
       });
     } else {
       // if user doesn't exist yet, create them
@@ -50,7 +63,7 @@ const findOrCreateUser = async (googleData: {
         googleId: googleData.googleId,
         email: googleData.email,
         userName: googleData.name,
-        user_level_id: 1, // default user level
+        user_level_id: userLevelId, // default user level is 1
         registeredAt: new Date(),
       });
 
@@ -87,6 +100,7 @@ const updateUserFromGoogle = async (
   googleData: {
     email: string;
     name: string;
+    user_level_id: number;
   },
 ) => {
   try {
@@ -98,6 +112,7 @@ const updateUserFromGoogle = async (
 
     // update name if changed
     user.userName = googleData.name;
+    user.user_level_id = googleData.user_level_id;
 
     await user.save();
     return user;
