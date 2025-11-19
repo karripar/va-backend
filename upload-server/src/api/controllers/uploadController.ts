@@ -54,7 +54,7 @@ const uploadDocument = async (
   const tempFiles: string[] = [];
   try {
     // check if user is admin
-    if (res.locals.user.user_level_id !== 2) {
+    if (![2, 3].includes(res.locals.user.user_level_id)) {
       throw new CustomError('Forbidden: admin only', 403);
     }
 
@@ -126,7 +126,7 @@ const deleteUploadedDocument = async (
     }
 
     // Check if the user is an admin
-    if (res.locals.user.user_level_id !== 2) {
+    if (![2, 3].includes(res.locals.user.user_level_id)) {
       throw new CustomError('Unauthorized. Admin access required.', 403);
     }
 
@@ -204,7 +204,7 @@ const listDocuments = async (
 ) => {
   try {
     // check if user is admin
-    if (res.locals.user.user_level_id !== 2) {
+    if (![2, 3].includes(res.locals.user.user_level_id)) {
       next(new CustomError('Unauthorized. Admin access required.', 403));
       return;
     }

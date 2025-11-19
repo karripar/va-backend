@@ -70,7 +70,7 @@ const deleteDestinationUrl = async (
   try {
     const { id } = req.params;
     const adminUser = res.locals.user;
-    if (!adminUser || adminUser.user_level_id !== 2) {
+    if (!adminUser || ![2, 3].includes(adminUser.user_level_id)) {
       return next(new CustomError('Unauthorized, admin access required', 403));
     }
 
@@ -113,7 +113,7 @@ const updateDestinationUrl = async (
   try {
     const { field, lang, url } = req.body;
     const adminUser = res.locals.user;
-    if (!adminUser || adminUser.user_level_id !== 2) {
+    if (!adminUser || ![2, 3].includes(adminUser.user_level_id)) {
       return next(new CustomError('Unauthorized, admin access required', 403));
     }
 
