@@ -4,7 +4,6 @@ import CustomError from '../../classes/CustomError';
 import {ProfileResponse} from 'va-hybrid-types/contentTypes';
 import User from '../models/userModel';
 
-
 /**
  * @module controllers/userController
  * @description Controller functions for handling user authentication and profile management,
@@ -39,7 +38,7 @@ const findOrCreateUser = async (googleData: {
 }) => {
   try {
     // First, try to find user by Google ID
-    let user = await User.findOne({ googleId: googleData.googleId });
+    let user = await User.findOne({googleId: googleData.googleId});
 
     if (user) {
       // Existing user: update profile info, preserve role
@@ -51,9 +50,9 @@ const findOrCreateUser = async (googleData: {
     }
 
     // Next, check if a placeholder admin exists by email
-    user = await User.findOne({ email: googleData.email });
+    user = await User.findOne({email: googleData.email});
 
-    if (user ) {
+    if (user) {
       // Link Google ID to the existing placeholder account
       if (!user.googleId) user.googleId = googleData.googleId;
 
@@ -79,13 +78,11 @@ const findOrCreateUser = async (googleData: {
 
     await newUser.save();
     return newUser;
-
   } catch (error) {
     console.error('Error in findOrCreateUser:', error);
     throw error;
   }
 };
-
 
 /**
  * @function updateUserFromGoogle
