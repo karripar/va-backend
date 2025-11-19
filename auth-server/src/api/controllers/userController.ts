@@ -4,6 +4,8 @@ import CustomError from '../../classes/CustomError';
 import {ProfileResponse} from 'va-hybrid-types/contentTypes';
 import User from '../models/userModel';
 
+
+
 /**
  * @module controllers/userController
  * @description Controller functions for handling user authentication and profile management,
@@ -172,4 +174,66 @@ const getUserProfile = async (
   }
 };
 
-export {updateUserFromGoogle, getUserProfile, findOrCreateUser};
+/**
+ * @function searchUsersByEmail
+ * @description Searches for users by email. Only accessible to admin users.
+ * Supports partial and case-insensitive matches.
+ *
+ * @param {Request<{ email: string }>} req - Express request object with email in params.
+ * @param {Response<{ users?: ProfileResponse[]; error?: string }>} res - Express response object.
+ * @param {NextFunction} next - Express next middleware for error handling.
+ *
+ * @returns {Promise<void>} Responds with:
+ * - 200: Array of matched user profiles.
+ * - 403: If user is not an admin.
+ * - 500: On server errors.
+ *
+ * @example
+ * // GET /api/v1/users/search/by-email/:email
+ * // Requires: Authorization header with admin token
+ * searchUsersByEmail(req, res, next);
+ */
+const searchUsersByEmail = async (
+  req: Request<{ email: string }>,
+  res: Response<{ users?: ProfileResponse[]; error?: string } >,
+  next: NextFunction
+) => {
+  try {
+    const adminUser = res.locals.user;
+    if (![2, 3].includes(adminUser.user_level_id)) {
+      return res.status(403).json({ error : "Unauthorized, not an admin" });
+    }
+
+    const { email } = req.params;
+
+    // Partial, case-insensitive match
+    const matchedUsers = await User.find({
+      email: { $regex: email, $options: "i" },
+    });
+
+    const responseUsers: ProfileResponse[] = matchedUsers.map((user) => ({
+      _id: user._id.toString(),
+      email: user.email,
+      userName: user.userName,
+      user_level_id: user.user_level_id,
+      avatarUrl: user.avatarUrl,
+      registeredAt: user.registeredAt,
+      favorites: [], // Ensure favorites is included
+      documents: [], // Ensure documents is included
+    }));
+
+    res.status(200).json({ users: responseUsers });
+  } catch (err) {
+    next(
+      err instanceof CustomError
+        ? err
+        : new CustomError(
+            "An error occurred while searching users",
+            500
+          )
+    );
+  }
+};
+
+
+export {updateUserFromGoogle, getUserProfile, findOrCreateUser, searchUsersByEmail};

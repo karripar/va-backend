@@ -60,7 +60,7 @@ const authenticate = async (
       process.env.JWT_SECRET as string,
     ) as TokenContent;
 
-    const user = await User.findById(decoded.id);
+    const user = await User.findById(decoded._id);
     if (!user) {
       next(new CustomError('Unauthorized, user not found', 401));
       return;
