@@ -222,6 +222,7 @@ const searchUsersByEmail = async (
       documents: [], // Ensure documents is included
     }));
 
+
     res.status(200).json({ users: responseUsers });
   } catch (err) {
     next(

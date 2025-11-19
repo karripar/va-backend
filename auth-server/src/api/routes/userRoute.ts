@@ -127,7 +127,7 @@ router.get(
    *       "message": "Failed to search users by email"
    *     }
    */
-  param('email').isEmail().normalizeEmail(),
+  param('email').isEmail().trim(),
   authenticate,
   searchUsersByEmail
 )
