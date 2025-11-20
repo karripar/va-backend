@@ -14,7 +14,7 @@ app.use(express.json())
 app.use(morgan('dev'));
 app.use(helmet(
   {
-    contentSecurityPolicy: false,
+    contentSecurityPolicy: false
   }
 ));
 app.use(cors());
