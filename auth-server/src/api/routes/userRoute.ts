@@ -1,7 +1,10 @@
 import express from 'express';
-import {getUserProfile, searchUsersByEmail} from '../controllers/userController';
+import {
+  getUserProfile,
+  searchUsersByEmail,
+} from '../controllers/userController';
 import {authenticate} from '../../middlewares';
-import { param } from 'express-validator';
+import {param} from 'express-validator';
 
 const router = express.Router();
 
@@ -77,7 +80,7 @@ router.get(
    */
   '/profile',
   authenticate,
-  getUserProfile
+  getUserProfile,
 );
 
 router.get(
@@ -129,7 +132,7 @@ router.get(
    */
   param('email').isEmail().trim(),
   authenticate,
-  searchUsersByEmail
-)
+  searchUsersByEmail,
+);
 
 export default router;
