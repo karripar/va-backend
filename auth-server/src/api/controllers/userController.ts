@@ -4,8 +4,6 @@ import CustomError from '../../classes/CustomError';
 import {ProfileResponse} from 'va-hybrid-types/contentTypes';
 import User from '../models/userModel';
 
-
-
 /**
  * @module controllers/userController
  * @description Controller functions for handling user authentication and profile management,
@@ -194,21 +192,21 @@ const getUserProfile = async (
  * searchUsersByEmail(req, res, next);
  */
 const searchUsersByEmail = async (
-  req: Request<{ email: string }>,
-  res: Response<{ users?: ProfileResponse[]; error?: string } >,
-  next: NextFunction
+  req: Request<{email: string}>,
+  res: Response<{users?: ProfileResponse[]; error?: string}>,
+  next: NextFunction,
 ) => {
   try {
     const adminUser = res.locals.user;
     if (![2, 3].includes(adminUser.user_level_id)) {
-      return res.status(403).json({ error : "Unauthorized, not an admin" });
+      return res.status(403).json({error: 'Unauthorized, not an admin'});
     }
 
-    const { email } = req.params;
+    const {email} = req.params;
 
     // Partial, case-insensitive match
     const matchedUsers = await User.find({
-      email: { $regex: email, $options: "i" },
+      email: {$regex: email, $options: 'i'},
     });
 
     const responseUsers: ProfileResponse[] = matchedUsers.map((user) => ({
@@ -222,19 +220,19 @@ const searchUsersByEmail = async (
       documents: [], // Ensure documents is included
     }));
 
-
-    res.status(200).json({ users: responseUsers });
+    res.status(200).json({users: responseUsers});
   } catch (err) {
     next(
       err instanceof CustomError
         ? err
-        : new CustomError(
-            "An error occurred while searching users",
-            500
-          )
+        : new CustomError('An error occurred while searching users', 500),
     );
   }
 };
 
-
-export {updateUserFromGoogle, getUserProfile, findOrCreateUser, searchUsersByEmail};
+export {
+  updateUserFromGoogle,
+  getUserProfile,
+  findOrCreateUser,
+  searchUsersByEmail,
+};
