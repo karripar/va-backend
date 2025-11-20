@@ -5,7 +5,7 @@ import {authenticate, validationErrors} from '../../middlewares';
 import {getDestinations, updateDestinationUrl, getDestinationUrls, deleteDestinationUrl} from '../controllers/destinationController';
 
 /**
- * @apiDefine DataGroup Data
+ * @apiDefine DestinationGroup Destinations
  * APIs for fetching data from external sources. Such as scraping Metropolia's pages.
  */
 

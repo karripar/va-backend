@@ -24,10 +24,10 @@ type AuthResponse = {
 // user type for the DB
 type UserInfo = {
   id: string;
-  googleId: string;
+  googleId?: string;
   userName: string;
   email: string;
-  user_level_id: number; 
+  user_level_id: number;
   registeredAt: string;
   favorites: string[];
   documents: string[];

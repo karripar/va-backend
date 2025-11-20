@@ -1,34 +1,32 @@
 import mongoose from 'mongoose';
 
 const budgetSchema = new mongoose.Schema({
-  userId: { type: String, required: true, unique: true, index: true },
+  userId: { type: String, required: true, index: true },
   destination: { type: String, default: '' },
-  grantAmount: { type: Number, default: 0 },
+  exchangeProgramId: { type: String },
   categories: {
     matkakulut: {
-      estimatedCost: { type: Number, default: 0 },
-      notes: { type: String }
+      amount: { type: Number, default: 0 },
+      notes: { type: String, default: '' }
     },
     vakuutukset: {
-      estimatedCost: { type: Number, default: 0 },
-      notes: { type: String }
+      amount: { type: Number, default: 0 },
+      notes: { type: String, default: '' }
     },
     asuminen: {
-      estimatedCost: { type: Number, default: 0 },
-      notes: { type: String }
+      amount: { type: Number, default: 0 },
+      notes: { type: String, default: '' }
     },
-    'ruoka ja arki': {
-      estimatedCost: { type: Number, default: 0 },
-      notes: { type: String }
+    ruoka_ja_arki: {
+      amount: { type: Number, default: 0 },
+      notes: { type: String, default: '' }
     },
     opintovalineet: {
-      estimatedCost: { type: Number, default: 0 },
-      notes: { type: String }
+      amount: { type: Number, default: 0 },
+      notes: { type: String, default: '' }
     }
   },
-  totalEstimate: { type: Number, default: 0 },
-  balance: { type: Number, default: 0 },
-  currency: { type: String, default: 'EUR' }
+  totalAmount: { type: Number, default: 0 }
 }, {
   timestamps: true
 });

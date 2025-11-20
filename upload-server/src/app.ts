@@ -7,6 +7,7 @@ import helmet from 'helmet';
 import {corsSettings} from './utils/settings';
 import {errorHandler, notFound} from './middlewares';
 import api from './api';
+import path from 'path';
 
 const app = express();
 
@@ -31,6 +32,16 @@ app.use(
 app.use('/uploads', express.static('uploads'));
 
 app.use('/api/v1', api);
+
+app.use(
+  '/docs/api',
+  express.static(path.join(process.cwd(), 'apidocs'))
+)
+
+app.use(
+  '/docs/typedoc',
+  express.static(path.join(process.cwd(), 'docs'))
+);
 
 app.use(notFound);
 

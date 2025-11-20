@@ -238,7 +238,7 @@ const updateInstructionLink = async (
 ) => {
   try {
     // check if user is admin
-    if (res.locals.user.user_level_id !== 2) {
+    if (![2, 3].includes(res.locals.user.user_level_id)) {
       next(new CustomError('Unauthorized: Only admins can update links', 403));
       return;
     }
@@ -349,7 +349,7 @@ const toggleInstructionVisibility = async (
 ) => {
   try {
     // check if user is admin
-    if (res.locals.user.user_level_id !== 2) {
+    if (![2, 3].includes(res.locals.user.user_level_id)) {
       next(
         new CustomError('Unauthorized: Only admins can toggle visibility', 403),
       );
