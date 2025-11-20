@@ -12,6 +12,7 @@ export const initializeUserLevels = async () => {
     const defaultLevels = [
       {user_level_id: 1, level_name: 'User'},
       {user_level_id: 2, level_name: 'Admin'},
+      {user_level_id: 3, level_name: 'SuperAdmin'},
     ];
 
     await UserLevel.insertMany(defaultLevels);

@@ -60,7 +60,7 @@ const authenticate = async (
 
     // set user info from token
     res.locals.user = {
-      id: decoded.id,
+      id: decoded._id,
       user_level_id: decoded.user_level_id
     };
 

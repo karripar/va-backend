@@ -34,29 +34,50 @@ const findOrCreateUser = async (googleData: {
   googleId: string;
   email: string;
   name: string;
+  picture?: string;
 }) => {
   try {
-    const existingUser = await User.findOne({googleId: googleData.googleId});
+    // First, try to find user by Google ID
+    let user = await User.findOne({googleId: googleData.googleId});
 
-    if (existingUser) {
-      // if user exists, update their info
+    if (user) {
+      // Existing user: update profile info, preserve role
       return await updateUserFromGoogle(googleData.googleId, {
         email: googleData.email,
         name: googleData.name,
+        avatarUrl: googleData.picture,
       });
-    } else {
-      // if user doesn't exist yet, create them
-      const newUser = new User({
-        googleId: googleData.googleId,
-        email: googleData.email,
-        userName: googleData.name,
-        user_level_id: 1, // default user level
-        registeredAt: new Date(),
-      });
-
-      await newUser.save();
-      return newUser;
     }
+
+    // Next, check if a placeholder admin exists by email
+    user = await User.findOne({email: googleData.email});
+
+    if (user) {
+      // Link Google ID to the existing placeholder account
+      if (!user.googleId) user.googleId = googleData.googleId;
+
+      await user.save();
+
+      // Update other profile info if needed, preserve user_level_id
+      return await updateUserFromGoogle(user.googleId!, {
+        email: googleData.email,
+        name: googleData.name,
+        avatarUrl: googleData.picture,
+      });
+    }
+
+    // Otherwise, create a new regular user
+    const newUser = new User({
+      googleId: googleData.googleId,
+      email: googleData.email,
+      userName: googleData.name,
+      user_level_id: 1, // default level
+      avatarUrl: googleData.picture,
+      registeredAt: new Date(),
+    });
+
+    await newUser.save();
+    return newUser;
   } catch (error) {
     console.error('Error in findOrCreateUser:', error);
     throw error;
@@ -87,6 +108,7 @@ const updateUserFromGoogle = async (
   googleData: {
     email: string;
     name: string;
+    avatarUrl?: string;
   },
 ) => {
   try {
@@ -98,6 +120,10 @@ const updateUserFromGoogle = async (
 
     // update name if changed
     user.userName = googleData.name;
+    user.email = googleData.email;
+    if (googleData.avatarUrl) {
+      user.avatarUrl = googleData.avatarUrl;
+    }
 
     await user.save();
     return user;
@@ -146,4 +172,67 @@ const getUserProfile = async (
   }
 };
 
-export {updateUserFromGoogle, getUserProfile, findOrCreateUser};
+/**
+ * @function searchUsersByEmail
+ * @description Searches for users by email. Only accessible to admin users.
+ * Supports partial and case-insensitive matches.
+ *
+ * @param {Request<{ email: string }>} req - Express request object with email in params.
+ * @param {Response<{ users?: ProfileResponse[]; error?: string }>} res - Express response object.
+ * @param {NextFunction} next - Express next middleware for error handling.
+ *
+ * @returns {Promise<void>} Responds with:
+ * - 200: Array of matched user profiles.
+ * - 403: If user is not an admin.
+ * - 500: On server errors.
+ *
+ * @example
+ * // GET /api/v1/users/search/by-email/:email
+ * // Requires: Authorization header with admin token
+ * searchUsersByEmail(req, res, next);
+ */
+const searchUsersByEmail = async (
+  req: Request<{email: string}>,
+  res: Response<{users?: ProfileResponse[]; error?: string}>,
+  next: NextFunction,
+) => {
+  try {
+    const adminUser = res.locals.user;
+    if (![2, 3].includes(adminUser.user_level_id)) {
+      return res.status(403).json({error: 'Unauthorized, not an admin'});
+    }
+
+    const {email} = req.params;
+
+    // Partial, case-insensitive match
+    const matchedUsers = await User.find({
+      email: {$regex: email, $options: 'i'},
+    });
+
+    const responseUsers: ProfileResponse[] = matchedUsers.map((user) => ({
+      _id: user._id.toString(),
+      email: user.email,
+      userName: user.userName,
+      user_level_id: user.user_level_id,
+      avatarUrl: user.avatarUrl,
+      registeredAt: user.registeredAt,
+      favorites: [], // Ensure favorites is included
+      documents: [], // Ensure documents is included
+    }));
+
+    res.status(200).json({users: responseUsers});
+  } catch (err) {
+    next(
+      err instanceof CustomError
+        ? err
+        : new CustomError('An error occurred while searching users', 500),
+    );
+  }
+};
+
+export {
+  updateUserFromGoogle,
+  getUserProfile,
+  findOrCreateUser,
+  searchUsersByEmail,
+};

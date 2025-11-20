@@ -12,7 +12,11 @@ dotenv.config();
 
 app.use(express.json())
 app.use(morgan('dev'));
-app.use(helmet());
+app.use(helmet(
+  {
+    contentSecurityPolicy: false,
+  }
+));
 app.use(cors());
 
 // Serve uploaded files from /uploads (folder at project root content-server/uploads)
@@ -22,7 +26,7 @@ app.use('/uploads', express.static(uploadsPath));
 app.use('/api/v1', api);
 
 app.use(
-  '/docs/api',
+  '/docs/apidoc',
   express.static(path.join(process.cwd(), 'apidocs'))
 )
 

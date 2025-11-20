@@ -1,6 +1,10 @@
 import express from 'express';
-import {getUserProfile} from '../controllers/userController';
+import {
+  getUserProfile,
+  searchUsersByEmail,
+} from '../controllers/userController';
 import {authenticate} from '../../middlewares';
+import {param} from 'express-validator';
 
 const router = express.Router();
 
@@ -76,7 +80,59 @@ router.get(
    */
   '/profile',
   authenticate,
-  getUserProfile
+  getUserProfile,
+);
+
+router.get(
+  '/search/by-email/:email',
+  /**
+   * @api {get} /users/search/by-email/:email Search User by Email
+   * @apiName SearchUserByEmail
+   * @apiGroup UserGroup
+   * @apiVersion 1.0.0
+   *
+   * @apiDescription Searches for users by their email address. Accessible only to admin users.
+   * @apiPermission token (admin only)
+   * @apiParam {String} email Email address to search for.
+   *
+   * @apiSuccess {Object[]} users List of users matching the email search.
+   * @apiSuccess {String} users.id User's unique identifier.
+   * @apiSuccess {String} users.userName User's display name.
+   * @apiSuccess {String} users.email Email address of the user.
+   * @apiSuccess {String} users.registeredAt Registration date in ISO format.
+   * @apiSuccess {Number} users.user_level_id User's role level (1 = user, 2 = admin).
+   *
+   * @apiSuccessExample {json} Success-Response:
+   *     HTTP/1.1 200 OK
+   *     {
+   *       "users": [
+   *         {
+   *           "id": "user_id",
+   *           "userName": "John Doe",
+   *           "email": "johndoe@metropolia.fi",
+   *           "registeredAt": "2024-01-01T00:00:00.000Z",
+   *           "user_level_id": 1
+   *         }
+   *       ]
+   *     }
+   *
+   * @apiError (403 Forbidden) Forbidden The requester is not an admin.
+   * @apiErrorExample {json} Forbidden-Response:
+   *     HTTP/1.1 403 Forbidden
+   *     {
+   *       "message": "Unauthorized, not an admin"
+   *     }
+   *
+   * @apiError (500 Internal Server Error) InternalServerError Server error while processing the request.
+   * @apiErrorExample {json} InternalServerError-Response:
+   *     HTTP/1.1 500 Internal Server Error
+   *     {
+   *       "message": "Failed to search users by email"
+   *     }
+   */
+  param('email').isEmail().trim(),
+  authenticate,
+  searchUsersByEmail,
 );
 
 export default router;

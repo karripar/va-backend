@@ -7,7 +7,7 @@ const router = express.Router();
 
 router.get('/', (req: Request, res: Response) => {
   res.json({
-    message: 'Routes in use: destinations, contact, instructions',
+    message: 'Routes in use: /destinations, /contact, /instructions',
   });
 });
 

@@ -7,7 +7,7 @@ import {
 
 export const profiles: ProfileResponse[] = [
   {
-    id: "1",
+    _id: "1",
     userName: "Test User",
     email: "test@metropolia.fi",
     registeredAt: new Date().toISOString(),

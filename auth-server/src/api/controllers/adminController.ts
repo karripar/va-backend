@@ -22,7 +22,7 @@ import userModel from '../models/userModel';
  * - 404: If no user with the given email exists.
  *
  * @example
- * // PUT /api/v1/users/make-admin/:email
+ * // PUT /api/v1/admin/make-admin/:email
  * // Requires res.locals.user to be an admin
  * makeUserAdmin(req, res, next);
  */
@@ -35,8 +35,8 @@ const makeUserAdmin = async (
     const {email} = req.params;
 
     const adminUser = res.locals.user;
-    if (adminUser.user_level_id !== 2) {
-      return res.status(403).json({error: 'Unauthorized, not an admin'});
+    if (adminUser.user_level_id !== 3) {
+      return res.status(403).json({error: 'Unauthorized, not an elevated admin'});
     }
 
     if (adminUser.email === email) {
@@ -51,7 +51,7 @@ const makeUserAdmin = async (
 
     const user = await userModel.findOne({email: email});
 
-    if (user?.user_level_id === 2) {
+    if (user?.user_level_id === 2 || user?.user_level_id === 3) {
       return res
         .status(400)
         .json({error: 'User is already an admin'});
@@ -85,18 +85,18 @@ const makeUserAdmin = async (
  * - 403: If the current user is not an admin.
  *
  * @example
- * // GET /api/v1/users/admins
+ * // GET /api/v1/admin/admins
  * // Requires res.locals.user to be an admin
  * getAdmins(req, res, next);
  */
 const getAdmins = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const adminUser = res.locals.user;
-    if (adminUser.user_level_id !== 2) {
+    if (![2, 3].includes(adminUser.user_level_id)) {
       return res.status(403).json({error: 'Unauthorized, not an admin'});
     }
 
-    const admins = await userModel.find({user_level_id: 2});
+    const admins = await userModel.find({user_level_id: {$in: [2, 3]}});
     res.status(200).json({admins});
   } catch (error) {
     next(error);
@@ -108,7 +108,7 @@ const getAdmins = async (req: Request, res: Response, next: NextFunction) => {
  * @description Removes admin rights from a user (sets them back to a regular user).
  * Only users with `user_level_id` 3 (super admins) are allowed to perform this action.
  *
- * @param {Request<{ email: string }>} req - Express request object containing the user's email in `req.params`.
+ * @param {Request<{ id: number }>} req - Express request object containing the user's id in `req.params`.
  * @param {Response} res - Express response object used to send JSON responses.
  * @param {NextFunction} next - Express next middleware function for error handling.
  *
@@ -119,30 +119,36 @@ const getAdmins = async (req: Request, res: Response, next: NextFunction) => {
  * - 404: If no user with the given email exists.
  *
  * @example
- * // PUT /api/v1/users/remove-admin/:email
+ * // PUT /api/v1/admin/remove-admin/:id
  * // Requires res.locals.user to be a super admin (user_level_id 3)
  * removeAdminStatus(req, res, next);
  */
 const removeAdminStatus = async (
-  req: Request<{email: string}, {}, {}>,
+  req: Request<{id: string}, {}, {}>,
   res: Response,
   next: NextFunction,
 ) => {
   try {
-    const {email} = req.params;
+    const {id} = req.params;
     const adminUser = res.locals.user;
 
     if (adminUser.user_level_id !== 3) {
-      return res.status(403).json({error: 'Unauthorized, not an admin'});
+      return res.status(403).json({error: 'Unauthorized, not an elevated admin'});
     }
 
-    if (!email || typeof email !== 'string') {
-      return res.status(400).json({error: 'Invalid email parameter'});
+    if (!id ) {
+      return res.status(400).json({ error: 'Invalid id parameter' });
     }
 
-    const user = await userModel.findOne({email: email});
+    const user = await userModel.findOne({_id: id});
     if (!user) {
       return res.status(404).json({error: 'User not found'});
+    }
+
+    if (user.user_level_id === 3) {
+      return res
+        .status(400)
+        .json({error: 'Cannot remove admin status from another elevated admin'});
     }
 
     user.user_level_id = 1; // Demote to regular user
@@ -150,10 +156,51 @@ const removeAdminStatus = async (
 
     res
       .status(200)
-      .json({message: `User with email ${email} is no longer an admin.`});
+      .json({message: `User with id: ${id} is no longer an admin.`});
   } catch (error) {
     next(error);
   }
 };
 
-export {makeUserAdmin, getAdmins, removeAdminStatus};
+
+const makeAdminElevated = async (
+  req: Request<{id: string}, {}, {}>,
+  res: Response,
+  next: NextFunction,
+) => {
+  try {
+    const adminUser = res.locals.user;
+    if (adminUser.user_level_id !== 3) {
+      return res.status(403).json({error: 'Unauthorized, not an elevated admin'});
+    }
+
+    const {id} = req.params;
+
+    if (!id) {
+      return res.status(400).json({error: 'Invalid id parameter'});
+    }
+
+    const user = await userModel.findOne({_id: id});
+
+    if (!user) {
+      return res.status(404).json({error: 'User not found'});
+    }
+
+    if (user.user_level_id === 3) {
+      return res
+        .status(400)
+        .json({error: 'User is already an elevated admin'});
+    }
+
+    user.user_level_id = 3; // Promote to elevated admin
+    await user.save();
+
+    res
+      .status(200)
+      .json({message: `User with id: ${id} is now an elevated admin.`});
+  } catch (error) {
+    next(error);
+  }
+}
+
+export {makeUserAdmin, getAdmins, removeAdminStatus, makeAdminElevated};

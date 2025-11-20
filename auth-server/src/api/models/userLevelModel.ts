@@ -10,7 +10,7 @@ const userLevelSchema = new mongoose.Schema({
     type: String,
     required: true,
     unique: true,
-    enum: ['Admin', 'User']
+    enum: ['Admin', 'User', 'SuperAdmin'],
   }
 });
 
