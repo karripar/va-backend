@@ -22,8 +22,8 @@ const userSchema = new mongoose.Schema<UserInfo>({
   user_level_id: {
     type: Number,
     required: true,
-    default: 1, // Default 1 = User (2 = Admin)
-    ref: 'UserLevel'
+    default: 1, // Default 1 = User (2 = Admin, 3 = Superadmin)
+    ref: 'UserLevel',
   },
   registeredAt: {
     type: String,
@@ -40,16 +40,7 @@ const userSchema = new mongoose.Schema<UserInfo>({
     required: false,
     default: [],
   },
-  exchangeBadge: {
-    type: Boolean,
-    required: false,
-    default: false,
-  },
   avatarUrl: {
-    type: String,
-    required: false,
-  },
-  linkedinUrl: {
     type: String,
     required: false,
   },

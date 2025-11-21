@@ -102,7 +102,7 @@ const verifyGoogleToken = async (
     const user = await findOrCreateUser(googleResponse);
 
     const tokenContent: TokenContent = {
-      _id: user.id,
+      _id: user._id.toString(),
       user_level_id: user.user_level_id,
     };
 

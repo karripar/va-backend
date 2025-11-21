@@ -1,22 +1,17 @@
 ﻿import { Router } from "express";
-import {getProfilePage, updateProfile, createProfile, getProfile, addFavorite, removeFavorite, addDocument, removeDocument,} from "../controllers/profileController";
+import { addFavorite, removeFavorite, addDocument, removeDocument, updateProfile } from "../controllers/profileController";
+import { authenticate } from "../../middlewares";
 
 const router = Router();
 
-// Profile CRUD
-router.get("/", getProfile);
-router.post("/", createProfile);
-
 // Favorites
-router.post("/favorites", addFavorite);
-router.delete("/favorites", removeFavorite);
+router.post("/favorites", authenticate, addFavorite);
+router.delete("/favorites", authenticate, removeFavorite);
 
-// Document, link-based
-router.post("/documents", addDocument);
-router.delete("/documents/:docId", removeDocument);
+// Documents
+router.post("/documents", authenticate, addDocument);
+router.delete("/documents/:docId", authenticate, removeDocument);
 
-// Parameterized routes
-router.get("/:id", getProfilePage);
-router.put("/:id", updateProfile);
+router.put("/:id", authenticate, updateProfile);
 
 export default router;
