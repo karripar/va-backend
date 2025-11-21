@@ -35,6 +35,8 @@ if (
 
 // USE api2.test.ts TO CREATE MORE TESTS, makes this file less cluttered because there are more coming
 
+// test comment
+
 describe("Admin Contact Information API Tests", () => {
   let testUser: UserInfo;
   let testToken: string;
