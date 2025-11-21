@@ -41,6 +41,7 @@
     "dotenv": "^17.2.3",
     "exif": "^0.6.0",
     "express": "^5.1.0",
+    "express-basic-auth": "^1.2.1",
     "express-rate-limit": "^8.1.0",
     "express-validator": "^7.2.1",
     "fluent-ffmpeg": "^2.1.3",

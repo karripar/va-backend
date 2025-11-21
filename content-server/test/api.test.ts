@@ -35,6 +35,8 @@ if (
 
 // USE api2.test.ts TO CREATE MORE TESTS, makes this file less cluttered because there are more coming
 
+// test comment
+
 describe("Admin Contact Information API Tests", () => {
   let testUser: UserInfo;
   let testToken: string;
@@ -57,7 +59,7 @@ describe("Admin Contact Information API Tests", () => {
     // Sign token for admin
     testToken = jwt.sign(
       {
-        id: testUser.id,
+        _id: testUser._id,
         level_name: "Admin",
       },
       process.env.JWT_SECRET as string,
@@ -101,7 +103,7 @@ describe("Admin Contact Information API Tests", () => {
 
   afterAll(async () => {
     if (testUser) {
-      await userModel.findByIdAndDelete(testUser.id);
+      await userModel.findByIdAndDelete(testUser._id);
     }
     if (mongoose.connection.readyState !== 0) {
       await mongoose.connection.close();
@@ -137,8 +139,8 @@ describe("Destination Scraper Controller Tests", () => {
     // Sign token
     testToken = jwt.sign(
       {
-        id: testUser.id,
-        level_name: "Admin",
+        _id: testUser._id,
+        user_level_id: 2,
       },
       process.env.JWT_SECRET as string,
       { expiresIn: "3h" }
@@ -184,7 +186,7 @@ describe("Destination Scraper Controller Tests", () => {
 
   afterAll(async () => {
     if (testUser) {
-      await userModel.findByIdAndDelete(testUser.id);
+      await userModel.findByIdAndDelete(testUser._id);
     }
     if (mongoose.connection.readyState !== 0) {
       await mongoose.connection.close();
