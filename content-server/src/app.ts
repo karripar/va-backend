@@ -6,6 +6,7 @@ import morgan from 'morgan';
 import path from 'path';
 import { errorHandler, notFound } from './middlewares';
 import api from './api';
+import basicAuth from 'express-basic-auth';
 
 const app = express();
 dotenv.config();
@@ -27,11 +28,19 @@ app.use('/api/v1', api);
 
 app.use(
   '/docs/apidoc',
+  basicAuth({
+    users: { admin: process.env.DOCS_PASSWORD || 'defaultPassword' },
+    challenge: true,
+  }),
   express.static(path.join(process.cwd(), 'apidocs'))
 )
 
 app.use(
   '/docs/typedoc',
+  basicAuth({
+    users: { admin: process.env.DOCS_PASSWORD || 'defaultPassword' },
+    challenge: true,
+  }),
   express.static(path.join(process.cwd(), 'docs'))
 );
 

@@ -8,6 +8,7 @@ import {corsSettings} from './lib/functions';
 import api from './api';
 import { errorHandler, notFound } from './middlewares';
 import path from 'path';
+import basicAuth from 'express-basic-auth';
 
 const app = express();
 
@@ -28,6 +29,10 @@ app.use('/api/v1', api);
 
 app.use(
   '/docs/api',
+  basicAuth({
+    users: { admin: process.env.DOCS_PASSWORD || 'defaultPassword' },
+    challenge: true,
+  }),
   express.static(path.join(process.cwd(), 'apidocs'))
 )
 
