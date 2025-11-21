@@ -35,7 +35,7 @@ app.use('/uploads', express.static('uploads'));
 app.use('/api/v1', api);
 
 app.use(
-  '/docs/api',
+  '/docs/apidoc',
   basicAuth({
     users: { admin: process.env.DOCS_PASSWORD || 'defaultPassword' },
     challenge: true,
