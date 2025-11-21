@@ -16,7 +16,6 @@ type AuthResponse = {
     documents: string[];
     exchangeBadge?: boolean;
     avatarUrl?: string;
-    linkedinUrl?: string;
     user_level_name?: 'Admin' | 'User' | 'Guest';
   };
 };
@@ -33,7 +32,6 @@ type UserInfo = {
   documents: string[];
   exchangeBadge?: boolean;
   avatarUrl?: string;
-  linkedinUrl?: string;
 }
 
 export type {

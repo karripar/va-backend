@@ -1,4 +1,4 @@
-import ApplicationStage from '../models/ApplicationStageModel';
+import ApplicationStage from '../api/models/ApplicationStageModel';
 
 export const seedApplicationStages = async () => {
   try {

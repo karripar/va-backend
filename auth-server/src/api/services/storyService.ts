@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from "express";
-import ExchangeStory from "../../models/ExchangeStoryModel";
-import StoryReaction from "../../models/StoryReactionModel";
+import ExchangeStory from "../models/ExchangeStoryModel";
+import StoryReaction from "../models/StoryReactionModel";
 import { getUserFromRequest } from "../../utils/authHelpers";
 
 export const getStories = async (req: Request, res: Response, next: NextFunction) => {

@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from "express";
-import Application from "../../models/ApplicationModel";
-import ApplicationStage from "../../models/ApplicationStageModel";
-import UserApplicationProgress from "../../models/UserApplicationProgressModel";
+import Application from '../models/ApplicationModel';
+import ApplicationStage from '../models/ApplicationStageModel';
+import UserApplicationProgress from '../models/UserApplicationProgressModel';
 import { requiredDocuments } from "../../utils/constants";
 import { getUserFromRequest, validateSourceType } from "../../utils/authHelpers";
 

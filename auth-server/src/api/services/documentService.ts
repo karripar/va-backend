@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import { Document } from "va-hybrid-types/contentTypes";
-import Profile from "../../models/ProfileModel";
+import Profile from "../models/ProfileModel";
 import { getUserFromRequest, validateSourceType } from "../../utils/authHelpers";
 
 export const addDocument = async (req: Request, res: Response, next: NextFunction) => {

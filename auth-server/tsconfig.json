@@ -11,5 +11,7 @@
     "skipLibCheck": true,
     "types": ["jest", "node"]
   },
-  "include": ["./*.js", "src/**/*.ts", "test/**/*.ts"],
+  //"include": ["./*.js", "src/**/*.ts", "test/**/*.ts","src/**/*.d.ts", "src/types/**/*.d.ts"],
+  "include": ["src", "test"],
+  "files": ["src/global.d.ts"]
 }

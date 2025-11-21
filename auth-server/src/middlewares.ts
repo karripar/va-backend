@@ -1,8 +1,6 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
-
 import CustomError from './classes/CustomError';
 import {NextFunction, Request, Response} from 'express';
-import {validationResult} from 'express-validator';
+import {validationResult, body} from 'express-validator';
 import jwt from 'jsonwebtoken';
 import User from './api/models/userModel';
 import {TokenContent} from 'va-hybrid-types/DBTypes';
@@ -14,6 +12,7 @@ const notFound = (req: Request, res: Response, next: NextFunction) => {
 };
 
 // Middleware to handle errors
+/* eslint-disable @typescript-eslint/no-unused-vars */
 const errorHandler = (
   error: CustomError,
   req: Request,
@@ -41,6 +40,24 @@ const validationErrors = (req: Request, res: Response, next: NextFunction) => {
   next();
 };
 
+//Story validations
+const validateStory = [
+  body('country').isString().trim().notEmpty().withMessage('country is required'),
+  body('city').isString().trim().notEmpty().withMessage('city is required'),
+  body('university').isString().trim().notEmpty().withMessage('university is required'),
+    // more validations for the schema fields
+];
+// Middleware to check for admin access
+function adminMiddleware(req: Request, res: Response, next: NextFunction) {
+  if (!req.user) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+  if (req.user.user_level_id !== 2) {
+    return res.status(403).json({ error: 'Admin access required' });
+  }
+  next();
+}
+
 // Middleware to authenticate the user
 const authenticate = async (
   req: Request,
@@ -66,6 +83,7 @@ const authenticate = async (
       return;
     }
 
+    req.user = user;
     res.locals.user = user;
     next();
   } catch (error) {
@@ -73,4 +91,4 @@ const authenticate = async (
   }
 };
 
-export {notFound, errorHandler, validationErrors, authenticate};
+export {notFound, errorHandler, validationErrors, authenticate, validateStory, adminMiddleware};

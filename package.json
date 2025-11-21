@@ -5,8 +5,7 @@
     "mongoose": "^8.19.0",
     "multer": "^2.0.2",
     "react": "^19.2.0",
-    "uuid": "^13.0.0",
-    "va-hybrid-types": "file:../va-hybrid-types"
+    "uuid": "^13.0.0"
   },
   "devDependencies": {
     "@types/uuid": "^10.0.0"

@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from "express";
-import { Budget } from "../../models/GrantModels";
+import { Budget } from "../models/GrantModels";
 import { budgetCategories } from "../../utils/constants";
 import { getUserFromRequest } from "../../utils/authHelpers";
 

@@ -1,4 +1,5 @@
 import mongoose from 'mongoose';
+import type { Document } from 'mongoose';
 import {UserInfo} from '../../types/LocalTypes';
 
 const userSchema = new mongoose.Schema<UserInfo>({
@@ -49,10 +50,7 @@ const userSchema = new mongoose.Schema<UserInfo>({
     type: String,
     required: false,
   },
-  linkedinUrl: {
-    type: String,
-    required: false,
-  },
 });
 
 export default mongoose.model<UserInfo>('User', userSchema);
+export type UserDocument = Document & UserInfo;

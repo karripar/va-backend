@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from "express";
-import { Grant, Kela, Budget } from "../../models/GrantModels";
+import { Grant, Kela, Budget } from "../models/GrantModels";
 import { erasmusGrantTypes } from "../../utils/constants";
 import { getUserFromRequest } from "../../utils/authHelpers";
 
