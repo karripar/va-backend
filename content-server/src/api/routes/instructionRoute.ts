@@ -31,7 +31,7 @@ const router = express.Router();
 
 router.get(
   /**
-   * @api {get} /instruction/links Get all instruction links
+   * @api {get} /instructions/links Get all instruction links
    * @apiName GetInstructionLinks
    * @apiGroup InstructionGroup
    * @apiVersion 1.0.0
@@ -71,7 +71,7 @@ router.get(
   getInstructionLinks
 ).put(
   /**
-   * @api {put} /instruction/links/:linkId Update an instruction link
+   * @api {put} /instructions/links/:linkId Update an instruction link
    * @apiName UpdateInstructionLink
    * @apiGroup InstructionGroup
    * @apiVersion 1.0.0
@@ -178,7 +178,7 @@ router.get(
   getInstructionVisibility
 ).put(
   /**
-   * @api {put} /instruction/visibility/:stepIndex Toggle instruction step visibility
+   * @api {put} /instructions/visibility/:stepIndex Toggle instruction step visibility
    * @apiName ToggleInstructionVisibility
    * @apiGroup InstructionGroup
    * @apiVersion 1.0.0
