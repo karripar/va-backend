@@ -358,7 +358,7 @@ const toggleInstructionVisibility = async (
     const {stepIndex} = req.params as {stepIndex: string};
     const index = parseInt(stepIndex, 10);
 
-    if (isNaN(index)) {
+    if (isNaN(index) || index < 0) {
       next(new CustomError('Invalid step index', 400));
       return;
     }

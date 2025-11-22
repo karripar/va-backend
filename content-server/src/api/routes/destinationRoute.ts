@@ -205,6 +205,37 @@ router.get(
 );
 
 router.delete(
+  /**
+ * @api {delete} /destinations/metropolia/destination-url/:id Delete Metropolia destination URL
+ * @apiName DeleteMetropoliaDestinationURL
+ * @apiGroup DataGroup
+ * @apiVersion 1.0.0
+ *
+ * @apiDescription Deletes a specific Metropolia destination URL entry by its ID.
+ * This endpoint is restricted to admin users only.
+ *
+ * @apiPermission token
+ *
+ * @apiParam {String} id Unique identifier of the destination URL entry to be deleted.
+ *
+ * @apiSuccess {String} message Confirmation message.
+ * @apiSuccessExample {json} Success-Response:
+ *     HTTP/1.1 200 OK
+ *     {
+ *       "message": "Destination URL deleted successfully"
+ *     }
+ *
+ * @apiError (401 Unauthorized) Unauthorized Missing or invalid authentication token.
+ * @apiError (403 Forbidden) Forbidden User is not an admin.
+ * @apiError (400 Bad Request) BadRequest Invalid destination URL ID.
+ * @apiError (404 Not Found) NotFound Destination URL entry not found.
+ * @apiError (500 Internal Server Error) InternalServerError Failed to delete the destination URL.
+ * @apiErrorExample {json} InternalServerError-Response:
+ *     HTTP/1.1 500 Internal Server Error
+ *     {
+ *       "message": "Failed to delete destination URL"
+ *     }
+ */
   '/metropolia/destination-url/:id',
   authenticate,
   param('id').isMongoId().withMessage('Invalid destination URL ID'),
