@@ -35,22 +35,15 @@ app.use('/uploads', express.static('uploads'));
 app.use('/api/v1', api);
 
 app.use(
-  '/docs/apidoc',
+  '/upload/docs',
   basicAuth({
     users: { admin: process.env.DOCS_PASSWORD || 'defaultPassword' },
     challenge: true,
-  }),
-  express.static(path.join(process.cwd(), 'apidocs'))
-)
-
-app.use(
-  '/docs/typedoc',
-  basicAuth({
-    users: { admin: process.env.DOCS_PASSWORD || 'defaultPassword' },
-    challenge: true,
-  }),
-  express.static(path.join(process.cwd(), 'docs'))
+  })
 );
+
+app.use('/upload/docs/typedoc', express.static(path.join(process.cwd(), 'docs')));
+app.use('/upload/docs/apidoc', express.static(path.join(process.cwd(), 'apidocs')));
 
 app.use(notFound);
 

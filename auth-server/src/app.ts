@@ -28,18 +28,15 @@ app.use(
 app.use('/api/v1', api);
 
 app.use(
-  '/docs/apidoc',
+  '/auth/docs',
   basicAuth({
     users: { admin: process.env.DOCS_PASSWORD || 'defaultPassword' },
     challenge: true,
-  }),
-  express.static(path.join(process.cwd(), 'apidocs'))
-)
-
-app.use(
-  '/docs/typedoc',
-  express.static(path.join(process.cwd(), 'docs'))
+  })
 );
+
+app.use('/auth/docs/typedoc', express.static(path.join(process.cwd(), 'docs')));
+app.use('/auth/docs/apidoc', express.static(path.join(process.cwd(), 'apidocs')));
 
 app.use(notFound);
 app.use(errorHandler);
