@@ -2,6 +2,7 @@ import express from 'express';
 import {
   getUserProfile,
   searchUsersByEmail,
+  deleteUser
 } from '../controllers/userController';
 import {authenticate} from '../../middlewares';
 import {param} from 'express-validator';
@@ -134,5 +135,54 @@ router.get(
   authenticate,
   searchUsersByEmail,
 );
+
+router.delete(
+  '/:id',
+  /**
+   * @api {delete} /users/:id Delete User
+   * @apiName DeleteUser
+   * @apiGroup UserGroup
+   * @apiVersion 1.0.0
+   *
+   * @apiDescription Deletes a user by their ID. Accessible only to elevated admin users.
+   * @apiPermission token (elevated admin only)
+   * @apiParam {String} id User's unique identifier.
+   *
+   * @apiSuccess {Boolean} success Indicates if the deletion was successful.
+   * @apiSuccess {String} message Confirmation message.
+   *
+   * @apiSuccessExample {json} Success-Response:
+   *     HTTP/1.1 200 OK
+   *     {
+   *       "success": true,
+   *       "message": "User deleted successfully"
+   *     }
+   *
+   * @apiError (403 Forbidden) Forbidden The requester is not an elevated admin.
+   * @apiErrorExample {json} Forbidden-Response:
+   *     HTTP/1.1 403 Forbidden
+   *     {
+   *       "message": "Forbidden, insufficient permissions"
+   *     }
+   *
+   * @apiError (404 Not Found) NotFound The user with the specified ID does not exist.
+   * @apiErrorExample {json} NotFound-Response:
+   *     HTTP/1.1 404 Not Found
+   *     {
+   *       "message": "User not found"
+   *     }
+   *
+   * @apiError (500 Internal Server Error) InternalServerError Server error while processing the request.
+   * @apiErrorExample {json} InternalServerError-Response:
+   *     HTTP/1.1 500 Internal Server Error
+   *     {
+   *       "message": "Failed to delete user"
+   *     }
+   */
+  param('id').isMongoId(),
+  authenticate,
+  deleteUser,
+);
+
 
 export default router;

@@ -230,9 +230,60 @@ const searchUsersByEmail = async (
   }
 };
 
+
+/** * @function deleteUser
+ * @description Deletes a user by ID. Only elevated admins (user_level_id = 3) can perform this action.
+ * Prevents deletion of other elevated admins. Users have to request deletion through support.
+ *
+ * @param {Request} req - Express request object with user ID in params.
+ * @param {Response<MessageResponse>} res - Express response object.
+ * @param {NextFunction} next - Express next middleware for error handling.
+ *
+ * @returns {Promise<void>} Responds with:
+ * - 200: Success message on deletion.
+ * - 403: If requester is not an elevated admin or tries to delete an elevated admin.
+ * - 404: If user to delete is not found.
+ * - 500: On server errors.
+ *
+ * @example
+ * // DELETE /api/v1/users/:id
+ * // Requires: Authorization header with elevated admin token
+ * deleteUser(req, res, next);
+ */
+const deleteUser = async (
+  req: Request,
+  res: Response<MessageResponse>,
+  next: NextFunction,
+) => {
+  try {
+    const userId = req.params.id;
+
+    const admin = res.locals.user;
+    if (admin.user_level_id !== 3) {
+      return res.status(403).json({message: 'Unauthorized, not an elevated admin'});
+    }
+
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({message: 'User not found'});
+    }
+
+    if (user.user_level_id === 3) {
+      return res.status(403).json({message: 'Cannot delete elevated admin users'});
+    }
+
+    await User.findByIdAndDelete(userId);
+    res.status(200).json({message: 'User deleted successfully'});
+  } catch (error) {
+    next(new CustomError((error as Error).message, 500));
+  }
+};
+
+
 export {
   updateUserFromGoogle,
   getUserProfile,
   findOrCreateUser,
   searchUsersByEmail,
+  deleteUser,
 };
