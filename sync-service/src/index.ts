@@ -6,7 +6,7 @@ dotenv.config();
 
 console.log('🚀 Vector Store Sync Service Started');
 console.log(`📅 Schedule: ${process.env.SYNC_SCHEDULE || '0 */6 * * *'}`);
-console.log(`📂 SharePoint Folder: ${process.env.SHAREPOINT_FOLDER_PATH}`);
+console.log(`📂 Google Drive Folder ID: ${process.env.GOOGLE_DRIVE_FOLDER_ID}`);
 console.log(`🗂️  Vector Store ID: ${process.env.VECTOR_STORE_ID}\n`);
 
 // Run sync on startup
