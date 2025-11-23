@@ -32,6 +32,7 @@ type UserInfo = {
   documents: string[];
   exchangeBadge?: boolean;
   avatarUrl?: string;
+  isBlocked: boolean;
 }
 
 export type {

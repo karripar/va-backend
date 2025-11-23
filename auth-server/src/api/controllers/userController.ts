@@ -216,6 +216,7 @@ const searchUsersByEmail = async (
       user_level_id: user.user_level_id,
       avatarUrl: user.avatarUrl,
       registeredAt: user.registeredAt,
+      isBlocked: user.isBlocked,
       favorites: [], // Ensure favorites is included
       documents: [], // Ensure documents is included
     }));
@@ -280,10 +281,113 @@ const deleteUser = async (
 };
 
 
+/** * @function toggleBlockUser
+ * @description Toggles the blocked status of a user by ID. Only elevated admins (user_level_id = 3) can perform this action.
+ * Prevents blocking of other elevated admins.
+ *
+ * @param {Request} req - Express request object with user ID in params.
+ * @param {Response<MessageResponse>} res - Express response object.
+ * @param {NextFunction} next - Express next middleware for error handling.
+ *
+ * @returns {Promise<void>} Responds with:
+ * - 200: Success message on blocking/unblocking.
+ * - 403: If requester is not an elevated admin or tries to block an elevated admin.
+ * - 404: If user to block/unblock is not found.
+ * - 500: On server errors.
+ *
+ * @example
+ * // PUT /api/v1/users/block/:id
+ * // Requires: Authorization header with elevated admin token
+ * toggleBlockUser(req, res, next);
+ */
+const toggleBlockUser = async (
+  req: Request,
+  res: Response<MessageResponse>,
+  next: NextFunction,
+ ) => {
+  try {
+    const userId = req.params.id;
+
+    const admin = res.locals.user;
+    if (![2, 3].includes(admin.user_level_id)) {
+      return res.status(403).json({message: 'Unauthorized, not an admin'});
+    }
+
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({message: 'User not found'});
+    }
+
+    if (user.user_level_id === 3) {
+      return res.status(403).json({message: 'Cannot block elevated admin users'});
+    }
+
+    user.isBlocked = !user.isBlocked;
+    await user.save();
+
+    const action = user.isBlocked ? 'blocked' : 'unblocked';
+    res.status(200).json({message: `User successfully ${action}`});
+  } catch (error) {
+    next(new CustomError((error as Error).message, 500));
+  }
+};
+
+
+/** * @function getBlockedUsers
+ * @description Retrieves a list of all blocked users. Only accessible to elevated admins (user_level_id = 2 or 3).
+ *
+ * @param {Request} req - Express request object.
+ * @param {Response<ProfileResponse[] | MessageResponse>} res - Express response object.
+ * @param {NextFunction} next - Express next middleware for error handling.
+ *
+ * @returns {Promise<ProfileResponse[]>} Array of blocked user profiles.
+ * @throws {Error} If requester is not an elevated admin or on server errors.
+ *
+ * @example
+ * // GET /api/v1/users/blocked
+ * // Requires: Authorization header with elevated admin token
+ * const blockedUsers = await getBlockedUsers(req, res, next);
+ */
+const getBlockedUsers = async (
+  req: Request,
+  res: Response<{ blockedUsers: Partial<ProfileResponse[]> } | MessageResponse>,
+  next: NextFunction,
+) => {
+  try {
+    const adminUser = res.locals.user;
+    if (![2, 3].includes(adminUser.user_level_id)) {
+      return res.status(403).json({ message: "Unauthorized, not an admin" });
+    }
+
+    const blockedUsers = await User.find({ isBlocked: true });
+
+    return res.status(200).json({
+      blockedUsers: blockedUsers.map((user) => ({
+        _id: user._id.toString(),
+        email: user.email,
+        userName: user.userName,
+        user_level_id: user.user_level_id,
+        avatarUrl: user.avatarUrl,
+        registeredAt: user.registeredAt,
+        isBlocked: user.isBlocked,
+        favorites: [], // Ensure favorites is included
+        documents: [], // Ensure documents is included
+      })),
+    });
+  } catch (error) {
+    next(new CustomError((error as Error).message, 500));
+  }
+};
+
+
+
+
 export {
   updateUserFromGoogle,
   getUserProfile,
   findOrCreateUser,
   searchUsersByEmail,
   deleteUser,
+  toggleBlockUser,
+  getBlockedUsers
 };

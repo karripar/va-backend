@@ -45,6 +45,11 @@ const userSchema = new mongoose.Schema<UserInfo>({
     type: String,
     required: false,
   },
+  isBlocked: {
+    type: Boolean,
+    required: true,
+    default: false,
+  },
 });
 
 export default mongoose.model<UserInfo>('User', userSchema);
