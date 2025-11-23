@@ -1,5 +1,5 @@
 import express from 'express';
-import {upload, uploadAvatar, uploadDocument, uploadApplicationDocument, addDocumentLink, validateDocumentLink,
+import {/* upload, uploadAvatar, uploadDocument, uploadApplicationDocument, */ addDocumentLink, validateDocumentLink,
 getPlatformInstructions, getDocuments} from "../controllers/services/linkUploadService";
 
 /**
@@ -24,21 +24,21 @@ const router = express.Router();
  * @apiGroup LinkUpload
  * @apiParam {File} avatar Avatar image file (form-data)
  */
-router.post('/avatar', upload.single('avatar'), uploadAvatar);
+//router.post('/avatar', upload.single('avatar'), uploadAvatar);
 /**
  * @api {post} /link-upload/document Upload document file
  * @apiName UploadDocument
  * @apiGroup LinkUpload
  * @apiParam {File} document Document file (form-data)
  */
-router.post('/document', upload.single('document'), uploadDocument);
+//router.post('/document', upload.single('document'), uploadDocument);
 /**
  * @api {post} /link-upload/applications/upload Upload application document file
  * @apiName UploadApplicationDocument
  * @apiGroup LinkUpload
  * @apiParam {File} file Application document file (form-data)
  */
-router.post('/applications/upload', upload.single('file'), uploadApplicationDocument);
+//router.post('/applications/upload', upload.single('file'), uploadApplicationDocument);
 
 
 /**
@@ -61,7 +61,7 @@ router.get('/documents', getDocuments);
  */
 router.post('/documents/validate', validateDocumentLink);
 
-// Document routes 
+// Document routes
 /**
  * @api {post} /link-upload/documents/link Add document link
  * @apiName AddDocumentLink
@@ -75,12 +75,12 @@ router.post('/documents/link', addDocumentLink);
  * @apiGroup LinkUpload
  * @apiUse DocumentLinkBody
  */
-router.post('/documents', addDocumentLink); 
+router.post('/documents', addDocumentLink);
 
 /*
-// Application document routes 
+// Application document routes
 router.post('/applications/documents/link', addApplicationDocumentLink);
-router.post('/applications/documents', addApplicationDocumentLink); 
+router.post('/applications/documents', addApplicationDocumentLink);
 */
 
 export default router;

@@ -1,19 +1,11 @@
 import {Request, Response, NextFunction} from 'express';
-import multer from 'multer';
-import path from 'path';
+/* import multer from 'multer';
+import path from 'path'; */
 import {v4 as uuidv4} from 'uuid';
 import { platformInstructions, platformPatterns } from '../../../utils/constants';
 import LinkDocument from '../../models/LinkDocumentModel';
 
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, 'uploads/');
-  },
-  filename: (req, file, cb) => {
-    const uniqueName = `${uuidv4()}${path.extname(file.originalname)}`;
-    cb(null, uniqueName);
-  },
-});
+
 
 const getDocuments = async (req: Request, res: Response, next: NextFunction) => {
   try {
@@ -25,7 +17,7 @@ const getDocuments = async (req: Request, res: Response, next: NextFunction) => 
   }
 };
 
-const upload = multer({
+/* const upload = multer({
   storage,
   limits: {fileSize: 10 * 1024 * 1024}, // 20MB limit
   fileFilter: (req, file, cb) => {
@@ -39,7 +31,7 @@ const upload = multer({
       cb(new Error('Invalid file type'));
     }
   },
-});
+}); */
 
 /**
  * Extracts the authenticated user's id from the request.
@@ -57,7 +49,7 @@ const validateSourceType = (sourceType: string): boolean => {
   return validSourceTypes.includes(sourceType);
 };
 
-const uploadAvatar = async (req: Request, res: Response, next: NextFunction) => {
+/* const uploadAvatar = async (req: Request, res: Response, next: NextFunction) => {
   try {
     if (!req.file) {
       return res.status(400).json({message: 'No file uploaded'});
@@ -68,9 +60,9 @@ const uploadAvatar = async (req: Request, res: Response, next: NextFunction) => 
   } catch (error) {
     next(error);
   }
-};
+}; */
 
-const uploadDocument = async (req: Request, res: Response, next: NextFunction) => {
+/* const uploadDocument = async (req: Request, res: Response, next: NextFunction) => {
   try {
     if (!req.file) {
       return res.status(400).json({message: 'No file uploaded'});
@@ -81,9 +73,9 @@ const uploadDocument = async (req: Request, res: Response, next: NextFunction) =
   } catch (error) {
     next(error);
   }
-};
+}; */
 
-const uploadApplicationDocument = async (req: Request, res: Response, next: NextFunction) => {
+/* const uploadApplicationDocument = async (req: Request, res: Response, next: NextFunction) => {
   try {
     if (!req.file) {
       return res.status(400).json({message: 'No file uploaded'});
@@ -100,7 +92,7 @@ const uploadApplicationDocument = async (req: Request, res: Response, next: Next
   } catch (error) {
     next(error);
   }
-};
+}; */
 
 // ===== LINK-BASED DOCUMENT =====
 
@@ -255,10 +247,10 @@ const getPlatformInstructions = async (req: Request, res: Response, next: NextFu
 };
 
 export {
-  upload,
+  /* upload,
   uploadAvatar,
   uploadDocument,
-  uploadApplicationDocument,
+  uploadApplicationDocument, */
   addDocumentLink,
   addApplicationDocumentLink,
   validateDocumentLink,
