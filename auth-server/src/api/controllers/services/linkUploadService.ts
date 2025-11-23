@@ -115,6 +115,7 @@ const addDocumentLink = async (req: Request, res: Response, next: NextFunction) 
     }
 
     const documentLink = {
+      // removed uuidv4() from here, mongodb will auto-generate _id
       userId,
       name,
       url,
@@ -152,6 +153,7 @@ const addApplicationDocumentLink = async (req: Request, res: Response, next: Nex
     }
 
     const applicationDocumentLink = {
+      // removed uuidv4() from here, mongodb will auto-generate _id
       applicationId: `app-${userId}-${Date.now()}`,
       applicationPhase: phase,
       documentType,
