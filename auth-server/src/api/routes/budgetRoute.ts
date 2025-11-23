@@ -1,7 +1,7 @@
 import { Router } from "express";
 import {getBudgetCategories, createOrUpdateBudgetEstimate, getBudgetEstimate,
 saveOrUpdateBudget, getUserBudget, getBudgetHistory, deleteBudget,} from "../controllers/profileController";
-import {saveCalculatorHistory, getCalculatorHistory} from "../services/budgetCalculatorService";
+import {saveCalculatorHistory, getCalculatorHistory} from "../controllers/services/budgetCalculatorService";
 
 const router = Router();
 

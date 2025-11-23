@@ -1,6 +1,6 @@
 import {Request, Response, NextFunction} from 'express';
-import User from '../models/userModel';
-import {isValidEmail} from '../../utils/authHelpers';
+import User from '../../models/userModel';
+import {isValidEmail} from '../../../utils/authHelpers';
 
 export const updateProfile = async (req: Request, res: Response) => {
   try {

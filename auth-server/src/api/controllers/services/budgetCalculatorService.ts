@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from "express";
-import { CalculatorHistory } from "../models/BudgetCalculatorModel";
+import { CalculatorHistory } from "../../models/BudgetCalculatorModel";
 
 // Save calculator history
 export const saveCalculatorHistory = async (req: Request, res: Response, next: NextFunction) => {

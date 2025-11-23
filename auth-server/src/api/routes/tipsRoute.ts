@@ -1,5 +1,5 @@
 import { Router } from "express";
-import {getStories, getStoryById, createStory, updateStory, reactToStory, getFeaturedStories} from "../services/storyService";
+import {getStories, getStoryById, createStory, updateStory, reactToStory, getFeaturedStories} from "../controllers/services/storyService";
 
 const router = Router();
 

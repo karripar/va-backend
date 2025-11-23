@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from "express";
-import { Budget } from "../models/GrantModels";
-import { budgetCategories } from "../../utils/constants";
-import { getUserFromRequest } from "../../utils/authHelpers";
+import { Budget } from "../../models/GrantModels";
+import { budgetCategories } from "../../../utils/constants";
+import { getUserFromRequest } from "../../../utils/authHelpers";
 
 // Get budget categories
 export const getBudgetCategories = (req: Request, res: Response, next: NextFunction) => {

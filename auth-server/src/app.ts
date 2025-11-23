@@ -8,6 +8,7 @@ import {corsSettings} from './lib/functions';
 import api from './api';
 import { errorHandler, notFound } from './middlewares';
 import path from 'path';
+import linkUploadRoute from './api/routes/linkUploadRoute';
 import basicAuth from 'express-basic-auth';
 
 const app = express();
@@ -26,6 +27,7 @@ app.use(
 );
 
 app.use('/api/v1', api);
+app.use('/api/v1', linkUploadRoute);
 
 app.use(
   '/docs/apidoc',

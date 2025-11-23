@@ -1,7 +1,7 @@
 import {Request, Response, NextFunction} from 'express';
 import {Document} from 'va-hybrid-types/contentTypes';
-import User from '../models/userModel';
-import {getUserFromRequest, validateSourceType} from '../../utils/authHelpers';
+import User from '../../models/userModel';
+import {getUserFromRequest, validateSourceType} from '../../../utils/authHelpers';
 
 export const addDocument = async (
   req: Request,

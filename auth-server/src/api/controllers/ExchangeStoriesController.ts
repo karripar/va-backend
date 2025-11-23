@@ -1,1 +1,1 @@
-export * from '../services/ExchangeStoriesService';
+export * from './services/ExchangeStoriesService';
