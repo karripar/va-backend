@@ -26,7 +26,7 @@ import {
   toggleFaultyInstructionVisibility,
 } from "./controllers/testInstructions";
 import jwt from "jsonwebtoken";
-import userModel from "../src/api/models/userModel"; // adjust if path differs
+import userModel from "../src/api/models/userModel"; 
 import { UserInfo } from "../src/types/LocalTypes";
 
 dotenv.config();

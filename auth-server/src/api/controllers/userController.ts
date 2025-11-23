@@ -344,7 +344,7 @@ const toggleBlockUser = async (
  * @throws {Error} If requester is not an elevated admin or on server errors.
  *
  * @example
- * // GET /api/v1/users/blocked
+ * // GET /api/v1/users/blocked/users
  * // Requires: Authorization header with elevated admin token
  * const blockedUsers = await getBlockedUsers(req, res, next);
  */

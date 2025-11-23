@@ -22,7 +22,7 @@ type AuthResponse = {
 
 // user type for the DB
 type UserInfo = {
-  id: string;
+  _id: string;
   googleId?: string;
   userName: string;
   email: string;

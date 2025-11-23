@@ -238,7 +238,7 @@ router.put(
 router.get(
   '/blocked/users',
   /**
-   * @api {get} /users/blocked Get Blocked Users
+   * @api {get} /users/blocked/users Get Blocked Users
    * @apiName GetBlockedUsers
    * @apiGroup UserGroup
    * @apiVersion 1.0.0
