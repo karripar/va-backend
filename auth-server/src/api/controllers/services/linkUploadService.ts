@@ -1,10 +1,9 @@
 import {Request, Response, NextFunction} from 'express';
 /* import multer from 'multer';
 import path from 'path'; */
-import {v4 as uuidv4} from 'uuid';
+//import { v4 as uuidv4 } from "uuid/dist/index.js";
 import { platformInstructions, platformPatterns } from '../../../utils/constants';
 import LinkDocument from '../../models/LinkDocumentModel';
-
 
 
 const getDocuments = async (req: Request, res: Response, next: NextFunction) => {
@@ -116,7 +115,6 @@ const addDocumentLink = async (req: Request, res: Response, next: NextFunction) 
     }
 
     const documentLink = {
-      id: uuidv4(),
       userId,
       name,
       url,
@@ -154,7 +152,6 @@ const addApplicationDocumentLink = async (req: Request, res: Response, next: Nex
     }
 
     const applicationDocumentLink = {
-      id: uuidv4(),
       applicationId: `app-${userId}-${Date.now()}`,
       applicationPhase: phase,
       documentType,
@@ -176,8 +173,6 @@ const addApplicationDocumentLink = async (req: Request, res: Response, next: Nex
     next(error);
   }
 };
-
-import fetch from 'node-fetch';
 
 const validateDocumentLink = async (req: Request, res: Response, next: NextFunction) => {
   try {
