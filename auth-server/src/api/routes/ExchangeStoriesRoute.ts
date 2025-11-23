@@ -26,6 +26,10 @@ router.get('/stories/:id', getStoryByIdHandler);
 /**
  * @api {post} /stories Create a new story (Admin only)
  */
+/**
+ * @api {get} /stories/:id Get story by ID
+ * @apiParam {String} id Story ID
+ */
 router.post(
   '/stories',
   authenticate,
