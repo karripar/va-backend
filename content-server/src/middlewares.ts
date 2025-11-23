@@ -54,6 +54,11 @@ const authenticate = async (req: Request, res: Response, next: NextFunction) => 
     return;
   }
 
+  if (user.isBlocked) {
+    next(new CustomError('User is blocked', 403));
+    return;
+  }
+
   res.locals.user = user;
   next();
   } catch (error) {

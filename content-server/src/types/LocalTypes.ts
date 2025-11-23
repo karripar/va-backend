@@ -12,6 +12,7 @@ type UserInfo = {
   avatarUrl?: string;
   linkedinUrl?: string;
   user_level_name?: 'Admin' | 'User' | 'Guest';
+  isBlocked: boolean;
 }
 
 export type {

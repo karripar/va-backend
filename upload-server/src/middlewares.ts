@@ -3,6 +3,7 @@ import {validationResult} from 'express-validator';
 import CustomError from './classes/CustomError';
 import {NextFunction, Request, Response} from 'express';
 import jwt from 'jsonwebtoken';
+import User from './api/models/userModel';
 
 // Middleware to handle 404 errors
 const notFound = (req: Request, res: Response, next: NextFunction) => {
@@ -57,6 +58,18 @@ const authenticate = async (
       token,
       process.env.JWT_SECRET as string,
     ) as TokenContent;
+
+    const user = await User.findById(decoded._id);
+    //console.log('Authenticated user:', user);
+    if (!user) {
+      next(new CustomError('Unauthorized, user not found', 401));
+      return;
+    }
+
+    if (user.isBlocked) {
+      next(new CustomError('User is blocked', 403));
+      return;
+    }
 
     // set user info from token
     res.locals.user = {

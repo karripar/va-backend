@@ -83,6 +83,11 @@ const authenticate = async (
       return;
     }
 
+    if (user.isBlocked) {
+      next(new CustomError('User is blocked', 403));
+      return;
+    }
+
     req.user = user;
     res.locals.user = user;
     next();
