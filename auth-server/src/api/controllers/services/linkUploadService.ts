@@ -2,7 +2,8 @@ import {Request, Response, NextFunction} from 'express';
 import multer from 'multer';
 import path from 'path';
 import {v4 as uuidv4} from 'uuid';
-import { platformInstructions, platformPatterns } from '../../utils/platformHelpers';
+import { platformInstructions, platformPatterns } from '../../../utils/constants';
+import LinkDocument from '../../models/LinkDocumentModel';
 
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
@@ -13,6 +14,16 @@ const storage = multer.diskStorage({
     cb(null, uniqueName);
   },
 });
+
+const getDocuments = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const userId = getUserFromRequest(req);
+    const docs = await LinkDocument.find({ userId });
+    res.json(docs);
+  } catch (error) {
+    next(error);
+  }
+};
 
 const upload = multer({
   storage,
@@ -30,9 +41,15 @@ const upload = multer({
   },
 });
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
+/**
+ * Extracts the authenticated user's id from the request.
+ * Throws if user is not authenticated (should not happen if authenticate middleware is used).
+ */
 const getUserFromRequest = (req: Request): string => {
-  return "1"; // Mock user ID
+  if (req.user && req.user._id) {
+    return req.user._id.toString();
+  }
+  throw new Error('User not authenticated');
 };
 
 const validateSourceType = (sourceType: string): boolean => {
@@ -85,7 +102,7 @@ const uploadApplicationDocument = async (req: Request, res: Response, next: Next
   }
 };
 
-// ===== LINK-BASED DOCUMENT ENDPOINTS =====
+// ===== LINK-BASED DOCUMENT =====
 
 const addDocumentLink = async (req: Request, res: Response, next: NextFunction) => {
   try {
@@ -117,9 +134,9 @@ const addDocumentLink = async (req: Request, res: Response, next: NextFunction) 
       accessPermission: "public",
       notes: notes || null
     };
-
-    // TODO: Save to database
-    res.status(201).json(documentLink);
+    // Saving the link
+    const saved = await LinkDocument.create(documentLink);
+    res.status(201).json(saved);
   } catch (error) {
     next(error);
   }
@@ -160,12 +177,15 @@ const addApplicationDocumentLink = async (req: Request, res: Response, next: Nex
       notes: notes || null
     };
 
-    // TODO: Save to database
-    res.status(201).json(applicationDocumentLink);
+    // Saving the link
+    const saved = await LinkDocument.create(applicationDocumentLink);
+    res.status(201).json(saved);
   } catch (error) {
     next(error);
   }
 };
+
+import fetch from 'node-fetch';
 
 const validateDocumentLink = async (req: Request, res: Response, next: NextFunction) => {
   try {
@@ -188,11 +208,34 @@ const validateDocumentLink = async (req: Request, res: Response, next: NextFunct
     const pattern = platformPatterns[sourceType];
     const isValidFormat = pattern ? pattern.test(url) : false;
 
-    // TODO: Implementing actual link accessibility check
+    let isAccessible = false;
+    let errorMessage = null;
+    if (isValidFormat) {
+      try {
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 5000);
+        let response;
+        try {
+          response = await fetch(url, { method: 'HEAD', signal: controller.signal });
+        } finally {
+          clearTimeout(timeout);
+        }
+        isAccessible = response.ok;
+        if (!isAccessible) {
+          errorMessage = `URL responded with status ${response.status}`;
+        }
+      } catch (err) {
+        isAccessible = false;
+        errorMessage = `Could not access URL: ${err instanceof Error ? err.message : 'Unknown error'}`;
+      }
+    } else {
+      errorMessage = "URL format does not match expected pattern for platform";
+    }
+
     const validation = {
       isValid: isValidFormat,
-      isAccessible: isValidFormat,
-      errorMessage: isValidFormat ? null : "URL format does not match expected pattern for platform",
+      isAccessible,
+      errorMessage,
       checkedAt: new Date().toISOString(),
       platform: sourceType
     };
@@ -219,5 +262,6 @@ export {
   addDocumentLink,
   addApplicationDocumentLink,
   validateDocumentLink,
-  getPlatformInstructions
+  getPlatformInstructions,
+  getDocuments
 };

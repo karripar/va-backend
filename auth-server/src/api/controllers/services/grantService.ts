@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from "express";
-import { Grant, Kela, Budget } from "../models/GrantModels";
-import { erasmusGrantTypes } from "../../utils/constants";
-import { getUserFromRequest } from "../../utils/authHelpers";
+import { Grant, Kela, Budget } from "../../models/GrantModels";
+import { erasmusGrantTypes } from "../../../utils/constants";
+import { getUserFromRequest } from "../../../utils/authHelpers";
 
 export const getErasmusGrantTypes = (req: Request, res: Response, next: NextFunction) => {
   try {

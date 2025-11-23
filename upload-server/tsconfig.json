@@ -11,5 +11,5 @@
       "skipLibCheck": true,
       "types": ["jest", "node"]
     },
-    "include": ["./*.js", "src/**/*.ts", "test/**/*.ts"],
+    "include": ["./*.js", "src/**/*.ts", "test/**/*.ts", "src/utils/platformHelpers.ts"],
   }

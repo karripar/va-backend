@@ -1,9 +1,9 @@
 import { Request, Response, NextFunction } from "express";
-import Application from '../models/ApplicationModel';
-import ApplicationStage from '../models/ApplicationStageModel';
-import UserApplicationProgress from '../models/UserApplicationProgressModel';
-import { requiredDocuments } from "../../utils/constants";
-import { getUserFromRequest, validateSourceType } from "../../utils/authHelpers";
+import Application from '../../models/ApplicationModel';
+import ApplicationStage from '../../models/ApplicationStageModel';
+import UserApplicationProgress from '../../models/UserApplicationProgressModel';
+import { requiredDocuments } from "../../../utils/constants";
+import { getUserFromRequest, validateSourceType } from "../../../utils/authHelpers";
 
 export const getApplicationStages = async (req: Request, res: Response, next: NextFunction) => {
   try {

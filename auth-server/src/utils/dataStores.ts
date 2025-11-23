@@ -15,7 +15,6 @@ export const profiles: ProfileResponse[] = [
     favorites: ["Espanja - Madrid", "Ranska - Pariisi"],
     documents: [],
     exchangeBadge: true,
-    linkedinUrl: "https://linkedin.com/in/testuser",
   }
 ];
 
