@@ -2,6 +2,9 @@ import express from 'express';
 import {
   getUserProfile,
   searchUsersByEmail,
+  deleteUser,
+  toggleBlockUser,
+  getBlockedUsers
 } from '../controllers/userController';
 import {authenticate} from '../../middlewares';
 import {param} from 'express-validator';
@@ -134,5 +137,155 @@ router.get(
   authenticate,
   searchUsersByEmail,
 );
+
+router.delete(
+  '/:id',
+  /**
+   * @api {delete} /users/:id Delete User
+   * @apiName DeleteUser
+   * @apiGroup UserGroup
+   * @apiVersion 1.0.0
+   *
+   * @apiDescription Deletes a user by their ID. Accessible only to elevated admin users.
+   * @apiPermission token (elevated admin only)
+   * @apiParam {String} id User's unique identifier.
+   *
+   * @apiSuccess {Boolean} success Indicates if the deletion was successful.
+   * @apiSuccess {String} message Confirmation message.
+   *
+   * @apiSuccessExample {json} Success-Response:
+   *     HTTP/1.1 200 OK
+   *     {
+   *       "success": true,
+   *       "message": "User deleted successfully"
+   *     }
+   *
+   * @apiError (403 Forbidden) Forbidden The requester is not an elevated admin.
+   * @apiErrorExample {json} Forbidden-Response:
+   *     HTTP/1.1 403 Forbidden
+   *     {
+   *       "message": "Forbidden, insufficient permissions"
+   *     }
+   *
+   * @apiError (404 Not Found) NotFound The user with the specified ID does not exist.
+   * @apiErrorExample {json} NotFound-Response:
+   *     HTTP/1.1 404 Not Found
+   *     {
+   *       "message": "User not found"
+   *     }
+   *
+   * @apiError (500 Internal Server Error) InternalServerError Server error while processing the request.
+   * @apiErrorExample {json} InternalServerError-Response:
+   *     HTTP/1.1 500 Internal Server Error
+   *     {
+   *       "message": "Failed to delete user"
+   *     }
+   */
+  param('id').isMongoId(),
+  authenticate,
+  deleteUser,
+);
+
+router.put(
+  '/block/:id',
+  /**
+   * @api {put} /users/block/:id Block User
+   * @apiName toggleBlockUser
+   * @apiGroup UserGroup
+   * @apiVersion 1.0.0
+   *
+   * @apiDescription Blocks a user by their ID. Accessible only to admin users. If the user is already blocked, this will unblock them. Elevated admin users cannot be blocked.
+   * @apiPermission token (elevated admin only)
+   * @apiParam {String} id User's unique identifier.
+   *
+   * @apiSuccess {Boolean} success Indicates if the blocking was successful.
+   * @apiSuccess {String} message Confirmation message.
+   *
+   * @apiSuccessExample {json} Success-Response:
+   *     HTTP/1.1 200 OK
+   *     {
+   *       "success": true,
+   *       "message": "User successfully blocked/unblocked"
+   *     }
+   *
+   * @apiError (403 Forbidden) Forbidden The requester is not an elevated admin.
+   * @apiErrorExample {json} Forbidden-Response:
+   *     HTTP/1.1 403 Forbidden
+   *     {
+   *       "message": "Forbidden, insufficient permissions"
+   *     }
+   *
+   * @apiError (404 Not Found) NotFound The user with the specified ID does not exist.
+   * @apiErrorExample {json} NotFound-Response:
+   *     HTTP/1.1 404 Not Found
+   *     {
+   *       "message": "User not found"
+   *     }
+   *
+   * @apiError (500 Internal Server Error) InternalServerError Server error while processing the request.
+   * @apiErrorExample {json} InternalServerError-Response:
+   *     HTTP/1.1 500 Internal Server Error
+   *     {
+   *       "message": "Failed to block/unblock user"
+   *     }
+   */
+  param('id').isMongoId(),
+  authenticate,
+  toggleBlockUser,
+);
+
+
+router.get(
+  '/blocked/users',
+  /**
+   * @api {get} /users/blocked/users Get Blocked Users
+   * @apiName GetBlockedUsers
+   * @apiGroup UserGroup
+   * @apiVersion 1.0.0
+   *
+   * @apiDescription Retrieves a list of all blocked users. Accessible only to admin users.
+   * @apiPermission token (admin only)
+   *
+   * @apiSuccess {Object[]} users List of blocked users.
+   * @apiSuccess {String} users.id User's unique identifier.
+   * @apiSuccess {String} users.userName User's display name.
+   * @apiSuccess {String} users.email Email address of the user.
+   * @apiSuccess {String} users.registeredAt Registration date in ISO format.
+   * @apiSuccess {Number} users.user_level_id User's role level (1 = user, 2 = admin).
+   *
+   * @apiSuccessExample {json} Success-Response:
+   *     HTTP/1.1 200 OK
+   *     {
+   *       "users": [
+   *         {
+   *           "id": "user_id",
+   *           "userName": "John Doe",
+   *           "email": "user@email.com",
+   *           "registeredAt": "2024-01-01T00:00:00.000Z",
+   *           "user_level_id": 1
+   *         }
+   *       ]
+   *     }
+   *
+   * @apiError (403 Forbidden) Forbidden The requester is not an admin.
+   * @apiErrorExample {json} Forbidden-Response:
+   *     HTTP/1.1 403 Forbidden
+   *     {
+   *       "message": "Unauthorized, not an admin"
+   *     }
+   *
+   * @apiError (500 Internal Server Error) InternalServerError Server error while processing the request.
+   * @apiErrorExample {json} InternalServerError-Response:
+   *     HTTP/1.1 500 Internal Server Error
+   *     {
+   *       "message": "Failed to fetch blocked users"
+   *     }
+   */
+  authenticate,
+  getBlockedUsers,
+);
+
+
+
 
 export default router;

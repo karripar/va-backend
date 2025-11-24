@@ -58,7 +58,7 @@ const addDocumentLink = async (req: Request, res: Response, next: NextFunction) 
     }
 
     const documentLink = {
-      id: uuidv4(),
+      // removed uuidv4() from here, mongodb will auto-generate _id
       userId,
       name,
       url,

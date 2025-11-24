@@ -17,8 +17,16 @@ import {
   deleteDestinationUrl,
   DestinationUrlEntry
 } from "./controllers/testDestinations";
+import {
+  getInstructionLinks,
+  updateInstructionLink,
+  updateFaultyInstructionLink,
+  getInstructionVisibility,
+  toggleInstructionVisibility,
+  toggleFaultyInstructionVisibility,
+} from "./controllers/testInstructions";
 import jwt from "jsonwebtoken";
-import userModel from "../src/api/models/userModel"; // adjust if path differs
+import userModel from "../src/api/models/userModel"; 
 import { UserInfo } from "../src/types/LocalTypes";
 
 dotenv.config();
@@ -193,3 +201,101 @@ describe("Destination Scraper Controller Tests", () => {
     }
   });
 });
+
+/* -----------------------------------------------------------
+    Instruction Links API Tests
+------------------------------------------------------------ */
+describe("Instruction Controller Tests", () => {
+  let testUser: UserInfo;
+  let testToken: string;
+
+  beforeAll(async () => {
+    const mongoURI = process.env.DB_URL;
+    if (!mongoURI) throw new Error("Missing DB_URL in environment variables");
+    if (mongoose.connection.readyState === 0) {
+      await mongoose.connect(mongoURI);
+    }
+
+    // Create mock admin user (reuse schema)
+    testUser = await userModel.create({
+      name: "Test Instruction Admin",
+      userName: "InstructionAdmin",
+      email: `instadmin_${randomstring.generate(5)}@example.com`,
+      user_level_id: 2,
+      googleId: randomstring.generate(12),
+    });
+
+    // Sign token
+    testToken = jwt.sign(
+      {
+        _id: testUser._id,
+        user_level_id: 2,
+      },
+      process.env.JWT_SECRET as string,
+      { expiresIn: "3h" }
+    );
+  });
+
+  it("should fetch all instruction links", async () => {
+    await getInstructionLinks(app);
+  });
+
+  it("should update an instruction link", async () => {
+    const links = await getInstructionLinks(app);
+    if (links.length === 0) return;
+
+    const linkToUpdate = links[0];
+    const updates = { href: "Updated Label " + randomstring.generate(3) };
+    await updateInstructionLink(app, linkToUpdate._id, testToken, updates);
+  });
+
+  it("should toggle instruction visibility", async () => {
+    // Reset visibility to known state
+    const vis = await getInstructionVisibility(app);
+    for (const v of vis) {
+      if (!v.isVisible) {
+        await toggleInstructionVisibility(app, v.stepIndex, testToken);
+      }
+    }
+
+    const links = await getInstructionLinks(app);
+    const step = Number(links[0].stepIndex);
+
+    const currentVisibility = await getInstructionVisibility(app);
+    await toggleInstructionVisibility(app, step, testToken);
+    const newVisibility = await getInstructionVisibility(app);
+
+    expect(newVisibility[step].isVisible).toBe(
+      !currentVisibility[step].isVisible
+    );
+  });
+
+
+
+
+
+  it("should reject updating an instruction link with invalid data", async () => {
+    const links = await getInstructionLinks(app);
+    if (links.length === 0) return;
+
+    const linkToUpdate = links[0];
+    const faultyData = { href: "" }; // Invalid: empty label
+    await updateFaultyInstructionLink(app, linkToUpdate._id, testToken, faultyData);
+  });
+
+  it("should reject toggling instruction visibility with invalid step index", async () => {
+    const invalidStepIndex = -1000; // Invalid index
+    await toggleFaultyInstructionVisibility(app, invalidStepIndex, testToken);
+  });
+
+
+  afterAll(async () => {
+    if (testUser) {
+      await userModel.findByIdAndDelete(testUser._id);
+    }
+    if (mongoose.connection.readyState !== 0) {
+      await mongoose.connection.close();
+    }
+  });
+});
+

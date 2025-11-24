@@ -1,4 +1,3 @@
-// exchangeStories.routes.ts
 import { Router, Request, Response, NextFunction } from 'express';
 import { authenticate, validateStory, adminMiddleware } from '../../middlewares';
 import { validationResult } from 'express-validator';

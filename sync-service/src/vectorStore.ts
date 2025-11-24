@@ -16,21 +16,36 @@ export class VectorStoreService {
     vectorStoreId: string
   ): Promise<Map<string, string>> {
     try {
-      const files = await this.openai.vectorStores.files.list(vectorStoreId);
-
       const fileMap = new Map<string, string>();
 
-      // Check if files.data exists and is an array
-      if (!files || !files.data || !Array.isArray(files.data)) {
-        console.log('⚠️  No files found in vector store or invalid response');
-        return fileMap;
-      }
+      // Use pagination to get all files, not just the first page
+      let filesPage = await this.openai.vectorStores.files.list(vectorStoreId, {
+        limit: 100,
+      });
 
-      for (const file of files.data) {
-        // Get file details to get the filename
-        const fileDetails = await this.openai.files.retrieve(file.id);
-        fileMap.set(fileDetails.filename, file.id);
-      }
+      do {
+        if (!filesPage || !filesPage.data) break;
+
+        for (const file of filesPage.data) {
+          try {
+            // Get file details to get the filename
+            // Note: This can be slow for many files as it requires an API call per file
+            const fileDetails = await this.openai.files.retrieve(file.id);
+            fileMap.set(fileDetails.filename, file.id);
+          } catch (e) {
+            console.warn(
+              `⚠️ Could not retrieve details for file ${file.id}`,
+              e
+            );
+          }
+        }
+
+        if (filesPage.hasNextPage()) {
+          filesPage = await filesPage.getNextPage();
+        } else {
+          break;
+        }
+      } while (true);
 
       return fileMap;
     } catch (error) {

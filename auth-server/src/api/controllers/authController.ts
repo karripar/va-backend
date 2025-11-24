@@ -101,6 +101,12 @@ const verifyGoogleToken = async (
 
     const user = await findOrCreateUser(googleResponse);
 
+    if (user.isBlocked) {
+      console.error('User is blocked:', user.email);
+      next(new CustomError('User is blocked', 403));
+      return;
+    }
+
     const tokenContent: TokenContent = {
       _id: user._id.toString(),
       user_level_id: user.user_level_id,
