@@ -7,7 +7,7 @@
     "dev": "nodemon src/index.ts",
     "build": "tsc",
     "start": "node dist/index.js",
-    "sync": "npm run sync:googledrive",
+    "sync": "node dist/sync-googledrive.js",
     "sync:googledrive": "ts-node src/sync-googledrive.ts"
   },
   "dependencies": {
