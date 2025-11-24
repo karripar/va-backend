@@ -12,6 +12,7 @@ import basicAuth from 'express-basic-auth';
 
 const app = express();
 
+
 app.use(express.json());
 
 app.use(morgan('dev'));
@@ -42,7 +43,6 @@ app.use(
   }),
   express.static(path.join(process.cwd(), 'apidocs'))
 )
-
 app.use(
   '/docs/typedoc',
   basicAuth({

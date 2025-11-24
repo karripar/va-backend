@@ -1,109 +1,43 @@
-import {Request, Response, NextFunction} from 'express';
-import multer from 'multer';
-import path from 'path';
-import {v4 as uuidv4} from 'uuid';
-import { platformInstructions, platformPatterns } from '../../../utils/constants';
-import LinkDocument from '../../models/LinkDocumentModel';
+import { Request, Response, NextFunction } from 'express';
+import { v4 as uuidv4 } from 'uuid';
+import fetch, { Response as FetchResponse } from 'node-fetch';
+import LinkDocument from '../../api/models/linkUploadModel';
+import { platformInstructions, platformPatterns } from '../../utils/linkUploadHelper';
 
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, 'uploads/');
-  },
-  filename: (req, file, cb) => {
-    const uniqueName = `${uuidv4()}${path.extname(file.originalname)}`;
-    cb(null, uniqueName);
-  },
-});
+const getUserFromRequest = (req: Request): string => {
+  const user = (req as Request & { user?: { _id: string } }).user;
+  if (user && user._id) {
+    return user._id.toString();
+  }
+  throw new Error('User not authenticated');
+};
 
+// Validating allowed source types
+const validateSourceType = (sourceType: string): boolean => {
+  const validSourceTypes = ["google_drive", "onedrive", "dropbox", "icloud", "other_url"];
+  return validSourceTypes.includes(sourceType);
+};
+
+
+// Getting all documents & can be filtered by userId or applicationId
+type LinkDocumentQuery = {
+  userId?: string;
+  applicationId?: string;
+};
 const getDocuments = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const userId = getUserFromRequest(req);
-    const docs = await LinkDocument.find({ userId });
+    const query: LinkDocumentQuery = {};
+    if (req.query.userId) query.userId = String(req.query.userId);
+    if (req.query.applicationId) query.applicationId = String(req.query.applicationId);
+
+    const docs = await LinkDocument.find(query).sort({ addedAt: -1 });
     res.json(docs);
   } catch (error) {
     next(error);
   }
 };
 
-const upload = multer({
-  storage,
-  limits: {fileSize: 10 * 1024 * 1024}, // 20MB limit
-  fileFilter: (req, file, cb) => {
-    const allowedTypes = /jpeg|jpg|png|gif|pdf|doc|docx/;
-    const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
-    const mimetype = allowedTypes.test(file.mimetype);
-
-    if (extname && mimetype) {
-      cb(null, true);
-    } else {
-      cb(new Error('Invalid file type'));
-    }
-  },
-});
-
-/**
- * Extracts the authenticated user's id from the request.
- * Throws if user is not authenticated (should not happen if authenticate middleware is used).
- */
-const getUserFromRequest = (req: Request): string => {
-  if (req.user && req.user._id) {
-    return req.user._id.toString();
-  }
-  throw new Error('User not authenticated');
-};
-
-const validateSourceType = (sourceType: string): boolean => {
-  const validSourceTypes = ["google_drive", "onedrive", "dropbox", "icloud", "other_url"];
-  return validSourceTypes.includes(sourceType);
-};
-
-const uploadAvatar = async (req: Request, res: Response, next: NextFunction) => {
-  try {
-    if (!req.file) {
-      return res.status(400).json({message: 'No file uploaded'});
-    }
-
-    const fileUrl = `${process.env.BASE_URL}/uploads/${req.file.filename}`;
-    res.json({url: fileUrl});
-  } catch (error) {
-    next(error);
-  }
-};
-
-const uploadDocument = async (req: Request, res: Response, next: NextFunction) => {
-  try {
-    if (!req.file) {
-      return res.status(400).json({message: 'No file uploaded'});
-    }
-
-    const fileUrl = `${process.env.BASE_URL}/uploads/${req.file.filename}`;
-    res.json({url: fileUrl, name: req.file.originalname});
-  } catch (error) {
-    next(error);
-  }
-};
-
-const uploadApplicationDocument = async (req: Request, res: Response, next: NextFunction) => {
-  try {
-    if (!req.file) {
-      return res.status(400).json({message: 'No file uploaded'});
-    }
-
-    const fileUrl = `${process.env.BASE_URL}/uploads/${req.file.filename}`;
-
-    res.json({
-      fileUrl,
-      originalName: req.file.originalname,
-      fileSize: req.file.size,
-      mimeType: req.file.mimetype,
-    });
-  } catch (error) {
-    next(error);
-  }
-};
-
-// ===== LINK-BASED DOCUMENT =====
-
+// A generic link document
 const addDocumentLink = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const userId = getUserFromRequest(req);
@@ -134,7 +68,7 @@ const addDocumentLink = async (req: Request, res: Response, next: NextFunction) 
       accessPermission: "public",
       notes: notes || null
     };
-    // Saving the link
+
     const saved = await LinkDocument.create(documentLink);
     res.status(201).json(saved);
   } catch (error) {
@@ -142,6 +76,7 @@ const addDocumentLink = async (req: Request, res: Response, next: NextFunction) 
   }
 };
 
+// Adding a link
 const addApplicationDocumentLink = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const userId = getUserFromRequest(req);
@@ -163,21 +98,20 @@ const addApplicationDocumentLink = async (req: Request, res: Response, next: Nex
 
     const applicationDocumentLink = {
       id: uuidv4(),
+      userId,
+      name: fileName || `document-${Date.now()}.ext`,
+      url: fileUrl,
+      sourceType,
+      addedAt: new Date().toISOString(),
+      isAccessible: true,
+      accessPermission: "public",
+      notes: notes || null,
       applicationId: `app-${userId}-${Date.now()}`,
       applicationPhase: phase,
       documentType,
-      fileName: fileName || `document-${Date.now()}.ext`,
-      fileUrl,
-      sourceType,
-      addedAt: new Date().toISOString(),
-      addedBy: userId,
-      isAccessible: true,
-      accessPermission: "public",
-      isRequired: false,
-      notes: notes || null
+      addedBy: userId
     };
 
-    // Saving the link
     const saved = await LinkDocument.create(applicationDocumentLink);
     res.status(201).json(saved);
   } catch (error) {
@@ -185,8 +119,7 @@ const addApplicationDocumentLink = async (req: Request, res: Response, next: Nex
   }
 };
 
-import fetch from 'node-fetch';
-
+// Validating a link URL
 const validateDocumentLink = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { url, sourceType } = req.body;
@@ -209,20 +142,20 @@ const validateDocumentLink = async (req: Request, res: Response, next: NextFunct
     const isValidFormat = pattern ? pattern.test(url) : false;
 
     let isAccessible = false;
-    let errorMessage = null;
+    let errorMessage: string | null = null;
     if (isValidFormat) {
       try {
         const controller = new AbortController();
         const timeout = setTimeout(() => controller.abort(), 5000);
-        let response;
+        let response: FetchResponse | undefined;
         try {
           response = await fetch(url, { method: 'HEAD', signal: controller.signal });
         } finally {
           clearTimeout(timeout);
         }
-        isAccessible = response.ok;
+        isAccessible = !!(response && response.ok);
         if (!isAccessible) {
-          errorMessage = `URL responded with status ${response.status}`;
+          errorMessage = `URL responded with status ${response?.status || 'unknown'}`;
         }
       } catch (err) {
         isAccessible = false;
@@ -246,6 +179,7 @@ const validateDocumentLink = async (req: Request, res: Response, next: NextFunct
   }
 };
 
+//  Instructions
 const getPlatformInstructions = async (req: Request, res: Response, next: NextFunction) => {
   try {
     res.json({ platforms: platformInstructions });
@@ -254,14 +188,4 @@ const getPlatformInstructions = async (req: Request, res: Response, next: NextFu
   }
 };
 
-export {
-  upload,
-  uploadAvatar,
-  uploadDocument,
-  uploadApplicationDocument,
-  addDocumentLink,
-  addApplicationDocumentLink,
-  validateDocumentLink,
-  getPlatformInstructions,
-  getDocuments
-};
+export {getDocuments, addDocumentLink, addApplicationDocumentLink, validateDocumentLink, getPlatformInstructions};

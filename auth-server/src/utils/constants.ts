@@ -88,6 +88,7 @@ export const requiredDocuments = {
   ]
 };
 
+/*
 export const platformInstructions = {
   google_drive: {
     name: "Google Drive",
@@ -162,3 +163,4 @@ export const platformPatterns: Record<string, RegExp> = {
   icloud: /icloud\.com/,
   other_url: /^https?:\/\/.+/
 };
+*/

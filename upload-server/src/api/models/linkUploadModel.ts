@@ -22,3 +22,4 @@ const linkDocumentSchema = new mongoose.Schema({
 
 const LinkDocument = mongoose.model('LinkDocument', linkDocumentSchema);
 export default LinkDocument;
+
