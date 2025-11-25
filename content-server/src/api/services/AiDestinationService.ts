@@ -2,34 +2,42 @@ import OpenAI from 'openai';
 import dotenv from 'dotenv';
 
 dotenv.config();
-const client = new OpenAI({apiKey: process.env.OPENAI_API_KEY});
+const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
 export interface ExtractedItem {
   country: string;
   title: string;
   link: string;
+  studyField?: string;
 }
 
 export async function extractSectionWithAI(
   sectionTitle: string,
   sectionHtml: string,
-  panelCountry: string, // new parameter
+  panelCountry: string,
+  studyField: string,
 ): Promise<ExtractedItem[]> {
   const prompt = `
 You are an expert parser. Extract ALL destinations from the following HTML.
-Return ONLY valid JSON. The HTML might be in English or Finnish.
+Return ONLY JSON.
 
 ### Rules:
 - Each destination must include:
   "country": string
   "title": string
   "link": string
-- Reconstruct the cleanest human-readable title.
+  "studyField": string
+
+- If HTML includes a study field, use it.
+- If HTML does NOT include one, use this fallback: "${studyField}"
+
+- The studyField must NOT contain duplicated text.
+- Ensure clean, human-readable titles.
 - Remove trailing colons.
-- Replace missing links with "".
-- Cleanup punctuation issues.
-- If the HTML does not contain a country for an item, use the panel-level country: "${panelCountry}".
-- DO NOT include commentary. Only JSON.
+- Use "" for missing links.
+- Use panel-level country if HTML does not provide one: "${panelCountry}"
+
+NO commentary. Return ONLY JSON.
 
 ### HTML:
 ${sectionHtml}
@@ -39,10 +47,11 @@ ${sectionHtml}
   {
     "country": "string",
     "title": "string",
-    "link": "string"
+    "link": "string",
+    "studyField": "string"
   }
 ]
-`;
+  `;
 
   const response = await client.responses.create({
     model: 'gpt-4o',
@@ -50,7 +59,6 @@ ${sectionHtml}
     temperature: 0,
   });
 
-  // --- Use output_text to get plain JSON ---
   const raw = response.output_text;
 
   let parsed;
@@ -60,6 +68,7 @@ ${sectionHtml}
       .replace(/^```(?:json)?\s*/, '')
       .replace(/```$/, '')
       .trim();
+
     parsed = JSON.parse(cleaned);
   } catch {
     console.error('Failed to parse AI JSON:', raw);
@@ -72,13 +81,13 @@ ${sectionHtml}
       (item) =>
         typeof item.country === 'string' &&
         typeof item.title === 'string' &&
-        typeof item.link === 'string',
+        typeof item.link === 'string' &&
+        typeof item.studyField === 'string'
     )
   ) {
     console.error('AI returned an invalid structure:', parsed);
     throw new Error('Invalid response format from AI');
   }
 
-  return parsed as ExtractedItem[];
+  return parsed;
 }
-
