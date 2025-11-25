@@ -12,7 +12,7 @@ const JWT_SECRET = process.env.JWT_SECRET || '';
 
 /**
  * @module controllers/authController
- * @description Controller functions for authentication-related operations.
+ * @remarks Controller functions for authentication-related operations.
  * Includes functions to verify Google ID tokens and manage user sessions.
  */
 
@@ -26,7 +26,6 @@ const JWT_SECRET = process.env.JWT_SECRET || '';
  * 4. Finds or creates the user in the database.
  * 5. Signs and returns a new JWT containing the user’s ID and access level.
  *
- * @async
  * @function verifyGoogleToken
  * @param {Request} req - Express request object, containing `idToken` in the request body.
  * @param {Response} res - Express response object used to send the JWT and user data.
