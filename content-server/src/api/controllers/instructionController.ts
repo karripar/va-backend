@@ -2,28 +2,24 @@ import {Request, Response, NextFunction} from 'express';
 import {
   InstructionLink,
   InstructionVisibility,
+  InstructionStep,
 } from '../models/instructionModel';
 import CustomError from '../../classes/CustomError';
+import mongoose from 'mongoose';
+import sanitizeHtml from 'sanitize-html';
 
 /**
  * @module controllers/instructionController
- * @description Controller functions for handling instruction links and visibility settings,
+ * @remarks Controller functions for handling instruction links and visibility settings,
  * including fetching, updating links, and toggling step visibility for admin users.
  */
 
 const uploadServerUrl =
   process.env.PUBLIC_UPLOADS_URL || 'http://localhost:3003/uploads';
 
-interface AuthRequest extends Request {
-  user?: {
-    id: string;
-    user_level_id: number;
-  };
-}
-
 /**
  * @function getInstructionLinks
- * @description Retrieves all instruction links from the database, sorted by stepIndex.
+ * @remarks Retrieves all instruction links from the database, sorted by stepIndex.
  * If no links exist, initializes the database with default bilingual links for all 9 steps.
  *
  * @param {Request} req - Express request object.
@@ -212,7 +208,7 @@ const getInstructionLinks = async (
 
 /**
  * @function updateInstructionLink
- * @description Updates an existing instruction link by ID. Only accessible to admin users.
+ * @remarks Updates an existing instruction link by ID. Only accessible to admin users.
  * Allows updating href of the link/document.
  *
  * @param {AuthRequest} req - Express request object containing linkId in params and href, isExternal, isFile in body.
@@ -231,34 +227,76 @@ const getInstructionLinks = async (
  * // Body: { href: "/new-path", isExternal: false, isFile: false }
  * updateInstructionLink(req, res, next);
  */
+
 const updateInstructionLink = async (
-  req: AuthRequest,
+  req: Request<{linkId: string}, {}, {href: string}>,
   res: Response,
   next: NextFunction,
 ) => {
   try {
-    // check if user is admin
-    if (![2, 3].includes(res.locals.user.user_level_id)) {
+    // admin check
+    if (!res.locals.user || ![2, 3].includes(res.locals.user.user_level_id)) {
       next(new CustomError('Unauthorized: Only admins can update links', 403));
       return;
     }
 
     const {linkId} = req.params;
-    const {href, isExternal, isFile} = req.body;
+    let {href} = req.body;
 
-    // validate input
-    if (!href) {
+    if (!mongoose.Types.ObjectId.isValid(linkId)) {
+      next(new CustomError('Invalid id', 400));
+      return;
+    }
+
+    if (typeof href !== 'string' || href.trim() === '') {
       next(new CustomError('Href is required', 400));
       return;
     }
 
+    href = href.trim().replace(/[\u200B-\u200D\uFEFF]/g, '');
+
+    const lowerHref = href.toLowerCase();
+
+    // validation to disallow javascript: and data:
+    if (lowerHref.startsWith('javascript:') || lowerHref.startsWith('data:')) {
+      return next(new CustomError('Invalid href', 400));
+    }
+
+    // accept internal paths or http(s) URLs or upload server URLs
+    let isExternal = true;
+    let isFile = false;
+
+    if (href.startsWith('/')) {
+      isExternal = false;
+      isFile = false;
+    } else if (href.startsWith(uploadServerUrl)) {
+      // uploaded files hosted on upload-server
+      isExternal = false;
+      isFile = true;
+    } else {
+      try {
+        const u = new URL(href);
+        if (!['http:', 'https:'].includes(u.protocol)) {
+          return next(new CustomError('Invalid protocol', 400));
+        }
+      } catch {
+        return next(new CustomError('Invalid URL', 400));
+      }
+    }
+
+    const updates: {
+      href: string;
+      isExternal: boolean;
+      isFile: boolean;
+    } = {
+      href: href,
+      isExternal,
+      isFile,
+    };
+
     const updatedLink = await InstructionLink.findByIdAndUpdate(
       linkId,
-      {
-        href,
-        isExternal: isExternal ?? true,
-        isFile: isFile ?? false,
-      },
+      {$set: updates},
       {new: true},
     );
 
@@ -279,7 +317,7 @@ const updateInstructionLink = async (
 
 /**
  * @function getInstructionVisibility
- * @description Retrieves visibility settings for all instruction steps.
+ * @remarks Retrieves visibility settings for all instruction steps.
  * If no settings exist, initializes the database with default visibility (all steps visible) for 9 steps.
  *
  * @param {Request} req - Express request object.
@@ -325,7 +363,7 @@ const getInstructionVisibility = async (
 
 /**
  * @function toggleInstructionVisibility
- * @description Toggles the visibility of a specific instruction step by stepIndex.
+ * @remarks Toggles the visibility of a specific instruction step by stepIndex.
  * Only accessible to admin users. If the step doesn't exist, creates it with isVisible=false.
  *
  * @param {AuthRequest} req - Express request object containing stepIndex in params.
@@ -343,7 +381,7 @@ const getInstructionVisibility = async (
  * toggleInstructionVisibility(req, res, next);
  */
 const toggleInstructionVisibility = async (
-  req: AuthRequest,
+  req: Request<{stepIndex: string}>,
   res: Response,
   next: NextFunction,
 ) => {
@@ -385,9 +423,230 @@ const toggleInstructionVisibility = async (
   }
 };
 
+/**
+ * @function getInstructionSteps
+ * @remarks Retrieves all instruction steps from the database, sorted by stepIndex.
+ *
+ * @param {Request} req - Express request object.
+ * @param {Response} res - Express response object.
+ * @param {NextFunction} next - Express next middleware for error handling.
+ * @returns {Promise<void>} Responds with:
+ * - 200: Array of instruction steps.
+ * - 500: If fetching fails.
+ *
+ * @example
+ * // GET /api/v1/instructions/steps
+ * getInstructionSteps(req, res, next);
+ */
+
+const getInstructionSteps = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
+  try {
+    let steps = await InstructionStep.find().sort({stepIndex: 1});
+
+    // Initialisoi steppien sisältö, jos puuttuu
+    if (steps.length === 0) {
+      const defaultSteps = [
+        {
+          stepIndex: 0,
+          titleFi: 'Etsi tietoa',
+          titleEn: 'Find information',
+          textFi:
+            'Tutustu tutkintoosi soveltuviin vaihtokohteisiin ja kohdekoulujen kurssitarjontaan.\n\nLue aiempien vaihto-opiskelijoiden kokemuksia ja vinkkejä raporttiportaalista.',
+          textEn:
+            'Explore partner universities and course offerings relevant to your degree.\n\nRead previous students experiences and tips from the Exchange Report portal.',
+        },
+        {
+          stepIndex: 1,
+          titleFi: 'Hakuinfo',
+          titleEn: 'Application info',
+          textFi:
+            'Osallistu hakuaikoina järjestettäviin alakohtaisiin infotilaisuuksiin kampuksella tai verkossa.\n\nTarkat hakuaikojen ja infotilaisuuksien päivämäärät näet opiskelijan omasta portaalista.',
+          textEn:
+            'Attend field-specific info sessions during the application period on campus or online.\n\nExact dates are available in student portal.',
+        },
+        {
+          stepIndex: 2,
+          titleFi: 'Ennen hakua',
+          titleEn: 'Before you apply',
+          textFi:
+            'Lue huolellisesti yksityiskohtaiset vaihdon säännöt ja periaatteet.\n\nVoit halutessasi keskustella oman tutkinto-ohjelmasi yhteyshenkilön kanssa milloin vaihtoon kannattaa lähteä ja millaiset opinnot sopivat tutkintoosi.',
+          textEn:
+            'Read the exchange rules and guidelines carefully.\n\nYou can discuss with your degree programme contact person about the best timing for your exchange and suitable courses.',
+        },
+        {
+          stepIndex: 3,
+          titleFi: 'Metropolian sisäinen haku',
+          titleEn: "Metropolia's internal application",
+          textFi:
+            'Vaihtoon hakeminen tapahtuu kahdessa osassa. Hakemus Metropolian sisäisessä haussa täytetään Mobility Onlinessa hakuaikana.\n\nHakemukseen riittää, että olet löytänyt sinulle sopivat vaihtokohteet ja laatinut suunnitelmaa vaihdon sisällöstä ja tavoitteista.',
+          textEn:
+            'Applying for an exchange takes place in two parts. The internal application is filled in Mobility Online during the application period.\n\nTo apply, you need to find exchange destinations that suit you and describe your exchange study content and goals.',
+        },
+        {
+          stepIndex: 4,
+          titleFi: 'Sisäisen haun tulokset',
+          titleEn: 'Internal selection results',
+          textFi:
+            'Hakuajan päätyttyä sinulle ilmoitetaan sisäisen haun tulokset. Mikäli vaihtosuunnitelmasi hyväksytään, käy vahvistamassa vaihtopaikka Mobility Onlinessa 7 päivän kuluessa.\n\nVaihtopaikan vahvistamisen jälkeen voit aloittaa varsinaisen hakuprosessin kohdekouluun.',
+          textEn:
+            'After the internal selection you will be informed of the results. If your exchange plan is approved, confirm your place in Mobility Online within 7 days.\n\nOnce confirmed, you can start the official application to the host university.',
+        },
+        {
+          stepIndex: 5,
+          titleFi: 'Hae kohdekorkeakouluun',
+          titleEn: 'Apply to the host university',
+          textFi:
+            'Aloita hakemuksen täyttäminen ja tarvittavien liitteiden hankkiminen hyvissä ajoin. Vaihto on ehdollinen kohdekoulun hyväksyntään saakka.\n\nLaadi Mobility Onlinessa Learning Agreement eli vaihdon opintosuunnitelma.',
+          textEn:
+            'Start preparing your application and required attachments well in advance. The exchange is conditional until the host university accepts you.\n\nPrepare the Learning Agreement in Mobility Online.',
+        },
+        {
+          stepIndex: 6,
+          titleFi: 'Hakemuksen täyttäminen',
+          titleEn: 'Filling attachments',
+          textFi:
+            'Sisällytä hakemukseen tarvittavat liitteet, esim. opintosuoritusote, vakuutustodistus, kielitodistus, CV ja motivaatiokirje.\n\nJos kohdekoulu vaatii kielitodistuksen, voit tehdä OLS-kielitestin tai pyytää opettajaa täyttämään kielitodistus pohjan.',
+          textEn:
+            'Include necessary attachments such as transcript of records, insurance certificate, language certificate, CV and motivation letter.\n\nIf a language certificate is required, you can take the OLS test or ask a language teacher to fill in the language certificate template.',
+        },
+        {
+          stepIndex: 7,
+          titleFi: 'Hakemuksen lähettäminen ja hyväksyntä',
+          titleEn: 'Submitting application & acceptance',
+          textFi:
+            'Osallistu pakollisiin vaihto-orientaatioihin, joista saat täsmätietoa hakemuksen täyttämiseen ja lähdön valmisteluun.\n\nKun saat kohdekoulun hyväksymiskirjeen, välitä hyväksymistieto kv-asiantuntijallesi.',
+          textEn:
+            'Attend mandatory exchange orientation sessions which provide guidance on applying and preparing to depart.\n\nWhen you receive the acceptance letter from the host university, forward it to the international affairs contact.',
+        },
+        {
+          stepIndex: 8,
+          titleFi: 'Valmistaudu lähtöön',
+          titleEn: 'Prepare for departure',
+          textFi:
+            'Hae apurahaa ennen vaihdon alkamista. Apurahan käsittelyn edellytyksenä on hyväksytty Learning Agreement ja kohdekoulun vahvistus.\n\nHae tarvittaessa viisumi tai oleskelulupa ja varaa matkat.',
+          textEn:
+            'Apply for grants before your exchange starts. A grant requires an approved Learning Agreement and confirmation from the host university.\n\nApply for a visa or residence permit if needed and book travel.',
+        },
+      ];
+      for (const stepData of defaultSteps) {
+        const step = new InstructionStep(stepData);
+        await step.save();
+      }
+      steps = await InstructionStep.find().sort({stepIndex: 1});
+    }
+    res.json(steps);
+  } catch (error) {
+    console.error('Error fetching instruction steps:', error);
+    next(new CustomError('Failed to fetch instruction steps', 500));
+  }
+};
+
+/**
+ * @function updateInstructionStep
+ * @remarks Updates an existing instruction step by stepIndex. Only accessible to admin users.
+ * Allows updating titleFi, titleEn, textFi, and textEn of the step.
+ * @param {AuthRequest} req - Express request object containing stepIndex in params and titleFi, titleEn, textFi, textEn in body.
+ * @param {Response} res - Express response object.
+ * @param {NextFunction} next - Express next middleware for error handling.
+ *
+ * @returns {Promise<void>} Responds with:
+ * - 200: When the step is successfully updated.
+ * - 400: If any required fields are missing.
+ * - 403: If the user is not an admin.
+ * - 404: If the step does not exist.
+ * - 500: On server errors.
+ */
+
+const updateInstructionStep = async (
+  req: Request<{stepIndex: string}>,
+  res: Response,
+  next: NextFunction,
+) => {
+  try {
+    const user = res.locals.user;
+    if (!user) {
+      next(new CustomError('Unauthorized: User not found', 401));
+      return;
+    }
+    // admin check
+    if (![2, 3].includes(user.user_level_id)) {
+      next(new CustomError('Unauthorized: Only admins can update steps', 403));
+      return;
+    }
+    const {stepIndex} = req.params;
+    // validate stepIndex
+    const index = Number(stepIndex);
+    if (Number.isNaN(index) || index < 0) {
+      next(new CustomError('Invalid step index', 400));
+      return;
+    }
+
+    const {titleFi, titleEn, textFi, textEn} = req.body;
+
+    const updates: {
+      titleFi?: string;
+      titleEn?: string;
+      textFi?: string;
+      textEn?: string;
+    } = {};
+
+    // sanitize HTML content
+    const sanitizeOptions = {
+      allowedTags: ['p', 'a', 'ul', 'ol', 'li', 'strong', 'em', 'br'],
+      allowedAttributes: {
+        a: ['href', 'rel', 'target'],
+      },
+      allowedSchemes: ['http', 'https', 'mailto'],
+      transformTags: {
+        a: sanitizeHtml.simpleTransform('a', {rel: 'noopener noreferrer'}),
+      },
+    };
+
+    if (typeof titleFi === 'string' && titleFi.trim() !== '') {
+      updates.titleFi = sanitizeHtml(titleFi, sanitizeOptions);
+    }
+    if (typeof titleEn === 'string' && titleEn.trim() !== '') {
+      updates.titleEn = sanitizeHtml(titleEn, sanitizeOptions);
+    }
+
+    if (typeof textFi === 'string' && textFi.trim() !== '') {
+      updates.textFi = sanitizeHtml(textFi, sanitizeOptions);
+    }
+    if (typeof textEn === 'string' && textEn.trim() !== '') {
+      updates.textEn = sanitizeHtml(textEn, sanitizeOptions);
+    }
+
+    if (Object.keys(updates).length === 0) {
+      next(new CustomError('No valid fields to update', 400));
+      return;
+    }
+
+    const updatedStep = await InstructionStep.findOneAndUpdate(
+      {stepIndex: index},
+      {$set: updates},
+      {new: true, runValidators: true},
+    );
+
+    if (!updatedStep) {
+      next(new CustomError('Step not found', 404));
+      return;
+    }
+    res.json({message: 'Step updated', step: updatedStep});
+  } catch (error) {
+    console.error('Error updating instruction step:', error);
+    next(new CustomError('Failed to update instruction step', 500));
+  }
+};
+
 export {
   getInstructionLinks,
   updateInstructionLink,
   getInstructionVisibility,
   toggleInstructionVisibility,
+  getInstructionSteps,
+  updateInstructionStep,
 };
