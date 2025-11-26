@@ -3,6 +3,7 @@ import {MessageResponse} from '../../types/MessageTypes';
 import CustomError from '../../classes/CustomError';
 import {ProfileResponse} from 'va-hybrid-types/contentTypes';
 import User from '../models/userModel';
+import mongoose from 'mongoose';
 
 /**
  * @module controllers/userController
@@ -256,7 +257,10 @@ const deleteUser = async (
   res: Response<MessageResponse>,
   next: NextFunction,
 ) => {
+  const session = await mongoose.startSession();
+  session.startTransaction();
   try {
+
     const userId = req.params.id;
 
     const admin = res.locals.user;

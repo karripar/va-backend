@@ -1,5 +1,9 @@
 import {Request, Response, NextFunction} from 'express';
+<<<<<<< HEAD
 import fetch, {Response as FetchResponse} from 'node-fetch';
+=======
+// import { v4 as uuidv4 } from 'uuid';
+>>>>>>> 27b46c7724c0902e88f9f30bd835dbe63bd8bc42
 import LinkDocument from '../../api/models/linkUploadModel';
 import {
   platformInstructions,
@@ -188,7 +192,7 @@ const validateDocumentLink = async (
       try {
         const controller = new AbortController();
         const timeout = setTimeout(() => controller.abort(), 5000);
-        let response: FetchResponse | undefined;
+        let response;
         try {
           response = await fetch(url, {
             method: 'HEAD',
