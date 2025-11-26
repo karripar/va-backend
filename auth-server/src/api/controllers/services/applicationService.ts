@@ -5,7 +5,6 @@ import UserApplicationProgress from "../../models/UserApplicationProgressModel";
 import LinkDocument from "../../models/LinkDocumentModel";
 import { requiredDocuments as rawRequiredDocs } from "../../../utils/constants";
 import { getUserFromRequest, validateSourceType } from "../../../utils/authHelpers";
-import { v4 as uuidv4 } from "uuid";
 import {
   ApplicationPhase,
   ExtendedApplicationDocument,
@@ -258,7 +257,7 @@ export const addApplicationDocument = async (req: Request, res: Response, next: 
     }
 
     const now = Date.now();
-    const docId = `doc-${now}-${uuidv4()}`;
+    const docId = `doc-${now}-${Math.floor(Math.random() * 10000)}`;
 
     const newDocument: ExtendedApplicationDocument = {
       id: docId,

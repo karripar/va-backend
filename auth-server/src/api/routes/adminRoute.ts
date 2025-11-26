@@ -12,6 +12,12 @@ const router = express.Router();
  */
 
 /**
+ * @apiDefine Token
+ * @apiHeader {String} Authorization required in the form of bearer token.
+ */
+
+router.put(
+  /**
  * @api {put} /admin/make-admin/:email Make User Admin
  * @apiName MakeUserAdmin
  * @apiGroup AdminGroup
@@ -46,7 +52,6 @@ const router = express.Router();
  *   "error": "User not found"
  * }
  */
-router.put(
   "/make-admin/:email",
   param("email").isString().trim(),
   validationErrors,
@@ -148,7 +153,7 @@ router.put(
    * @apiVersion 1.0.0
    * @apiDescription Demote an admin user to regular user status by their ID. Only accessible by super admins.
    *
-   * @apiPermission Super Admin JWT token required
+   * @apiPermission Elevated Admin JWT token required
    *
    * @apiHeader {String} Authorization Bearer JWT token of a super admin user.
    * @apiParam {String} id ID of the user to be demoted from admin.

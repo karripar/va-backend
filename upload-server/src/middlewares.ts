@@ -60,7 +60,7 @@ const authenticate = async (
     ) as TokenContent;
 
     const user = await User.findById(decoded._id);
-    //console.log('Authenticated user:', user);
+    console.log('Authenticated user:', user);
     if (!user) {
       next(new CustomError('Unauthorized, user not found', 401));
       return;
@@ -72,9 +72,19 @@ const authenticate = async (
     }
 
     // set user info from token
+    // Coerce user_level_id to a number to avoid string/number mismatches
+    const rawLevel = (decoded as unknown as { user_level_id?: string | number }).user_level_id;
+    let userLevelNumber: number | null = null;
+    if (typeof rawLevel === 'string') {
+      const parsed = parseInt(rawLevel, 10);
+      userLevelNumber = Number.isNaN(parsed) ? null : parsed;
+    } else if (typeof rawLevel === 'number') {
+      userLevelNumber = rawLevel;
+    }
+
     res.locals.user = {
       id: decoded._id,
-      user_level_id: decoded.user_level_id
+      user_level_id: userLevelNumber,
     };
 
     next();
