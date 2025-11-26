@@ -2,6 +2,7 @@ import CustomError from './classes/CustomError';
 import {NextFunction, Request, Response} from 'express';
 import {validationResult, body} from 'express-validator';
 import jwt from 'jsonwebtoken';
+import ExchangeStories from './api/models/ExchangeStoryModel';
 import User from './api/models/userModel';
 import {TokenContent} from 'va-hybrid-types/DBTypes';
 
@@ -47,16 +48,27 @@ const validateStory = [
   body('university').isString().trim().notEmpty().withMessage('university is required'),
     // more validations for the schema fields
 ];
-// Middleware to check for admin access
-function adminMiddleware(req: Request, res: Response, next: NextFunction) {
-  if (!req.user) {
-    return res.status(401).json({ error: 'Unauthorized' });
-  }
-  if (req.user.user_level_id !== 2) {
-    return res.status(403).json({ error: 'Admin access required' });
-  }
+// story updating/deleting
+const requireAuthOrAdmin = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => { const story = await ExchangeStories.findById(req.params.id);
+  if (!story) return res.status(404).json({ error: 'Story not found' });
+
+  if (req.user?.user_level_id === 2) return next(); // admin always allowed --> default update/delete access
+  if (story.createdBy?.toString() === req.user?._id.toString()) return next(); //the owner allowed
+
+  return res.status(403).json({ error: 'Not allowed' });
+};
+
+// Middleware to check for admin access or role assigned/authorized user
+const adminMiddleware = (req: Request, res: Response, next: NextFunction) => {
+  if (!req.user) return res.status(401).json({ error: 'Unauthorized' });
+  if (req.user.user_level_id !== 2)
+    return res.status(403).json({ error: 'Admin or authorization access required' });
   next();
-}
+};
 
 // Middleware to authenticate the user
 const authenticate = async (
@@ -88,7 +100,6 @@ const authenticate = async (
       return;
     }
 
-    req.user = user;
     res.locals.user = user;
     next();
   } catch (error) {
@@ -96,4 +107,4 @@ const authenticate = async (
   }
 };
 
-export {notFound, errorHandler, validationErrors, authenticate, validateStory, adminMiddleware};
+export {notFound, errorHandler, validationErrors, authenticate, validateStory, adminMiddleware, requireAuthOrAdmin};
