@@ -73,8 +73,6 @@ export const scrapeDestinations = async (
         if (labelElem.length) {
           const fieldDiv = labelElem
             .find('.field-name-field-label')
-            .addBack('.field-name-field-label')
-            .first();
           if (fieldDiv.length) {
             studyField = fieldDiv.text().trim();
           }
