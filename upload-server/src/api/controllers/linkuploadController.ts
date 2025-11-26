@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import { v4 as uuidv4 } from 'uuid';
+//import { v4 as uuidv4 } from 'uuid';
 import fetch, { Response as FetchResponse } from 'node-fetch';
 import LinkDocument from '../../api/models/linkUploadModel';
 import { platformInstructions, platformPatterns } from '../../utils/linkUploadHelper';
@@ -97,7 +97,7 @@ const addApplicationDocumentLink = async (req: Request, res: Response, next: Nex
     }
 
     const applicationDocumentLink = {
-      id: uuidv4(),
+      //id: uuidv4(),
       userId,
       name: fileName || `document-${Date.now()}.ext`,
       url: fileUrl,
