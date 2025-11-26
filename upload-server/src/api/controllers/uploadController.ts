@@ -6,7 +6,7 @@ import {MessageResponse} from 'va-hybrid-types/MessageTypes';
 
 /**
  * @module controllers/uploadController
- * @description Controller functions for handling file uploads, deletions, and listings.
+ * @remarks Controller functions for handling file uploads, deletions, and listings.
  * All operations require admin authentication (user_level_id === 2).
  * Supports PDF, DOC, DOCX, PPT, and PPTX file types with a 20MB size limit.
  */
@@ -16,7 +16,10 @@ const UPLOAD_DIR = process.env.UPLOAD_PATH || './uploads';
 // create uploads directory if it doesn't exist
 fs.mkdirSync(UPLOAD_DIR, {recursive: true});
 
-type UploadResponse = MessageResponse & {
+/**
+ * Response returned when an upload completes successfully.
+ */
+export type UploadResponse = MessageResponse & {
   data: {
     filename: string;
     url: string;
@@ -27,7 +30,7 @@ type UploadResponse = MessageResponse & {
 
 /**
  * @function uploadDocument
- * @description Uploads a document file to the server. Only accessible to admin users.
+ * @remarks Uploads a document file to the server. Only accessible to admin users.
  * Accepts PDF, PPT, PPTX, DOC, DOCX files up to 20MB.
  * Files are saved with a timestamp suffix to prevent naming conflicts.
  *
@@ -95,7 +98,7 @@ const uploadDocument = async (
 
 /**
  * @function deleteUploadedDocument
- * @description Deletes an uploaded document by filename. Only accessible to admin users.
+ * @remarks Deletes an uploaded document by filename. Only accessible to admin users.
  * Removes the file from the file system permanently.
  *
  * @param {Request<{filename: string}>} req - Express request object with filename in params.
@@ -125,20 +128,29 @@ const deleteUploadedDocument = async (
       throw new CustomError('No filename provided', 400);
     }
 
-    // Check if the user is an admin
-    if (![2, 3].includes(res.locals.user.user_level_id)) {
+    const user = res.locals.user;
+    if (!user) {
       throw new CustomError('Unauthorized. Admin access required.', 403);
     }
 
-    const filePath = `${UPLOAD_DIR}/${filename}`;
+    // Check if the user is an admin
+    if (![2, 3].includes(user.user_level_id)) {
+      throw new CustomError('Unauthorized. Admin access required.', 403);
+    }
 
-    if (!fs.existsSync(filePath)) {
+    const resolved = path.resolve(UPLOAD_DIR, filename);
+    const dir = path.resolve(UPLOAD_DIR);
+    if (!resolved.startsWith(dir + path.sep) && resolved !== dir) {
+      throw new CustomError('Invalid filename', 400);
+    }
+
+    if (!fs.existsSync(resolved)) {
       throw new CustomError('File not found', 404);
     }
 
     try {
       // delete the exact file requested
-      fs.unlinkSync(filePath);
+      fs.unlinkSync(resolved);
     } catch (err) {
       console.error('Error deleting file:', err);
       throw new CustomError('An error occurred while deleting the file', 500);
@@ -156,7 +168,7 @@ const deleteUploadedDocument = async (
 
 /**
  * @function cleanup
- * @description Helper function to clean up temporary files in case of upload errors.
+ * @remarks Helper function to clean up temporary files in case of upload errors.
  * Attempts to delete each file in the provided array if it exists.
  *
  * @param {string[]} files - Array of file paths to delete.
@@ -180,7 +192,7 @@ const cleanup = (files: string[]) => {
 
 /**
  * @function listDocuments
- * @description Retrieves a list of all uploaded documents with their metadata.
+ * @remarks Retrieves a list of all uploaded documents with their metadata.
  * Only accessible to admin users. Returns file details including name, URL, MIME type, size, and upload date.
  *
  * @param {Request} req - Express request object.

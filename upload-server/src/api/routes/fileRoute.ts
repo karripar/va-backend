@@ -6,6 +6,7 @@ import {
   uploadDocument,
   listDocuments,
 } from '../controllers/uploadController';
+import path from 'path';
 
 /**
  * @apiDefine FileUploadGroup File Upload
@@ -36,14 +37,18 @@ const UPLOAD_DIR = process.env.UPLOAD_PATH || './uploads';
 const documentStorage = multer.diskStorage({
   destination: UPLOAD_DIR,
   filename: (req, file, cb) => {
-    // original filename
-    const originalName = file.originalname.replace(/\.[^/.]+$/, '');
     // extension
-    const extension = file.originalname.split('.').pop();
+    const extension = path.extname(file.originalname).toLowerCase();
+    // basename for file
+    let baseName = path.basename(file.originalname, extension);
+
+    // sanitize filename
+    baseName = baseName.replace(/[^\w-]/g, '_');
+
     // timestamp to make it unique
     const timestamp = Date.now();
-    // new filename: originalname_timestamp.extension
-    const newName = `${originalName}_${timestamp}.${extension}`;
+    // new filename: baseName_timestamp.extension
+    const newName = `${baseName}_${timestamp}${extension}`;
     cb(null, newName);
   },
 });
