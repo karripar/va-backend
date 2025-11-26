@@ -1,5 +1,4 @@
 import {Request, Response, NextFunction} from 'express';
-// import { v4 as uuidv4 } from 'uuid';
 import fetch, {Response as FetchResponse} from 'node-fetch';
 import LinkDocument from '../../api/models/linkUploadModel';
 import {
@@ -81,7 +80,6 @@ const addDocumentLink = async (
     }
 
     const documentLink = {
-      // removed uuidv4() from here, mongodb will auto-generate _id
       userId,
       name,
       url,
@@ -131,7 +129,6 @@ const addApplicationDocumentLink = async (
     }
 
     const applicationDocumentLink = {
-      // id: uuidv4(),
       userId,
       name: fileName || `document-${Date.now()}.ext`,
       url: fileUrl,

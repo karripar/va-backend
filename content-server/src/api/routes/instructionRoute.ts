@@ -7,7 +7,8 @@ import {
   getInstructionSteps,
   updateInstructionStep,
 } from '../controllers/instructionController';
-import {authenticate} from '../../middlewares';
+import {authenticate, validationErrors} from '../../middlewares';
+import {body, param} from 'express-validator';
 
 const router = express.Router();
 
@@ -277,30 +278,39 @@ router
      * @apiVersion 1.0.0
      *
      * @apiDescription Updates a specific instruction step. Admin only operation.
-     * @apiPermission token
+     * Partial updates are supported: only the provided, non-empty fields will be
+     * updated — omitted or empty fields will NOT overwrite existing database values.
+     *
+     * @apiPermission token (admin users only: `user_level_id` 2 or 3)
      *
      * @apiParam {Number} stepIndex Index of the instruction step to update (0-8).
      *
-     * @apiBody {String} [content] New content for the instruction step.
+     * @apiBody {String} [titleFi] New Finnish title (optional, max 150 characters, plain text)
+     * @apiBody {String} [titleEn] New English title (optional, max 150 characters, plain text)
+     * @apiBody {String} [textFi] New Finnish text (optional, max 4000 characters, plain text)
+     * @apiBody {String} [textEn] New English text (optional, max 4000 characters, plain text)
      *
      * @apiSuccess {String} message Success message.
-     * @apiSuccess {Object} step Updated step object.
+     * @apiSuccess {Object} step Updated step object containing `stepIndex`, `titleFi`, `titleEn`, `textFi`, `textEn`.
      * @apiSuccessExample {json} Success-Response:
      *     HTTP/1.1 200 OK
      *     {
      *       "message": "Step updated successfully",
      *       "step": {
-     *         "_id": "unique_step_id",
      *         "stepIndex": 0,
-     *         "content": "Updated step 1 content"
+     *         "titleFi": "",
+     *         "titleEn": "Updated title",
+     *         "textFi": "",
+     *         "textEn": "Updated text"
      *       }
      *     }
      *
-     * @apiError (400 Bad Request) BadRequest Content is required.
-     * @apiErrorExample {json} BadRequest-Response:
+     * @apiError (400 Bad Request) BadRequest Validation errors (e.g. field too long or contains HTML tags).
+     * @apiErrorExample {json} ValidationError-Response:
      *     HTTP/1.1 400 Bad Request
      *     {
-     *       "message": "Content is required"
+     *       "message": "Validation failed",
+     *       "errors": ["titleEn too long", "textEn must be plain text (no HTML tags)"]
      *     }
      *
      * @apiError (403 Forbidden) Forbidden Only admins can update steps.
@@ -323,16 +333,55 @@ router
      *     {
      *       "message": "Failed to update instruction step"
      *     }
-     *
-     * @apiError (401 Unauthorized) Unauthorized Missing or invalid authentication token.
-     * @apiErrorExample {json} Unauthorized-Response:
-     *     HTTP/1.1 401 Unauthorized
-     *     {
-     *       "message": "Unauthorized"
-     *     }
      */
     '/steps/:stepIndex',
     authenticate,
+    param('stepIndex').isInt({min: 0}).withMessage('Invalid step index'),
+    body('titleFi')
+      .optional()
+      .isString()
+      .trim()
+      .notEmpty()
+      .isLength({max: 150})
+      .withMessage('titleFi too long')
+      .withMessage('titleFi must be a non-empty string')
+      .bail()
+      .custom((v) => !/<[^>]+>/.test(v))
+      .withMessage('titleFi must be plain text (no HTML tags)'),
+    body('titleEn')
+      .optional()
+      .isString()
+      .trim()
+      .notEmpty()
+      .isLength({max: 150})
+      .withMessage('titleEn too long')
+      .withMessage('titleEn must be a non-empty string')
+      .bail()
+      .custom((v) => !/<[^>]+>/.test(v))
+      .withMessage('titleEn must be plain text (no HTML tags)'),
+    body('textFi')
+      .optional()
+      .isString()
+      .trim()
+      .notEmpty()
+      .isLength({max: 4000})
+      .withMessage('textFi too long')
+      .withMessage('textFi must be a non-empty string')
+      .bail()
+      .custom((v) => !/<[^>]+>/.test(v))
+      .withMessage('textFi must be plain text (no HTML tags)'),
+    body('textEn')
+      .optional()
+      .isString()
+      .trim()
+      .notEmpty()
+      .isLength({max: 4000})
+      .withMessage('textEn too long')
+      .withMessage('textEn must be a non-empty string')
+      .bail()
+      .custom((v) => !/<[^>]+>/.test(v))
+      .withMessage('textEn must be plain text (no HTML tags)'),
+    validationErrors,
     updateInstructionStep,
   );
 

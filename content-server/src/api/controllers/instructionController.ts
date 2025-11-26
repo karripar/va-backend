@@ -5,8 +5,6 @@ import {
   InstructionStep,
 } from '../models/instructionModel';
 import CustomError from '../../classes/CustomError';
-import mongoose from 'mongoose';
-import sanitizeHtml from 'sanitize-html';
 
 /**
  * @module controllers/instructionController
@@ -208,8 +206,12 @@ const getInstructionLinks = async (
 
 /**
  * @function updateInstructionLink
- * @remarks Updates an existing instruction link by ID. Only accessible to admin users.
- * Allows updating href of the link/document.
+ * @remarks
+ * Updates an existing instruction link by ID. Accessible to authorized admin users
+ * (`user_level_id` 2 or 3). The endpoint accepts a new `href`
+ * and will set it as an internal path, an external URL, or an uploaded file.
+ * If the provided `href` begins with the configured `PUBLIC_UPLOADS_URL`, it is
+ * treated as an uploaded file and `isFile` will be set to `true`.
  *
  * @param {AuthRequest} req - Express request object containing linkId in params and href, isExternal, isFile in body.
  * @param {Response} res - Express response object.
@@ -217,8 +219,9 @@ const getInstructionLinks = async (
  *
  * @returns {Promise<void>} Responds with:
  * - 200: When the link is successfully updated.
- * - 400: If href is not provided.
- * - 403: If the user is not an admin.
+ * - 400: If `href` is missing or invalid (includes JS/data URIs or invalid URL).
+ * - 401: If the request is unauthenticated (missing/invalid token).
+ * - 403: If authenticated but the user does not have admin/superadmin privileges.
  * - 404: If the link does not exist.
  * - 500: On server errors.
  *
@@ -242,11 +245,6 @@ const updateInstructionLink = async (
 
     const {linkId} = req.params;
     let {href} = req.body;
-
-    if (!mongoose.Types.ObjectId.isValid(linkId)) {
-      next(new CustomError('Invalid id', 400));
-      return;
-    }
 
     if (typeof href !== 'string' || href.trim() === '') {
       next(new CustomError('Href is required', 400));
@@ -363,8 +361,11 @@ const getInstructionVisibility = async (
 
 /**
  * @function toggleInstructionVisibility
- * @remarks Toggles the visibility of a specific instruction step by stepIndex.
- * Only accessible to admin users. If the step doesn't exist, creates it with isVisible=false.
+ * @remarks
+ * Toggles the visibility of a specific instruction step by `stepIndex`.
+ * Accessible to authorized admin users (`user_level_id` 2 or 3).
+ * If the step doesn't exist, a new record is created with `isVisible=false` and
+ * then toggled.
  *
  * @param {AuthRequest} req - Express request object containing stepIndex in params.
  * @param {Response} res - Express response object.
@@ -372,8 +373,9 @@ const getInstructionVisibility = async (
  *
  * @returns {Promise<void>} Responds with:
  * - 200: When visibility is successfully toggled.
- * - 400: If stepIndex is invalid.
- * - 403: If the user is not an admin.
+ * - 400: If `stepIndex` is invalid.
+ * - 401: If the request is unauthenticated (missing/invalid token).
+ * - 403: If authenticated but the user does not have admin privileges.
  * - 500: On server errors.
  *
  * @example
@@ -547,16 +549,19 @@ const getInstructionSteps = async (
 
 /**
  * @function updateInstructionStep
- * @remarks Updates an existing instruction step by stepIndex. Only accessible to admin users.
- * Allows updating titleFi, titleEn, textFi, and textEn of the step.
+ * @remarks
+ * Updates an existing instruction step by `stepIndex`. Accessible to authorized
+ * admin users (`user_level_id` 2 or 3). Allows updating
+ * `titleFi`, `titleEn`, `textFi` and `textEn` fields.
+ *
  * @param {AuthRequest} req - Express request object containing stepIndex in params and titleFi, titleEn, textFi, textEn in body.
  * @param {Response} res - Express response object.
  * @param {NextFunction} next - Express next middleware for error handling.
  *
  * @returns {Promise<void>} Responds with:
  * - 200: When the step is successfully updated.
- * - 400: If any required fields are missing.
- * - 403: If the user is not an admin.
+ * - 401: If the request is unauthenticated (missing/invalid token).
+ * - 403: If authenticated but the user does not have admin privileges.
  * - 404: If the step does not exist.
  * - 500: On server errors.
  */
@@ -577,8 +582,8 @@ const updateInstructionStep = async (
       next(new CustomError('Unauthorized: Only admins can update steps', 403));
       return;
     }
-    const {stepIndex} = req.params;
     // validate stepIndex
+    const {stepIndex} = req.params;
     const index = Number(stepIndex);
     if (Number.isNaN(index) || index < 0) {
       next(new CustomError('Invalid step index', 400));
@@ -587,38 +592,11 @@ const updateInstructionStep = async (
 
     const {titleFi, titleEn, textFi, textEn} = req.body;
 
-    const updates: {
-      titleFi?: string;
-      titleEn?: string;
-      textFi?: string;
-      textEn?: string;
-    } = {};
-
-    // sanitize HTML content
-    const sanitizeOptions = {
-      allowedTags: ['p', 'a', 'ul', 'ol', 'li', 'strong', 'em', 'br'],
-      allowedAttributes: {
-        a: ['href', 'rel', 'target'],
-      },
-      allowedSchemes: ['http', 'https', 'mailto'],
-      transformTags: {
-        a: sanitizeHtml.simpleTransform('a', {rel: 'noopener noreferrer'}),
-      },
-    };
-
-    if (typeof titleFi === 'string' && titleFi.trim() !== '') {
-      updates.titleFi = sanitizeHtml(titleFi, sanitizeOptions);
-    }
-    if (typeof titleEn === 'string' && titleEn.trim() !== '') {
-      updates.titleEn = sanitizeHtml(titleEn, sanitizeOptions);
-    }
-
-    if (typeof textFi === 'string' && textFi.trim() !== '') {
-      updates.textFi = sanitizeHtml(textFi, sanitizeOptions);
-    }
-    if (typeof textEn === 'string' && textEn.trim() !== '') {
-      updates.textEn = sanitizeHtml(textEn, sanitizeOptions);
-    }
+    const updates: Record<string, string> = {};
+    if (titleFi) updates.titleFi = titleFi;
+    if (titleEn) updates.titleEn = titleEn;
+    if (textFi) updates.textFi = textFi;
+    if (textEn) updates.textEn = textEn;
 
     if (Object.keys(updates).length === 0) {
       next(new CustomError('No valid fields to update', 400));
