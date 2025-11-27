@@ -61,9 +61,8 @@ const adminMiddleware = async (req: Request, res: Response, next: NextFunction) 
   // }
   // next();
 
-  const levelName = (user as any).user_level_id?.level_name ?? (user as any).user_level_name ?? (user as any).user_level_id;
-  if (levelName !== 'Admin' && levelName !== 'SuperAdmin') {
-    return res.status(403).json({ error: 'Admin access required' });
+  if (![2, 3].includes(user.user_level_id)) { // Assuming 2 is Admin level
+    return res.status(403).json({ error: "Admin access required" });
   }
 
   next();
@@ -90,7 +89,7 @@ const authenticate = async (
 
     //const user = await User.findById(decoded._id);
 
-    const user = await User.findById(decoded._id).populate("user_level_id"); //--> The story posting was failing so I had to populate the user level here
+    const user = await User.findById(decoded._id); //--> The story posting was failing so I had to populate the user level here
     if (!user) {
       next(new CustomError('Unauthorized, user not found', 401));
       return;
