@@ -1,9 +1,10 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import CustomError from './classes/CustomError';
 import {NextFunction, Request, Response} from 'express';
-import {validationResult, body} from 'express-validator';
+import {validationResult} from 'express-validator';
 import jwt from 'jsonwebtoken';
-import ExchangeStories from './api/models/ExchangeStoryModel';
 import User from './api/models/userModel';
+//import UserLevel from './api/models/userLevelModel';
 import {TokenContent} from 'va-hybrid-types/DBTypes';
 
 // Middleware to handle 404 errors
@@ -41,32 +42,30 @@ const validationErrors = (req: Request, res: Response, next: NextFunction) => {
   next();
 };
 
-//Story validations
-const validateStory = [
-  body('country').isString().trim().notEmpty().withMessage('country is required'),
-  body('city').isString().trim().notEmpty().withMessage('city is required'),
-  body('university').isString().trim().notEmpty().withMessage('university is required'),
-    // more validations for the schema fields
-];
-// story updating/deleting
-const requireAuthOrAdmin = async (
-  req: Request,
-  res: Response,
-  next: NextFunction,
-) => { const story = await ExchangeStories.findById(req.params.id);
-  if (!story) return res.status(404).json({ error: 'Story not found' });
+//Story updating/deleting/posting --> admin or owner
+const adminMiddleware = async (req: Request, res: Response, next: NextFunction) => {
+  const user = res.locals.user;
 
-  if (req.user?.user_level_id === 2) return next(); // admin always allowed --> default update/delete access
-  if (story.createdBy?.toString() === req.user?._id.toString()) return next(); //the owner allowed
+  if (!user) {
+    return res.status(401).json({ error: "Unauthorized" });
+  }
 
-  return res.status(403).json({ error: 'Not allowed' });
-};
+  // Loading user's level, Admin/User/SuperAdmin
+  // const level = await UserLevel.findOne({ user_level_id: user.user_level_id });
+  // if (!level) {
+  //   return res.status(403).json({ error: "Invalid user level" });
+  // }
+  // // Allowing Admin and SuperAdmin
+  // if (level.level_name !== "Admin" && level.level_name !== "SuperAdmin") {
+  //   return res.status(403).json({ error: "Admin access required" });
+  // }
+  // next();
 
-// Middleware to check for admin access or role assigned/authorized user
-const adminMiddleware = (req: Request, res: Response, next: NextFunction) => {
-  if (!req.user) return res.status(401).json({ error: 'Unauthorized' });
-  if (req.user.user_level_id !== 2)
-    return res.status(403).json({ error: 'Admin or authorization access required' });
+  const levelName = (user as any).user_level_id?.level_name ?? (user as any).user_level_name ?? (user as any).user_level_id;
+  if (levelName !== 'Admin' && levelName !== 'SuperAdmin') {
+    return res.status(403).json({ error: 'Admin access required' });
+  }
+
   next();
 };
 
@@ -89,7 +88,9 @@ const authenticate = async (
       process.env.JWT_SECRET as string,
     ) as TokenContent;
 
-    const user = await User.findById(decoded._id);
+    //const user = await User.findById(decoded._id);
+
+    const user = await User.findById(decoded._id).populate("user_level_id"); //--> The story posting was failing so I had to populate the user level here
     if (!user) {
       next(new CustomError('Unauthorized, user not found', 401));
       return;
@@ -107,4 +108,4 @@ const authenticate = async (
   }
 };
 
-export {notFound, errorHandler, validationErrors, authenticate, validateStory, adminMiddleware, requireAuthOrAdmin};
+export {notFound, errorHandler, validationErrors, authenticate, adminMiddleware};

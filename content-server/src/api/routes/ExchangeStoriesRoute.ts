@@ -1,9 +1,8 @@
 import { Router} from 'express'; // Request, Response, NextFunction } from 'express';
 import { authenticate, validateStory, adminMiddleware, validationErrors, requireAuthOrAdmin} from '../../middlewares';
-//import { validationResult } from 'express-validator';
 import {getApprovedStoriesHandler, getAllStoriesHandler, getStoryByIdHandler, createStoryHandler,
   updateStoryHandler, deleteStoryHandler, approveStoryHandler, likeStoryHandler,
-  getCountriesHandler} from '../controllers/services/ExchangeStoriesService';
+  getCountriesHandler} from '../controllers/ExchangeStoriesController';
 
 const router = Router();
 
@@ -44,10 +43,11 @@ router.get('/stories/:id', getStoryByIdHandler);
 router.post(
   '/stories',
   authenticate,
+  requireAuthOrAdmin,
   validateStory,
   validationErrors,
-  adminMiddleware,
-  createStoryHandler,
+  createStoryHandler
+
   /*
   (req: Request, res: Response, next: NextFunction) => {
     const errors = validationResult(req);
