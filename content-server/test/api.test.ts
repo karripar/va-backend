@@ -26,7 +26,7 @@ import {
   toggleFaultyInstructionVisibility,
 } from "./controllers/testInstructions";
 import jwt from "jsonwebtoken";
-import userModel from "../src/api/models/userModel"; 
+import userModel from "../src/api/models/userModel";
 import { UserInfo } from "../src/types/LocalTypes";
 
 dotenv.config();
@@ -245,7 +245,7 @@ describe("Instruction Controller Tests", () => {
     if (links.length === 0) return;
 
     const linkToUpdate = links[0];
-    const updates = { href: "Updated Label " + randomstring.generate(3) };
+    const updates = { href: "https://Updated-label-" + randomstring.generate(5) + '.fi'};
     await updateInstructionLink(app, linkToUpdate._id, testToken, updates);
   });
 
