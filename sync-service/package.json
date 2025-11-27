@@ -1,13 +1,13 @@
 {
   "name": "vector-store-sync-service",
   "version": "1.0.0",
-  "description": "Syncs Goolge Drive files to OpenAI Vector Store",
+  "description": "Syncs Google files to OpenAI Vector Store",
   "main": "src/index.ts",
   "scripts": {
     "dev": "nodemon src/index.ts",
     "build": "tsc",
     "start": "node dist/index.js",
-    "sync": "npm run sync:googledrive",
+    "sync": "node dist/sync-googledrive.js",
     "sync:googledrive": "ts-node src/sync-googledrive.ts"
   },
   "dependencies": {
