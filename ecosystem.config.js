@@ -22,6 +22,7 @@ module.exports = {
       env: {
         NODE_ENV: 'production',
         PORT: 3001,
+        VA_CHAT_SERVICE_URL: 'http://localhost:3004',
       },
       error_file: './logs/auth-error.log',
       out_file: './logs/auth-out.log',

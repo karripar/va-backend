@@ -1,7 +1,7 @@
 {
   "name": "vector-store-sync-service",
   "version": "1.0.0",
-  "description": "Syncs SharePoint files to OpenAI Vector Store",
+  "description": "Syncs Goolge Drive files to OpenAI Vector Store",
   "main": "src/index.ts",
   "scripts": {
     "dev": "nodemon src/index.ts",
