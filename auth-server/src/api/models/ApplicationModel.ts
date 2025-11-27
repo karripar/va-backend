@@ -28,7 +28,12 @@ const applicationSchema = new mongoose.Schema({
   }],
   currentPhase: String
 }, {
-  timestamps: true
+  timestamps: true,
+  collection: 'applications'
 });
 
-export default mongoose.model('Application', applicationSchema);
+const Application =
+  mongoose.models.Application ||
+  mongoose.model('Application', applicationSchema);
+
+export default Application;

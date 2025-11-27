@@ -1,25 +1,25 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { Request, Response } from 'express';
-import ExchangeStories from '../models/ExchangeStoryModel';
+import Story from '../models/storyModel';
+
 import type { StoryFilters, CreateStoryRequest, ExchangeStory, CountriesResponse, PaginationOptions } from 'va-hybrid-types/contentTypes';
 
 
 function buildQuery(filters: StoryFilters = {}, onlyApproved = true): Record<string, unknown> {
   const query: Record<string, unknown> = {};
+
   if (onlyApproved) query.isApproved = true;
 
   if (filters.country) query.country = filters.country;
-  if (filters.city) query.city = filters.city;
+  if (filters.university) query.university = filters.university;
   if (filters.search) query.$text = { $search: filters.search };
   if (filters.minRating) query['ratings.overall'] = { $gte: Number(filters.minRating) };
-  if (filters.isFeatured !== undefined) query.isFeatured = filters.isFeatured;
-  if (filters.tags) query.tags = { $in: filters.tags };
+  if (filters.isFeatured !== undefined) query.featured = filters.isFeatured;
 
   return query;
 }
 
-
-async function fetchStoriesFromDb(
+async function fetchStoriesDb(
   filters: StoryFilters = {},
   options: PaginationOptions = {},
   onlyApproved = true
@@ -27,87 +27,111 @@ async function fetchStoriesFromDb(
   const query = buildQuery(filters, onlyApproved);
 
   let sort: Record<string, 1 | -1> = { createdAt: -1 };
-  if (filters.sort === 'popular') sort = { likes: -1 };
+  if (filters.sort === 'popular') sort = { 'reactions.length': -1 };
   if (filters.sort === 'rating') sort = { 'ratings.overall': -1 };
 
   const offset = options.offset ? Number(options.offset) : 0;
   const limit = options.limit ? Number(options.limit) : 12;
 
-  return ExchangeStories.find(query)
-    .sort(sort)
-    .skip(offset)
-    .limit(limit)
-    .lean<ExchangeStory[]>();
+  return Story.find(query).sort(sort).skip(offset).limit(limit).lean<ExchangeStory[]>();
 }
 
-async function getStoryByIdDb(_id: string): Promise<ExchangeStory | null> {
-  const story = await ExchangeStories.findById(_id).lean();
+// One story
+async function getStoryByIdDb(id: string): Promise<ExchangeStory | null> {
+  const story = await Story.findById(id).lean();
   if (!story) return null;
-  const { _id: mongoId, ...rest } = story as any;
-  return { id: mongoId.toString(), ...rest } as ExchangeStory;
+
+  const { _id, ...rest } = story as any;
+  return { id: _id.toString(), ...rest } as unknown as ExchangeStory;
 }
 
+// Create a story
 async function createStoryDb(data: CreateStoryRequest, userId: string): Promise<ExchangeStory> {
-  const storyDoc = await ExchangeStories.create({
+  const doc = await Story.create({
     ...data,
     createdBy: userId,
     isApproved: false,
   });
 
-  const { _id, ...rest } = storyDoc.toObject();
+  const { _id, ...rest } = doc.toObject();
   return { id: _id.toString(), ...rest } as unknown as ExchangeStory;
 }
 
-async function updateStoryDb(_id: string, data: Partial<CreateStoryRequest>) {
-  return ExchangeStories.findByIdAndUpdate(_id, data, { new: true }).lean();
+// Update story
+async function updateStoryDb(id: string, data: Partial<CreateStoryRequest>) {
+  return Story.findByIdAndUpdate(id, data, { new: true }).lean();
 }
 
+// Delete story
 async function deleteStoryDb(id: string) {
-  return ExchangeStories.findByIdAndDelete(id).lean();
+  return Story.findByIdAndDelete(id).lean();
 }
 
+// Approve story
 async function approveStoryDb(id: string) {
-  return ExchangeStories.findByIdAndUpdate(id, { isApproved: true }, { new: true }).lean();
+  return Story.findByIdAndUpdate(id, { isApproved: true }, { new: true }).lean();
 }
 
-async function likeStoryDb(id: string): Promise<number> {
-  const updated = await ExchangeStories.findByIdAndUpdate(
-    id,
-    { $inc: { likes: 1 } },
-    { new: true }
-  ).lean() as { likes?: number } | null;
-  return updated?.likes ?? 0;
+// Reaction (like/save)
+async function reactStoryDb(id: string, userId: string, type: 'like' | 'save') {
+  const story = await Story.findById(id);
+  if (!story) return null;
+
+
+  story.set(
+    'reactions',
+    story.reactions.filter(
+      r => !(r.userId.toString() === userId && r.type === type)
+    )
+  );
+
+  story.reactions.push({ userId, type });
+
+  await story.save();
+
+  return story.toObject();
 }
 
+// Country counts
 async function getCountriesWithCountsDb(): Promise<CountriesResponse['countries']> {
   const pipeline = [
     { $match: { isApproved: true } },
-    { $group: { _id: { country: '$country', city: '$city' }, count: { $sum: 1 } } },
+    {
+      $group: {
+        _id: { country: '$country', university: '$university' },
+        count: { $sum: 1 },
+      },
+    },
   ];
 
-  const results = await ExchangeStories.aggregate(pipeline);
+  const results = await Story.aggregate(pipeline);
+
   const map: Record<string, { count: number; cities: Record<string, number> }> = {};
 
   results.forEach((r: any) => {
-    const { country, city } = r._id;
+    const { country, university } = r._id;
     if (!map[country]) map[country] = { count: 0, cities: {} };
     map[country].count += r.count;
-    map[country].cities[city] = (map[country].cities[city] || 0) + r.count;
+    map[country].cities[university] = (map[country].cities[university] || 0) + r.count;
   });
 
   return Object.entries(map).map(([country, data]) => ({
     country,
     count: data.count,
-    cities: Object.entries(data.cities).map(([city, count]) => ({ city, count })),
+    cities: Object.entries(data.cities).map(([city, count]) => ({
+      city,
+      count,
+    })),
   }));
 }
 
 
+
 const createStoryHandler = async (req: Request, res: Response) => {
   try {
-    const userId = res.locals.user?._id?.toString() || req.body.userId || 'anonymous';
-    const newStory = await createStoryDb(req.body, userId);
-    res.status(201).json({ story: newStory });
+    const userId = res.locals.user?._id || req.body.userId || 'anonymous';
+    const story = await createStoryDb(req.body, userId.toString());
+    res.status(201).json({ story });
   } catch (error) {
     console.error('createStoryHandler error:', error);
     res.status(500).json({ error: (error as Error).message });
@@ -116,28 +140,27 @@ const createStoryHandler = async (req: Request, res: Response) => {
 
 const getApprovedStoriesHandler = async (req: Request, res: Response) => {
   try {
-    // Allow pagination/filtering via query
     const filters = req.query as unknown as StoryFilters;
     const options: PaginationOptions = {
       offset: req.query.offset ? Number(req.query.offset) : 0,
       limit: req.query.limit ? Number(req.query.limit) : 12,
     };
 
-    const stories = await fetchStoriesFromDb(filters, options, true);
-    const total = await ExchangeStories.countDocuments(buildQuery(filters, true));
-    const offset = options.offset ?? 0;
-    const limit = options.limit ?? 12;
-    res.json({ stories, total, hasMore: total > offset + limit });
+    const stories = await fetchStoriesDb(filters, options, true);
+    const total = await Story.countDocuments(buildQuery(filters, true));
+
+    res.json({
+      stories,
+      total,
+      hasMore: total > (options.offset ?? 0) + (options.limit ?? 12),
+    });
   } catch (error) {
     console.error('getApprovedStoriesHandler error:', error);
     res.status(500).json({ error: (error as Error).message });
   }
 };
 
-/**
- * Admin only, returning all stories both approved and not).
- * Returns the same shape as approved endpoint so frontend code can reuse it.
- */
+// Admin: all stories
 const getAllStoriesHandler = async (req: Request, res: Response) => {
   try {
     const filters = req.query as unknown as StoryFilters;
@@ -146,11 +169,14 @@ const getAllStoriesHandler = async (req: Request, res: Response) => {
       limit: req.query.limit ? Number(req.query.limit) : 100,
     };
 
-    const stories = await fetchStoriesFromDb(filters, options, false);
-    const total = await ExchangeStories.countDocuments(buildQuery(filters, false));
-    const offset = options.offset ?? 0;
-    const limit = options.limit ?? 100;
-    res.json({ stories, total, hasMore: total > offset + limit });
+    const stories = await fetchStoriesDb(filters, options, false);
+    const total = await Story.countDocuments(buildQuery(filters, false));
+
+    res.json({
+      stories,
+      total,
+      hasMore: total > (options.offset ?? 0) + (options.limit ?? 100),
+    });
   } catch (error) {
     console.error('getAllStoriesHandler error:', error);
     res.status(500).json({ error: (error as Error).message });
@@ -198,12 +224,15 @@ const approveStoryHandler = async (req: Request, res: Response) => {
   }
 };
 
-const likeStoryHandler = async (req: Request, res: Response) => {
+const reactStoryHandler = async (req: Request, res: Response) => {
   try {
-    const likes = await likeStoryDb(req.params.id);
-    res.json({ likes });
+    const userId = res.locals.user?._id?.toString();
+    const { type } = req.body;
+
+    const story = await reactStoryDb(req.params.id, userId, type);
+    res.json({ story });
   } catch (error) {
-    console.error('likeStoryHandler error:', error);
+    console.error('reactStoryHandler error:', error);
     res.status(500).json({ error: (error as Error).message });
   }
 };
@@ -218,14 +247,16 @@ const getCountriesHandler = async (req: Request, res: Response) => {
   }
 };
 
+
+
 export {
-  deleteStoryHandler,
-  updateStoryHandler,
-  getStoryByIdHandler,
   createStoryHandler,
   getApprovedStoriesHandler,
   getAllStoriesHandler,
-  likeStoryHandler,
+  getStoryByIdHandler,
+  updateStoryHandler,
+  deleteStoryHandler,
+  approveStoryHandler,
+  reactStoryHandler,
   getCountriesHandler,
-  approveStoryHandler
 };

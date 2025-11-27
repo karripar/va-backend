@@ -1,24 +1,30 @@
 import mongoose from 'mongoose';
 
 const linkDocumentSchema = new mongoose.Schema({
-  //id: { type: String, required: true },
   userId: { type: String, required: true },
-  name: { type: String },
-  url: { type: String },
-  sourceType: { type: String },
-  addedAt: { type: String },
-  isAccessible: { type: Boolean },
-  accessPermission: { type: String },
-  notes: { type: String },
-  // Application document fields
-  applicationId: { type: String },
-  applicationPhase: { type: String },
-  documentType: { type: String },
-  fileName: { type: String },
-  fileUrl: { type: String },
-  addedBy: { type: String },
-  isRequired: { type: Boolean },
-}, { timestamps: true });
+  name: String,
+  url: String,
+  sourceType: String,
+  addedAt: String,
+  isAccessible: Boolean,
+  accessPermission: String,
+  notes: String,
 
-const LinkDocument = mongoose.model('LinkDocument', linkDocumentSchema);
+  applicationId: String,
+  applicationPhase: String,
+  documentType: String,
+  fileName: String,
+  fileUrl: String,
+  addedBy: String,
+  isRequired: Boolean
+}, {
+  timestamps: true,
+  collection: 'linkDocuments'
+});
+
+const LinkDocument =
+  mongoose.models.LinkDocument ||
+  mongoose.model('LinkDocument', linkDocumentSchema);
+
 export default LinkDocument;
+

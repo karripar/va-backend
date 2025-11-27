@@ -11,12 +11,17 @@ const userApplicationProgressSchema = new mongoose.Schema({
   },
   completedAt: { type: Date, default: null }
 }, {
-  timestamps: true
+  timestamps: true,
+  collection: 'userApplicationProgress'
 });
 
-// Compound index to ensure one progress record per user per stage
-userApplicationProgressSchema.index({ userId: 1, stageId: 1 }, { unique: true });
+userApplicationProgressSchema.index(
+  { userId: 1, stageId: 1 },
+  { unique: true }
+);
 
-const UserApplicationProgress = mongoose.model('UserApplicationProgress', userApplicationProgressSchema);
+const UserApplicationProgress =
+  mongoose.models.UserApplicationProgress ||
+  mongoose.model('UserApplicationProgress', userApplicationProgressSchema);
 
 export default UserApplicationProgress;

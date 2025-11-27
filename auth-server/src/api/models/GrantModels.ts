@@ -5,33 +5,24 @@ const budgetSchema = new mongoose.Schema({
   destination: { type: String, default: '' },
   exchangeProgramId: { type: String },
   categories: {
-    matkakulut: {
-      amount: { type: Number, default: 0 },
-      notes: { type: String, default: '' }
-    },
-    vakuutukset: {
-      amount: { type: Number, default: 0 },
-      notes: { type: String, default: '' }
-    },
-    asuminen: {
-      amount: { type: Number, default: 0 },
-      notes: { type: String, default: '' }
-    },
-    ruoka_ja_arki: {
-      amount: { type: Number, default: 0 },
-      notes: { type: String, default: '' }
-    },
-    opintovalineet: {
-      amount: { type: Number, default: 0 },
-      notes: { type: String, default: '' }
-    }
+    matkakulut: { amount: Number, notes: String },
+    vakuutukset: { amount: Number, notes: String },
+    asuminen: { amount: Number, notes: String },
+    ruoka_ja_arki: { amount: Number, notes: String },
+    opintovalineet: { amount: Number, notes: String }
   },
   totalAmount: { type: Number, default: 0 }
 }, {
-  timestamps: true
+  timestamps: true,
+  collection: 'budgets'
 });
 
 budgetSchema.index({ updatedAt: -1 });
+
+export const Budget =
+  mongoose.models.Budget ||
+  mongoose.model('Budget', budgetSchema);
+
 
 const grantSchema = new mongoose.Schema({
   userId: { type: String, required: true },
@@ -44,8 +35,14 @@ const grantSchema = new mongoose.Schema({
   destination: String,
   program: String
 }, {
-  timestamps: true
+  timestamps: true,
+  collection: 'grants'
 });
+
+export const Grant =
+  mongoose.models.Grant ||
+  mongoose.model('Grant', grantSchema);
+
 
 const kelaSchema = new mongoose.Schema({
   userId: { type: String, required: true },
@@ -58,9 +55,10 @@ const kelaSchema = new mongoose.Schema({
   documents: [mongoose.Schema.Types.Mixed],
   destination: String
 }, {
-  timestamps: true
+  timestamps: true,
+  collection: 'kela'
 });
 
-export const Budget = mongoose.model('Budget', budgetSchema);
-export const Grant = mongoose.model('Grant', grantSchema);
-export const Kela = mongoose.model('Kela', kelaSchema);
+export const Kela =
+  mongoose.models.Kela ||
+  mongoose.model('Kela', kelaSchema);

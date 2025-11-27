@@ -1,29 +1,40 @@
 import mongoose from 'mongoose';
 
-const externalLinkSchema = new mongoose.Schema({
-  title: { type: String, required: true },
-  url: { type: String, required: true },
-  description: { type: String, required: true }
-}, { _id: false });
-
-const applicationStageSchema = new mongoose.Schema({
-  id: { type: String, required: true, unique: true },
-  phase: {
-    type: String,
-    required: true,
-    enum: ['esihaku', 'nomination', 'apurahat', 'vaihdon_jalkeen']
-  },
-  title: { type: String, required: true },
-  description: { type: String, required: true },
-  requiredDocuments: [{ type: String }],
-  optionalDocuments: [{ type: String }],
-  externalLinks: [externalLinkSchema],
-  deadline: { type: Date },
-  order: { type: Number, required: true }
+const applicationSchema = new mongoose.Schema({
+  userId: { type: String, required: true },
+  applications: [{
+    phase: String,
+    data: mongoose.Schema.Types.Mixed,
+    documents: [{
+      id: String,
+      applicationId: String,
+      applicationPhase: String,
+      documentType: String,
+      fileName: String,
+      fileUrl: String,
+      sourceType: String,
+      addedAt: String,
+      addedBy: String,
+      isAccessible: Boolean,
+      accessPermission: String,
+      isRequired: Boolean,
+      notes: String
+    }],
+    submittedAt: String,
+    status: String,
+    reviewedBy: String,
+    reviewNotes: String,
+    reviewedAt: String
+  }],
+  currentPhase: String
 }, {
-  timestamps: true
+  timestamps: true,
+  collection: 'applications'
 });
 
-const ApplicationStage = mongoose.model('ApplicationStage', applicationStageSchema);
+const Application =
+  mongoose.models.Application ||
+  mongoose.model('Application', applicationSchema);
 
-export default ApplicationStage;
+export default Application;
+

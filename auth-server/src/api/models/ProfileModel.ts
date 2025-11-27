@@ -1,6 +1,5 @@
 import mongoose from 'mongoose';
 
-
 const profileSchema = new mongoose.Schema({
   userId: { type: String, required: true, unique: true },
   documents: [{
@@ -12,9 +11,14 @@ const profileSchema = new mongoose.Schema({
     isAccessible: Boolean,
     accessPermission: String,
     notes: String
-  }],
+  }]
 }, {
-  timestamps: true
+  timestamps: true,
+  collection: 'profiles'
 });
 
-export default mongoose.model('Profile', profileSchema);
+const Profile =
+  mongoose.models.Profile ||
+  mongoose.model('Profile', profileSchema);
+
+export default Profile;

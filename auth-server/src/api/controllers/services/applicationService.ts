@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Request, Response, NextFunction } from "express";
 import Application from "../../models/ApplicationModel";
 import ApplicationStage from "../../models/ApplicationStageModel";
@@ -5,27 +6,15 @@ import UserApplicationProgress from "../../models/UserApplicationProgressModel";
 import LinkDocument from "../../models/LinkDocumentModel";
 import { requiredDocuments as rawRequiredDocs } from "../../../utils/constants";
 import { getUserFromRequest, validateSourceType } from "../../../utils/authHelpers";
-import {
-  ApplicationPhase,
-  ExtendedApplicationDocument,
-  DocumentSourceType,
-  ExtendedApplicationStatus,
+import {ApplicationPhase, ExtendedApplicationDocument, DocumentSourceType, ExtendedApplicationStatus,
 } from "va-hybrid-types/contentTypes";
 
-// -------------------------
-// TYPES
-// -------------------------
-
-// Fix TS error: requiredDocuments[phase] string index
 type RequiredDoc = { type: string; name: string };
 
 type RequiredDocumentsMap = Record<ApplicationPhase, RequiredDoc[]>;
 
 const requiredDocuments = rawRequiredDocs as RequiredDocumentsMap;
 
-// -------------------------
-// GET APPLICATION STAGES
-// -------------------------
 
 export const getApplicationStages = async (req: Request, res: Response, next: NextFunction) => {
   try {
@@ -58,9 +47,6 @@ export const getApplicationStages = async (req: Request, res: Response, next: Ne
   }
 };
 
-// -------------------------
-// GET APPLICATIONS
-// -------------------------
 
 export const getApplications = async (req: Request, res: Response, next: NextFunction) => {
   try {
@@ -77,9 +63,6 @@ export const getApplications = async (req: Request, res: Response, next: NextFun
   }
 };
 
-// -------------------------
-// CREATE APPLICATION
-// -------------------------
 
 export const createApplication = async (req: Request, res: Response, next: NextFunction) => {
   try {
@@ -93,7 +76,7 @@ export const createApplication = async (req: Request, res: Response, next: NextF
     let userApp = await Application.findOne({ userId });
 
     if (userApp) {
-      const existingPhase = userApp.applications.find((app) => app.phase === phase);
+      const existingPhase = userApp.applications.find((app: any) => app.phase === phase);
       if (existingPhase) {
         return res.status(400).json({ error: "Application phase already exists" });
       }
@@ -129,9 +112,7 @@ export const createApplication = async (req: Request, res: Response, next: NextF
   }
 };
 
-// -------------------------
-// UPDATE APPLICATION PHASE
-// -------------------------
+
 
 export const updateApplicationPhase = async (req: Request, res: Response, next: NextFunction) => {
   try {
@@ -143,7 +124,7 @@ export const updateApplicationPhase = async (req: Request, res: Response, next: 
 
     if (!userApp) return res.status(404).json({ error: "Application not found" });
 
-    const index = userApp.applications.findIndex((app) => app.phase === phase);
+    const index = userApp.applications.findIndex((app: { phase: ApplicationPhase }) => app.phase === phase);
 
     if (index === -1) {
       userApp.applications.push({
@@ -157,7 +138,6 @@ export const updateApplicationPhase = async (req: Request, res: Response, next: 
       const existing = userApp.applications[index];
       existing.data = { ...existing.data, ...data };
     }
-
     userApp.currentPhase = phase;
     await userApp.save();
 
@@ -167,9 +147,6 @@ export const updateApplicationPhase = async (req: Request, res: Response, next: 
   }
 };
 
-// -------------------------
-// GET DOCUMENTS FOR A PHASE
-// -------------------------
 
 export const getApplicationDocuments = async (req: Request, res: Response, next: NextFunction) => {
   try {
@@ -179,7 +156,7 @@ export const getApplicationDocuments = async (req: Request, res: Response, next:
     const userApp = await Application.findOne({ userId });
     if (!userApp) return res.status(404).json({ error: "Application not found" });
 
-    const phaseApp = userApp.applications.find((app) => app.phase === phase);
+    const phaseApp = userApp.applications.find((app: any) => app.phase === phase);
     if (!phaseApp) return res.status(404).json({ error: "Phase not found" });
 
     res.json(phaseApp.documents);
@@ -240,7 +217,7 @@ export const addApplicationDocument = async (req: Request, res: Response, next: 
       });
     }
 
-    let phaseApp = userApp.applications.find((a) => a.phase === phase);
+    let phaseApp = userApp.applications.find((a: any) => a.phase === phase);
     if (!phaseApp) {
       userApp.applications.push({
         phase,
@@ -249,7 +226,7 @@ export const addApplicationDocument = async (req: Request, res: Response, next: 
         submittedAt: null,
         status: "draft",
       });
-      phaseApp = userApp.applications.find((a) => a.phase === phase);
+      phaseApp = userApp.applications.find((a: any) => a.phase === phase);
     }
 
     if (!phaseApp) {
@@ -304,9 +281,6 @@ export const addApplicationDocument = async (req: Request, res: Response, next: 
   }
 };
 
-// -------------------------
-// REMOVE DOCUMENT
-// -------------------------
 
 export const removeApplicationDocument = async (req: Request, res: Response, next: NextFunction) => {
   try {
@@ -319,7 +293,7 @@ export const removeApplicationDocument = async (req: Request, res: Response, nex
     let removed = false;
 
     for (const phaseApp of userApp.applications) {
-      const index = phaseApp.documents.findIndex((doc) => doc.id === documentId);
+      const index = phaseApp.documents.findIndex((doc: any) => doc.id === documentId);
       if (index !== -1) {
         phaseApp.documents.splice(index, 1);
         removed = true;
@@ -343,9 +317,6 @@ export const removeApplicationDocument = async (req: Request, res: Response, nex
   }
 };
 
-// -------------------------
-// SUBMIT PHASE
-// -------------------------
 
 export const submitApplicationPhase = async (req: Request, res: Response, next: NextFunction) => {
   try {
@@ -355,11 +326,11 @@ export const submitApplicationPhase = async (req: Request, res: Response, next: 
     const userApp = await Application.findOne({ userId });
     if (!userApp) return res.status(404).json({ error: "Application not found" });
 
-    const phaseApp = userApp.applications.find((app) => app.phase === phase);
+    const phaseApp = userApp.applications.find((app: { phase: ApplicationPhase }) => app.phase === phase);
     if (!phaseApp) return res.status(404).json({ error: "Phase not found" });
 
     const required = requiredDocuments[phase] ?? [];
-    const uploadedTypes = phaseApp.documents.map((d) => d.documentType);
+    const uploadedTypes = phaseApp.documents.map((d: any) => d.documentType);
 
     const missing = required.filter((reqDoc: RequiredDoc) => !uploadedTypes.includes(reqDoc.type));
 
@@ -380,9 +351,6 @@ export const submitApplicationPhase = async (req: Request, res: Response, next: 
   }
 };
 
-// -------------------------
-// APPROVE APPLICATION PHASE
-// -------------------------
 
 export const approveApplication = async (req: Request, res: Response, next: NextFunction) => {
   try {
@@ -395,7 +363,7 @@ export const approveApplication = async (req: Request, res: Response, next: Next
     const userApp = await Application.findOne({ userId: id });
     if (!userApp) return res.status(404).json({ error: "Application not found" });
 
-    const phaseApp = userApp.applications.find((app) => app.phase === phase);
+    const phaseApp = userApp.applications.find((app: { phase: ApplicationPhase }) => app.phase === phase);
     if (!phaseApp) return res.status(404).json({ error: "Phase not found" });
 
     phaseApp.status = "approved";
@@ -411,9 +379,6 @@ export const approveApplication = async (req: Request, res: Response, next: Next
   }
 };
 
-// -------------------------
-// GET REQUIRED DOCUMENTS
-// -------------------------
 
 export const getRequiredDocuments = (req: Request, res: Response) => {
   const { phase } = req.params as { phase: ApplicationPhase };
@@ -424,9 +389,6 @@ export const getRequiredDocuments = (req: Request, res: Response) => {
   return res.json(docs);
 };
 
-// -------------------------
-// UPDATE STAGE STATUS
-// -------------------------
 
 export const updateStageStatus = async (req: Request, res: Response, next: NextFunction) => {
   try {

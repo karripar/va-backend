@@ -1,8 +1,14 @@
 import { Router} from 'express'; // Request, Response, NextFunction } from 'express';
 import { authenticate, validateStory, adminMiddleware, validationErrors, requireAuthOrAdmin} from '../../middlewares';
-import {getApprovedStoriesHandler, getAllStoriesHandler, getStoryByIdHandler, createStoryHandler,
-  updateStoryHandler, deleteStoryHandler, approveStoryHandler, likeStoryHandler,
-  getCountriesHandler} from '../controllers/ExchangeStoriesController';
+import {createStoryHandler,
+  getApprovedStoriesHandler,
+  //getAllStoriesHandler,
+  getStoryByIdHandler,
+  updateStoryHandler,
+  deleteStoryHandler,
+  approveStoryHandler,
+  reactStoryHandler,
+  getCountriesHandler,} from '../controllers/ExchangeStoriesController';
 
 const router = Router();
 
@@ -13,7 +19,7 @@ const router = Router();
  * public access
  */
 
-router.get('/stories', getApprovedStoriesHandler);
+router.get("/", getApprovedStoriesHandler);
 
 /**
  * @api {get} /stories/all Get all approved stories
@@ -21,7 +27,7 @@ router.get('/stories', getApprovedStoriesHandler);
  * @apiGroup ExchangeStories
  * Admin access only
  */
-router.get('/stories/all', authenticate, adminMiddleware, getAllStoriesHandler);
+///router.get('/stories/all', authenticate, adminMiddleware, getAllStoriesHandler);
 
 /**
  * @api {get} /stories/:id Get story by ID
@@ -29,7 +35,7 @@ router.get('/stories/all', authenticate, adminMiddleware, getAllStoriesHandler);
  * @apiGroup ExchangeStories
  * @apiParam {String} id Story ID
  */
-router.get('/stories/:id', getStoryByIdHandler);
+router.get("/:id", getStoryByIdHandler);
 
 /**
  * @api {post} /stories Create a new story (Admin only)
@@ -41,7 +47,7 @@ router.get('/stories/:id', getStoryByIdHandler);
  * Creating story admin or authorized user only
  */
 router.post(
-  '/stories',
+  "/",
   authenticate,
   requireAuthOrAdmin,
   validateStory,
@@ -66,7 +72,7 @@ router.post(
  * @apiGroup ExchangeStories
  * @apiParam {String} id Story's unique ID
  */
-router.put('/stories/:id', authenticate, requireAuthOrAdmin, updateStoryHandler);
+router.put("/:id", authenticate, requireAuthOrAdmin, updateStoryHandler);
 
 /**
  * @api {delete} /stories/:id Delete a story
@@ -75,7 +81,7 @@ router.put('/stories/:id', authenticate, requireAuthOrAdmin, updateStoryHandler)
  * @apiParam {String} id Story's unique ID
  * Admin or the owner only
  */
-router.delete('/stories/:id',authenticate, requireAuthOrAdmin, deleteStoryHandler);
+router.delete("/:id", authenticate, requireAuthOrAdmin, deleteStoryHandler);
 
 /**
  * @api {put} /stories/:id/approve Approve a
@@ -83,7 +89,7 @@ router.delete('/stories/:id',authenticate, requireAuthOrAdmin, deleteStoryHandle
  * @apiParam {String} id Story's unique ID
  * Admin only
  */
-router.put('/stories/:id/approve', authenticate,adminMiddleware, approveStoryHandler);
+router.put("/:id", authenticate,adminMiddleware, approveStoryHandler);
 
 /**
  * @api {post} /stories/:id/
@@ -92,7 +98,8 @@ router.put('/stories/:id/approve', authenticate,adminMiddleware, approveStoryHan
  * @apiParam {String} id Story's unique ID
  * Public access
  */
-router.post('/stories/:id/like', likeStoryHandler);
+router.post("/:id/like", deleteStoryHandler);
+router.post("/:id/react", authenticate, reactStoryHandler);
 
 /**
  * @api {get} /countries Get countries with story counts
@@ -100,6 +107,6 @@ router.post('/stories/:id/like', likeStoryHandler);
  * @apiGroup ExchangeStories
  * Public access
  */
-router.get('/countries', getCountriesHandler);
+router.get("/", getCountriesHandler);
 
 export default router;

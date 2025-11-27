@@ -6,10 +6,12 @@ const calculatorHistorySchema = new mongoose.Schema({
   result: { type: Number, required: true },
   timestamp: { type: Date, default: Date.now, required: true }
 }, {
-  timestamps: false
+  timestamps: false,
+  collection: 'calculatorHistory'
 });
 
-// Index for efficient queries
 calculatorHistorySchema.index({ userId: 1, timestamp: -1 });
 
-export const CalculatorHistory = mongoose.model('CalculatorHistory', calculatorHistorySchema);
+export const CalculatorHistory =
+  mongoose.models.CalculatorHistory ||
+  mongoose.model('CalculatorHistory', calculatorHistorySchema);
