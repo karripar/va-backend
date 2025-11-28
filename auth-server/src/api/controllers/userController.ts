@@ -3,16 +3,17 @@ import {MessageResponse} from '../../types/MessageTypes';
 import CustomError from '../../classes/CustomError';
 import {ProfileResponse} from 'va-hybrid-types/contentTypes';
 import User from '../models/userModel';
+import mongoose from 'mongoose';
 
 /**
  * @module controllers/userController
- * @description Controller functions for handling user authentication and profile management,
+ * @remarks Controller functions for handling user authentication and profile management,
  * including Google OAuth integration, user creation, and profile retrieval.
  */
 
 /**
  * @function findOrCreateUser
- * @description Finds an existing user by Google ID or creates a new user if not found.
+ * @remarks Finds an existing user by Google ID or creates a new user if not found.
  * If the user exists, updates their email and name from Google data.
  *
  * @param {Object} googleData - Google authentication data.
@@ -86,7 +87,7 @@ const findOrCreateUser = async (googleData: {
 
 /**
  * @function updateUserFromGoogle
- * @description Updates an existing user's information (name and email) based on their Google profile data.
+ * @remarks Updates an existing user's information (name and email) based on their Google profile data.
  * This ensures the local user data stays in sync with Google account changes.
  *
  * @param {string} googleId - The unique Google user ID.
@@ -135,7 +136,7 @@ const updateUserFromGoogle = async (
 
 /**
  * @function getUserProfile
- * @description Retrieves the authenticated user's profile from the JWT token stored in res.locals.
+ * @remarks Retrieves the authenticated user's profile from the JWT token stored in res.locals.
  * The user data is populated by the authentication middleware.
  *
  * @param {Request} req - Express request object.
@@ -174,7 +175,7 @@ const getUserProfile = async (
 
 /**
  * @function searchUsersByEmail
- * @description Searches for users by email. Only accessible to admin users.
+ * @remarks Searches for users by email. Only accessible to admin users.
  * Supports partial and case-insensitive matches.
  *
  * @param {Request<{ email: string }>} req - Express request object with email in params.
@@ -233,7 +234,7 @@ const searchUsersByEmail = async (
 
 
 /** * @function deleteUser
- * @description Deletes a user by ID. Only elevated admins (user_level_id = 3) can perform this action.
+ * @remarks Deletes a user by ID. Only elevated admins (user_level_id = 3) can perform this action.
  * Prevents deletion of other elevated admins. Users have to request deletion through support.
  *
  * @param {Request} req - Express request object with user ID in params.
@@ -256,7 +257,10 @@ const deleteUser = async (
   res: Response<MessageResponse>,
   next: NextFunction,
 ) => {
+  const session = await mongoose.startSession();
+  session.startTransaction();
   try {
+
     const userId = req.params.id;
 
     const admin = res.locals.user;
@@ -282,7 +286,7 @@ const deleteUser = async (
 
 
 /** * @function toggleBlockUser
- * @description Toggles the blocked status of a user by ID. Only elevated admins (user_level_id = 3) can perform this action.
+ * @remarks Toggles the blocked status of a user by ID. Only elevated admins (user_level_id = 3) can perform this action.
  * Prevents blocking of other elevated admins.
  *
  * @param {Request} req - Express request object with user ID in params.
@@ -334,7 +338,7 @@ const toggleBlockUser = async (
 
 
 /** * @function getBlockedUsers
- * @description Retrieves a list of all blocked users. Only accessible to elevated admins (user_level_id = 2 or 3).
+ * @remarks Retrieves a list of all blocked users. Only accessible to elevated admins (user_level_id = 2 or 3).
  *
  * @param {Request} req - Express request object.
  * @param {Response<ProfileResponse[] | MessageResponse>} res - Express response object.

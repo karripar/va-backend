@@ -1,6 +1,7 @@
 import express from 'express';
-import {/* upload, uploadAvatar, uploadDocument, uploadApplicationDocument, */ addDocumentLink, validateDocumentLink,
-getPlatformInstructions, getDocuments} from "../controllers/services/linkUploadService";
+import { addDocumentLink, validateDocumentLink,
+getPlatformInstructions, getDocuments} from "../controllers/linkuploadController";
+import { authenticate } from '../../middlewares';
 
 /**
  * @apiDefine DocumentLinkBody
@@ -46,6 +47,7 @@ const router = express.Router();
  * @apiName GetPlatformInstructions
  * @apiGroup LinkUpload
  */
+
 router.get('/documents/platforms', getPlatformInstructions);
 /**
  * @api {get} /link-upload/documents Get all documents
@@ -53,13 +55,13 @@ router.get('/documents/platforms', getPlatformInstructions);
  * @apiGroup LinkUpload
  */
 router.get('/documents', getDocuments);
+router.post('/documents/validate', validateDocumentLink);
 /**
  * @api {post} /link-upload/documents/validate Validate document link
  * @apiName ValidateDocumentLink
  * @apiGroup LinkUpload
  * @apiUse DocumentLinkBody
  */
-router.post('/documents/validate', validateDocumentLink);
 
 // Document routes
 /**
@@ -68,19 +70,8 @@ router.post('/documents/validate', validateDocumentLink);
  * @apiGroup LinkUpload
  * @apiUse DocumentLinkBody
  */
-router.post('/documents/link', addDocumentLink);
-/**
- * @api {post} /link-upload/documents Add document link (alias)
- * @apiName AddDocumentLinkAlias
- * @apiGroup LinkUpload
- * @apiUse DocumentLinkBody
- */
+router.post('/documents/link', authenticate, addDocumentLink);
 router.post('/documents', addDocumentLink);
 
-/*
-// Application document routes
-router.post('/applications/documents/link', addApplicationDocumentLink);
-router.post('/applications/documents', addApplicationDocumentLink);
-*/
 
 export default router;

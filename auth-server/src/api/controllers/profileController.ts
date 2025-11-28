@@ -4,4 +4,3 @@ export * from './services/documentService';
 export * from './services/applicationService';
 export * from './services/budgetService';
 export * from './services/grantService';
-export * from './services/linkUploadService';

@@ -15,14 +15,14 @@ const exchangeStorySchema = new mongoose.Schema({
 
   destination: { type: String, required: true },
   country: { type: String, required: true, index: true },
-  city: { type: String, required: true },               
+  city: { type: String, required: true },
   university: { type: String, required: true },
   duration: { type: Number, required: true },
   exchangeDate: { type: String, required: true },
 
   title: { type: String, required: true },
   summary: { type: String, required: true },
-  fullReport: { type: String, required: false },        
+  fullReport: { type: String, required: false },
   highlights: [{ type: String }],
   challenges: [{ type: String }],
   tips: [{ type: String }],
@@ -35,9 +35,9 @@ const exchangeStorySchema = new mongoose.Schema({
   likes: { type: Number, default: 0 },
   saves: { type: Number, default: 0 },
 
-  isApproved: { type: Boolean, default: false },        
-  isFeatured: { type: Boolean, default: false },       
-  createdBy: { type: String, required: false },         
+  isApproved: { type: Boolean, default: false },
+  isFeatured: { type: Boolean, default: false },
+  createdBy: { type: String, required: false },
   tags: [{ type: String, index: true }]
 }, {
   timestamps: true
@@ -50,7 +50,6 @@ exchangeStorySchema.index({ isFeatured: 1, isApproved: 1 });
 // Text search index
 exchangeStorySchema.index({ title: 'text', summary: 'text', university: 'text' });
 
-const ExchangeStories = mongoose.model('ExchangeStory', exchangeStorySchema);
+const ExchangeStories = mongoose.models.ExchangeStory || mongoose.model('ExchangeStory', exchangeStorySchema);
 
 export default ExchangeStories;
-

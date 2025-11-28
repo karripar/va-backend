@@ -1,8 +1,7 @@
-import { Router } from "express";
-import {getStories, getStoryById, createStory, updateStory, reactToStory, getFeaturedStories} from "../controllers/services/storyService";
+import { Router} from 'express';
+import {getStories, getStoryById, createStory, updateStory, reactToStory, getFeaturedStories} from "../controllers/storyController"
 
 const router = Router();
-
 router.get("/stories", getStories);
 router.get("/featured", getFeaturedStories);
 /**

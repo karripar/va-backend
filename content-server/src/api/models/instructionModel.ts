@@ -70,9 +70,36 @@ const InstructionVisibility = model<IInstructionVisibility>(
   instructionVisibilitySchema,
 );
 
+// ohjesteppi, sisältää otsikon ja tekstin molemmilla kielillä
+interface IInstructionStep {
+  stepIndex: number;
+  titleFi: string;
+  titleEn: string;
+  textFi: string;
+  textEn: string;
+}
+
+const instructionStepSchema = new Schema<IInstructionStep>(
+  {
+    stepIndex: {type: Number, required: true, unique: true},
+    titleFi: {type: String, required: true},
+    titleEn: {type: String, required: true},
+    textFi: {type: String, required: true},
+    textEn: {type: String, required: true},
+  },
+  {timestamps: true},
+);
+
+const InstructionStep = model<IInstructionStep>(
+  'InstructionStep',
+  instructionStepSchema,
+);
+
 export {
   InstructionLink,
   IInstructionLink,
   InstructionVisibility,
   IInstructionVisibility,
+  InstructionStep,
+  IInstructionStep,
 };
