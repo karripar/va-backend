@@ -158,7 +158,7 @@ const getDestinations = async (
   next: NextFunction
 ) => {
   try {
-    const lang = (req.query.lang as string) || 'en';
+    const lang = 'en';
     const validFields = ['tech', 'health', 'business', 'culture'];
     const field =
       req.query.field && validFields.includes(req.query.field as string)

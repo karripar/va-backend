@@ -15,10 +15,7 @@ export type SectionData = Record<
 
 function cleanField(field: string): string {
   if (!field) return '';
-
   let cleaned = field.trim();
-
-  // Detect exact repeated halves (like "Oral HygieneOral Hygiene")
   for (let i = 1; i <= Math.floor(cleaned.length / 2); i++) {
     const first = cleaned.slice(0, i);
     const second = cleaned.slice(i, i * 2);
@@ -27,7 +24,6 @@ function cleanField(field: string): string {
       break;
     }
   }
-
   return cleaned;
 }
 
@@ -41,7 +37,6 @@ export const scrapeDestinations = async (
   for (const section of $('div.paragraph--type--accordion').toArray()) {
     const h2 = $(section).find('h2').first();
     if (!h2.length) continue;
-
     const sectionTitle = h2.text().trim();
 
     const skipSections = [
@@ -54,70 +49,66 @@ export const scrapeDestinations = async (
       'Palvelut muualla',
       'Metropolia somessa',
     ];
-
     if (skipSections.includes(sectionTitle)) continue;
 
     sections[sectionTitle] = [];
 
-    const panels = $(section).find('.accordion-panel').toArray();
+    const panels = $(section).find('.field-item').toArray();
 
-    // --- Batch all panel HTMLs ---
-    const panelData = panels.map((panel) => {
-      const panelHtml = $(panel).html() ?? '';
+    for (const panel of panels) {
+      const label = $(panel).find('.field-name-field-label').first().text().trim() || 'Unknown';
+      const panelContent = $(panel).find('.field-name-field-content');
 
-      // --- Get study field ---
-      const labelId = $(panel).attr('aria-labelledby');
-      let studyField = 'Unknown';
-      if (labelId) {
-        const labelElem = $(`#${labelId}`);
-        if (labelElem.length) {
-          const fieldDiv = labelElem
-            .find('.field-name-field-label')
-          if (fieldDiv.length) {
-            studyField = fieldDiv.text().trim();
-          }
-        }
+      // Check for multiple-country (health-style) panels
+      if (panelContent.find('p > span').length > 0) {
+        panelContent.find('p > span').each((_, span) => {
+          const country = $(span).text().trim();
+          const ul = $(span).parent().next('ul');
+          if (!ul.length) return;
+
+          ul.find('li').each((_, li) => {
+            const a = $(li).find('a').first();
+            if (!a.length) return;
+
+            const title = a.text().trim();
+            const link = a.attr('href') || '';
+            const studyField = cleanField(label);
+
+            const isoCode = getClosestCountry(country, lang);
+            const coords = getCoordinates(isoCode);
+
+            sections[sectionTitle].push({
+              country,
+              title,
+              link,
+              studyField,
+              coordinates: { lat: coords?.lat, lng: coords?.lng },
+            });
+          });
+        });
+      } else {
+        // Fallback: normal single-country panel → AI extraction
+        const panelHtml = $(panel).html() ?? '';
+        const fallbackCountry = label;
+        const fallbackStudyField = label;
+
+        const extracted = await extractSectionWithAI(sectionTitle, panelHtml, fallbackCountry, fallbackStudyField);
+
+        extracted.forEach((item) => {
+          const country = item.country?.trim() || fallbackCountry;
+          const isoCode = getClosestCountry(country, lang);
+          const coords = getCoordinates(isoCode);
+
+          sections[sectionTitle].push({
+            country,
+            title: item.title,
+            link: item.link,
+            studyField: cleanField(item.studyField || fallbackStudyField),
+            coordinates: { lat: coords?.lat, lng: coords?.lng },
+          });
+        });
       }
-
-      // --- Extract panel country ---
-      let country = labelId ? $(`#${labelId}`).text().trim() : 'Unknown';
-      if (country) {
-        const parts = country.split(/\s+/);
-        country = [...new Set(parts)].join(' ');
-      }
-
-      return { panelHtml, country, studyField };
-    });
-
-    // --- Combine all panel HTMLs for one AI call ---
-    const combinedHtml = panelData.map((p) => p.panelHtml).join('\n\n');
-
-    // Use the first studyField and country as fallback
-    const fallbackStudyField = panelData[0]?.studyField ?? 'Unknown';
-    const fallbackCountry = panelData[0]?.country ?? 'Unknown';
-
-    const extracted = await extractSectionWithAI(
-      sectionTitle,
-      combinedHtml,
-      fallbackCountry,
-      fallbackStudyField
-    );
-
-    extracted.forEach((item) => {
-      const isoCode = getClosestCountry(item.country, lang);
-      const jsonCoords = getCoordinates(isoCode);
-
-      sections[sectionTitle].push({
-        country: item.country,
-        title: item.title,
-        link: item.link,
-        studyField: cleanField(item.studyField ?? fallbackStudyField),
-        coordinates: {
-          lat: jsonCoords?.lat,
-          lng: jsonCoords?.lng,
-        },
-      });
-    });
+    }
   }
 
   return sections;
