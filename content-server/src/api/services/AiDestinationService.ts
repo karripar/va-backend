@@ -1,62 +1,93 @@
-import OpenAI from "openai";
+import OpenAI from 'openai';
+import dotenv from 'dotenv';
+
+dotenv.config();
 const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
-interface ExtractedItem {
+export interface ExtractedItem {
   country: string;
   title: string;
   link: string;
+  studyField?: string;
 }
 
-async function extractSectionWithAI(
+export async function extractSectionWithAI(
   sectionTitle: string,
-  sectionHtml: string
+  sectionHtml: string,
+  panelCountry: string,
+  studyField: string,
 ): Promise<ExtractedItem[]> {
   const prompt = `
-You are an expert parser. Extract *all destinations* from the following HTML.
-Return ONLY valid JSON.
+You are an expert parser. Extract ALL destinations from the following HTML.
+Return ONLY JSON.
 
 ### Rules:
-- Each destination must have:
-  - "country": string
-  - "title": string
-  - "link": string (absolute or relative)
-- For each <li>, <a>, or text combo, reconstruct the most human-readable title.
-- Do NOT include colons at the end.
-- If no link exists, return an empty string.
-- Country is the heading (aria-labelledby text) or closest country-like text.
-- Cleanup weird punctuation: merge duplicated colons, semicolons, etc.
+- Each destination must include:
+  "country": string
+  "title": string
+  "link": string
+  "studyField": string
 
-### Input HTML:
+- If HTML includes a study field, use it.
+- If HTML does NOT include one, use this fallback: "${studyField}"
+
+- The studyField must NOT contain duplicated text.
+- Ensure clean, human-readable titles.
+- Remove trailing colons.
+- Use "" for missing links.
+- Use panel-level country if HTML does not provide one: "${panelCountry}"
+
+NO commentary. Return ONLY JSON.
+
+### HTML:
 ${sectionHtml}
 
-### Output JSON format:
+### JSON format:
 [
   {
-    "country": "...",
-    "title": "...",
-    "link": "..."
+    "country": "string",
+    "title": "string",
+    "link": "string",
+    "studyField": "string"
   }
 ]
-`;
+  `;
 
   const response = await client.responses.create({
-    model: "gpt-4.1",
+    model: 'gpt-4o',
     input: prompt,
     temperature: 0,
-    top_p: 1,
   });
 
-  const output = response.output[0];
-  if (Array.isArray(output) && output.every(item =>
-    typeof item.country === "string" &&
-    typeof item.title === "string" &&
-    typeof item.link === "string"
-  )) {
-    return output as ExtractedItem[];
-  } else {
-    throw new Error("Invalid response format");
+  const raw = response.output_text;
+
+  let parsed;
+  try {
+    const cleaned = raw
+      .trim()
+      .replace(/^```(?:json)?\s*/, '')
+      .replace(/```$/, '')
+      .trim();
+
+    parsed = JSON.parse(cleaned);
+  } catch {
+    console.error('Failed to parse AI JSON:', raw);
+    throw new Error('AI did not return valid JSON');
   }
+
+  if (
+    !Array.isArray(parsed) ||
+    !parsed.every(
+      (item) =>
+        typeof item.country === 'string' &&
+        typeof item.title === 'string' &&
+        typeof item.link === 'string' &&
+        typeof item.studyField === 'string'
+    )
+  ) {
+    console.error('AI returned an invalid structure:', parsed);
+    throw new Error('Invalid response format from AI');
+  }
+
+  return parsed;
 }
-
-export { extractSectionWithAI, ExtractedItem };
-

@@ -165,10 +165,11 @@ const getDestinations = async (
         ? (req.query.field as string)
         : 'tech';
 
-    const threeDaysAgo = new Date(Date.now() - 3 * 24 * 60 * 60 * 1000);
+    // seven day cache to reduce OpenAI api calls and scraping load
+    const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
     const cached = await DestinationModel.findOne({ field, lang });
 
-    if (cached && cached.lastUpdated > threeDaysAgo) {
+    if (cached && cached.lastUpdated > sevenDaysAgo) {
       console.log('Using cached data');
       return res.status(200).json({ destinations: cached.sections });
     }

@@ -1,5 +1,11 @@
+<<<<<<< HEAD
 import {Request, Response, NextFunction} from 'express';
 // import { v4 as uuidv4 } from 'uuid';
+=======
+import { Request, Response, NextFunction } from 'express';
+import { v4 as uuidv4 } from 'uuid';
+
+>>>>>>> ai-karri
 import LinkDocument from '../../api/models/linkUploadModel';
 import {
   platformInstructions,
