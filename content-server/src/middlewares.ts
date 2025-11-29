@@ -68,9 +68,8 @@ const adminMiddleware = (
 ) => {
   const user = res.locals.user;
 
-  const role = user?.role;
-
-  if (role !== "Admin" && role !== "SuperAdmin") {
+  // Check user_level_id: 1 = User, 2 = Admin
+  if (user?.user_level_id !== 2) {
     return res.status(403).json({ error: "Admin access required" });
   }
 

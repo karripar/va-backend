@@ -1,7 +1,7 @@
 import mongoose from 'mongoose';
 
 const linkDocumentSchema = new mongoose.Schema({
-  id: { type: String, required: true },
+  id: { type: String },
   userId: { type: String, required: true },
 
   name: { type: String },

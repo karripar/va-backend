@@ -13,6 +13,14 @@ import {createStoryHandler,
 const router = Router();
 
 /**
+ * @api {get} /stories/countries Get countries with story counts
+ * @apiName GetCountries
+ * @apiGroup ExchangeStories
+ * Public access
+ */
+router.get("/countries", getCountriesHandler);
+
+/**
  * @api {get} /stories Get approved stories
  * @apiName GetApprovedStories
  * @apiGroup ExchangeStories
@@ -84,29 +92,20 @@ router.put("/:id", authenticate, requireAuthOrAdmin, updateStoryHandler);
 router.delete("/:id", authenticate, requireAuthOrAdmin, deleteStoryHandler);
 
 /**
- * @api {put} /stories/:id/approve Approve a
+ * @api {put} /stories/:id/approve Approve a story
  * @apiGroup ExchangeStories
  * @apiParam {String} id Story's unique ID
  * Admin only
  */
-router.put("/:id", authenticate,adminMiddleware, approveStoryHandler);
+router.put("/:id/approve", authenticate, adminMiddleware, approveStoryHandler);
 
 /**
- * @api {post} /stories/:id/
- * @apiName LikeStory
+ * @api {post} /stories/:id/react React to a story (like/save)
+ * @apiName ReactStory
  * @apiGroup ExchangeStories
  * @apiParam {String} id Story's unique ID
- * Public access
+ * Authenticated user access
  */
-router.post("/:id/like", deleteStoryHandler);
 router.post("/:id/react", authenticate, reactStoryHandler);
-
-/**
- * @api {get} /countries Get countries with story counts
- * @apiName GetCountries
- * @apiGroup ExchangeStories
- * Public access
- */
-router.get("/", getCountriesHandler);
 
 export default router;

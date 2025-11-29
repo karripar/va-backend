@@ -1,7 +1,7 @@
 import express from 'express';
 import { addDocumentLink, validateDocumentLink,
 getPlatformInstructions, getDocuments} from "../controllers/linkuploadController";
-import { authenticate } from '../../middlewares';
+//import { authenticate } from '../../middlewares';
 
 /**
  * @apiDefine DocumentLinkBody
@@ -70,8 +70,7 @@ router.post('/documents/validate', validateDocumentLink);
  * @apiGroup LinkUpload
  * @apiUse DocumentLinkBody
  */
-router.post('/documents/link', authenticate, addDocumentLink);
-router.post('/documents', addDocumentLink);
+router.post('/documents/link', addDocumentLink);
 
 
 export default router;

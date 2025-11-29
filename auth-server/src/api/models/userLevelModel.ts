@@ -12,6 +12,8 @@ const userLevelSchema = new mongoose.Schema({
     unique: true,
     enum: ['Admin', 'User', 'SuperAdmin'],
   }
+}, {
+  collection: 'userLevels'
 });
 
 export default mongoose.model('UserLevel', userLevelSchema);

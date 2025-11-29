@@ -50,6 +50,8 @@ const userSchema = new mongoose.Schema<UserInfo>({
     required: true,
     default: false,
   },
+}, {
+  collection: 'users'
 });
 
 export default mongoose.model<UserInfo>('User', userSchema);
