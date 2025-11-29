@@ -55,7 +55,7 @@ export const removeDocument = async (
   next: NextFunction,
 ) => {
   try {
-    const userId = getUserFromRequest(req);
+    const userId = getUserFromRequest(req, res);
     const {docId} = req.params;
 
     const user = await User.findOne({googleId: userId});
