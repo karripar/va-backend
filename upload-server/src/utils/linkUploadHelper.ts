@@ -62,6 +62,17 @@ export const platformInstructions = {
     ],
     urlPattern: "https://...",
     sharingDocs: null
+  },
+  checkbox: {
+    name: "Checkbox Confirmation",
+    icon: "✓",
+    instructions: [
+      "This is an attendance confirmation task",
+      "No document upload required",
+      "Check the box to confirm attendance"
+    ],
+    urlPattern: "attendance-confirmed",
+    sharingDocs: null
   }
 };
 
@@ -70,5 +81,6 @@ export const platformPatterns: Record<string, RegExp> = {
   onedrive: /1drv\.ms\/|onedrive\.live\.com/,
   dropbox: /dropbox\.com\//,
   icloud: /icloud\.com/,
-  other_url: /^https?:\/\/.+/
+  other_url: /^https?:\/\/.+/,
+  checkbox: /attendance-confirmed/
 };

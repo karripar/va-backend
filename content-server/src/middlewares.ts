@@ -38,29 +38,11 @@ const validateStory = [
   body('country').isString().trim().notEmpty().withMessage('country is required'),
   body('city').isString().trim().notEmpty().withMessage('city is required'),
   body('university').isString().trim().notEmpty().withMessage('university is required'),
-  // add other fields/validations as needed
+  body('title').isString().trim().notEmpty().withMessage('title is required'),
+  body('content').isString().trim().notEmpty().withMessage('content is required'),
 ];
- // story updating/deleting
-const requireAuthOrAdmin = async (req: Request, res: Response, next: NextFunction) => {
-  try {
-    const story = await ExchangeStories.findById(req.params.id);
-    if (!story) return res.status(404).json({ error: 'Story not found' });
 
-    const user = res.locals.user;
-
-    // Admin allowed by default
-    if (user?.user_level_id === 2) return next();
-
-    // Owner allowed
-    if (story.createdBy?.toString() === user?._id.toString()) return next();
-
-    return res.status(403).json({ error: 'Not allowed' });
-  } catch (err) {
-    next(new CustomError((err as Error).message, 500));
-  }
-};
-
-//Story updating/deleting/posting --> admin or owner
+//Story CRUD operations --> admin only
 const adminMiddleware = (
   req: Request,
   res: Response,
@@ -68,11 +50,21 @@ const adminMiddleware = (
 ) => {
   const user = res.locals.user;
 
-  // Check user_level_id: 1 = User, 2 = Admin
-  if (user?.user_level_id !== 2) {
+  console.log('Admin middleware check:', {
+    hasUser: !!user,
+    userId: user?._id,
+    userLevelId: user?.user_level_id,
+    email: user?.email
+  });
+
+  // Check user_level_id: 1 = User, 2 = Admin, 3 = Elevated Admin
+  // Allow both level 2 and 3 as admins
+  if (!user || (user.user_level_id !== 2 && user.user_level_id !== 3)) {
+    console.log('Admin access denied - user_level_id:', user?.user_level_id);
     return res.status(403).json({ error: "Admin access required" });
   }
 
+  console.log('Admin access granted');
   next();
 };
 
@@ -89,8 +81,16 @@ const authenticate = async (req: Request, res: Response, next: NextFunction) => 
   // decode the user_id from the token
   const decoded = jwt.verify(token, process.env.JWT_SECRET as string) as TokenContent;
 
+  console.log('JWT decoded:', { _id: decoded._id });
+
   const user = await User.findById(decoded._id);
-  //console.log('Authenticated user:', user);
+  console.log('User found in DB:', {
+    found: !!user,
+    userId: user?._id,
+    email: user?.email,
+    user_level_id: user?.user_level_id
+  });
+
   if (!user) {
     next(new CustomError('Unauthorized, user not found', 401));
     return;
@@ -109,4 +109,4 @@ const authenticate = async (req: Request, res: Response, next: NextFunction) => 
   }
 }
 
-export {notFound, errorHandler, validationErrors, authenticate, adminMiddleware, requireAuthOrAdmin, validateStory};
+export {notFound, errorHandler, validationErrors, authenticate, adminMiddleware, validateStory};

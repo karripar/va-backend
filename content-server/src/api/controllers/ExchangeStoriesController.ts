@@ -129,8 +129,16 @@ async function getCountriesWithCountsDb(): Promise<CountriesResponse['countries'
 
 const createStoryHandler = async (req: Request, res: Response) => {
   try {
-    const userId = res.locals.user?._id || req.body.userId || 'anonymous';
+    const userId = res.locals.user?._id;
+
+    if (!userId) {
+      console.error('createStoryHandler: No user ID found in res.locals.user');
+      return res.status(401).json({ error: 'User authentication required' });
+    }
+
+    console.log('Creating story for user:', userId);
     const story = await createStoryDb(req.body, userId.toString());
+    console.log('Story created successfully:', story.id);
     res.status(201).json({ story });
   } catch (error) {
     console.error('createStoryHandler error:', error);
@@ -228,6 +236,10 @@ const reactStoryHandler = async (req: Request, res: Response) => {
   try {
     const userId = res.locals.user?._id?.toString();
     const { type } = req.body;
+
+    if (!userId) {
+      return res.status(401).json({ error: 'User authentication required' });
+    }
 
     const story = await reactStoryDb(req.params.id, userId, type);
     res.json({ story });

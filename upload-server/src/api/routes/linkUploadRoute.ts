@@ -1,6 +1,6 @@
 import express from 'express';
 import { addDocumentLink, validateDocumentLink,
-getPlatformInstructions, getDocuments} from "../controllers/linkuploadController";
+getPlatformInstructions, getDocuments, addApplicationDocumentLink} from "../controllers/linkuploadController";
 //import { authenticate } from '../../middlewares';
 
 /**
@@ -163,6 +163,31 @@ router.post(
    */
   '/documents/link',
   addDocumentLink
+);
+
+router.post(
+  /**
+   * @api {post} /linkUploads/documents:1 Add application document link
+   * @apiName AddApplicationDocumentLink
+   * @apiGroup LinkUploadGroup
+   * @apiVersion 1.0.0
+   * @apiDescription Add a document link for application phase
+   * @apiPermission authenticated
+   *
+   * @apiBody {String} phase Application phase
+   * @apiBody {String} documentType Document type
+   * @apiBody {String} fileName File name
+   * @apiBody {String} fileUrl File URL
+   * @apiBody {String} sourceType Source platform type
+   * @apiBody {String} [notes] Optional notes
+   *
+   * @apiSuccess (201) {Object} document Created document object
+   *
+   * @apiError (400) {String} error Error message
+   * @apiError (401) {String} error User not authenticated
+   */
+  '/documents',
+  addApplicationDocumentLink
 );
 
 

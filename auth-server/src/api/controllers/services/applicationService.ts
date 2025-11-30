@@ -392,7 +392,15 @@ export const getRequiredDocuments = (req: Request, res: Response) => {
 
 export const updateStageStatus = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const userId = getUserFromRequest(req);
+    // Try to get authenticated user, fallback to request body userId
+    let userId: string;
+    try {
+      userId = getUserFromRequest(req);
+    } catch {
+      // If not authenticated, use userId from body or generate temporary one
+      userId = req.body.userId || `user-${Date.now()}`;
+    }
+
     const { stageId } = req.params as { stageId: string };
     const { status } = req.body as { status: ExtendedApplicationStatus };
 

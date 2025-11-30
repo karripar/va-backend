@@ -1,7 +1,8 @@
 import { Router} from 'express';
-import { authenticate, validateStory, adminMiddleware, validationErrors, requireAuthOrAdmin} from '../../middlewares';
+import { authenticate, validateStory, adminMiddleware, validationErrors} from '../../middlewares';
 import {createStoryHandler,
   getApprovedStoriesHandler,
+  getAllStoriesHandler,
   getStoryByIdHandler,
   updateStoryHandler,
   deleteStoryHandler,
@@ -12,6 +13,10 @@ import {createStoryHandler,
 /**
  * @apiDefine ExchangeStoriesGroup Exchange Stories
  * Exchange student stories management and interaction
+ *
+ * AUTHORIZATION MODEL:
+ * - Normal Users ( logged in or user_level_id = 1): Read-only access to approved stories only
+ * - Admin Users (user_level_id = 2 or 3): Full CRUD access - can create, view all stories (including unapproved), edit/delete any story, approve stories
  */
 
 const router = Router();
@@ -42,6 +47,43 @@ router.get(
    */
   "/countries",
   getCountriesHandler
+);
+
+router.get(
+  /**
+   * @api {get} /stories/all Get all stories (admin only)
+   * @apiName GetAllStories
+   * @apiGroup ExchangeStoriesGroup
+   * @apiVersion 1.0.0
+   * @apiDescription Retrieve ALL stories including pending/unapproved ones (admin only)
+   * @apiPermission admin
+   *
+   * @apiHeader {String} Authorization Bearer JWT token (admin)
+   *
+   * @apiQuery {String} [country] Filter by country
+   * @apiQuery {String} [university] Filter by university
+   * @apiQuery {Number} [limit] Limit number of results
+   * @apiQuery {Number} [skip] Skip number of results for pagination
+   *
+   * @apiSuccess (200) {Object[]} stories List of all stories
+   * @apiSuccess (200) {Object} total Total count
+   * @apiSuccess (200) {Boolean} hasMore Whether more results exist
+   *
+   * @apiError (401) {String} error Unauthorized
+   * @apiError (403) {String} error Forbidden - admin only
+   *
+   * @apiSuccessExample {json} Success-Response:
+   * HTTP/1.1 200 OK
+   * {
+   *   "stories": [...],
+   *   "total": 50,
+   *   "hasMore": true
+   * }
+   */
+  "/all",
+  authenticate,
+  adminMiddleware,
+  getAllStoriesHandler
 );
 
 router.get(
@@ -125,10 +167,10 @@ router.post(
    * @apiName CreateStory
    * @apiGroup ExchangeStoriesGroup
    * @apiVersion 1.0.0
-   * @apiDescription Create a new exchange story (authenticated users or admin)
-   * @apiPermission authenticated
+   * @apiDescription Create a new exchange story (admin only)
+   * @apiPermission admin
    *
-   * @apiHeader {String} Authorization Bearer JWT token
+   * @apiHeader {String} Authorization Bearer JWT token (admin)
    *
    * @apiBody {String} title Story title
    * @apiBody {String} content Story content
@@ -144,6 +186,7 @@ router.post(
    *
    * @apiError (400) {Object} errors Validation errors
    * @apiError (401) {String} error Unauthorized
+   * @apiError (403) {String} error Forbidden - admin only
    *
    * @apiSuccessExample {json} Success-Response:
    * HTTP/1.1 201 Created
@@ -164,7 +207,7 @@ router.post(
    */
   "/",
   authenticate,
-  requireAuthOrAdmin,
+  adminMiddleware,
   validateStory,
   validationErrors,
   createStoryHandler
@@ -176,8 +219,8 @@ router.put(
    * @apiName UpdateStory
    * @apiGroup ExchangeStoriesGroup
    * @apiVersion 1.0.0
-   * @apiDescription Update an existing story (owner or admin only)
-   * @apiPermission authenticated
+   * @apiDescription Update an existing story (admin only)
+   * @apiPermission admin
    *
    * @apiHeader {String} Authorization Bearer JWT token
    *
@@ -200,7 +243,7 @@ router.put(
    */
   "/:id",
   authenticate,
-  requireAuthOrAdmin,
+  adminMiddleware,
   updateStoryHandler
 );
 
@@ -210,17 +253,17 @@ router.delete(
    * @apiName DeleteStory
    * @apiGroup ExchangeStoriesGroup
    * @apiVersion 1.0.0
-   * @apiDescription Delete a story (owner or admin only)
-   * @apiPermission authenticated
+   * @apiDescription Delete a story admins only
+   * @apiPermission admin
    *
-   * @apiHeader {String} Authorization Bearer JWT token
+   * @apiHeader {String} Authorization Bearer JWT token, admin
    *
    * @apiParam {String} id Story's unique ID
    *
    * @apiSuccess (200) {String} message Success message
    *
    * @apiError (401) {String} error Unauthorized
-   * @apiError (403) {String} error Forbidden - not story owner
+   * @apiError (403) {String} error Forbidden, admin only
    * @apiError (404) {String} error Story not found
    *
    * @apiSuccessExample {json} Success-Response:
@@ -231,7 +274,7 @@ router.delete(
    */
   "/:id",
   authenticate,
-  requireAuthOrAdmin,
+  adminMiddleware,
   deleteStoryHandler
 );
 

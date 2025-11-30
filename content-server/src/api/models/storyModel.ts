@@ -13,7 +13,7 @@ const RatingSchema = new Schema({
 
 const StorySchema = new Schema({
   title: { type: String, required: true },
-  destination: { type: String, required: true },
+  city: { type: String, required: true },
   university: { type: String, required: true },
   country: { type: String, required: true },
   coverPhoto: { type: String },

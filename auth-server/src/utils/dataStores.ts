@@ -3,7 +3,7 @@ import {
   ExtendedApplicationsResponse as ApplicationsResponse,
 } from "va-hybrid-types/contentTypes";
 
-// TODO: Replacing with MongoDB/PostgreSQL database
+
 
 export const profiles: ProfileResponse[] = [
   {

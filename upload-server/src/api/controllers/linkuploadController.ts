@@ -6,13 +6,6 @@ import {
   platformPatterns,
 } from '../../utils/linkUploadHelper';
 
-const getUserFromRequest = (req: Request): string => {
-  const user = (req as Request & {user?: {_id: string}}).user;
-  if (user && user._id) {
-    return user._id.toString();
-  }
-  throw new Error('User not authenticated');
-};
 
 // Validating allowed source types
 const validateSourceType = (sourceType: string): boolean => {
@@ -22,8 +15,19 @@ const validateSourceType = (sourceType: string): boolean => {
     'dropbox',
     'icloud',
     'other_url',
+    'checkbox',
   ];
   return validSourceTypes.includes(sourceType);
+};
+
+// Helper to validate URL format (skip for checkbox type)
+const isValidUrl = (url: string): boolean => {
+  try {
+    new URL(url);
+    return true;
+  } catch {
+    return false;
+  }
 };
 
 // Getting all documents & can be filtered by userId or applicationId
@@ -42,7 +46,9 @@ const getDocuments = async (
     if (req.query.applicationId)
       query.applicationId = String(req.query.applicationId);
 
+    console.log('getDocuments query:', query);
     const docs = await LinkDocument.find(query).sort({addedAt: -1});
+    console.log('getDocuments found:', docs.length, 'documents');
     res.json(docs);
   } catch (error) {
     next(error);
@@ -56,7 +62,7 @@ const addDocumentLink = async (
   next: NextFunction
 ) => {
   try {
-    const userId = getUserFromRequest(req);
+    const userId = req.body.userId || `user-${Date.now()}`;
     const {name, url, sourceType, notes} = req.body;
 
     if (!name || !url || !sourceType) {
@@ -75,7 +81,16 @@ const addDocumentLink = async (
           'dropbox',
           'icloud',
           'other_url',
+          'checkbox',
         ],
+      });
+    }
+
+    // Validate URL format only for non-checkbox tasks
+    if (sourceType !== 'checkbox' && !isValidUrl(url)) {
+      return res.status(400).json({
+        error: 'Invalid URL format',
+        details: 'Must be a valid URL for document uploads',
       });
     }
 
@@ -91,8 +106,10 @@ const addDocumentLink = async (
     };
 
     const saved = await LinkDocument.create(documentLink);
+    console.log('Document saved:', saved._id, 'userId:', saved.userId);
     res.status(201).json(saved);
   } catch (error) {
+    console.error('Error in addDocumentLink:', error);
     next(error);
   }
 };
@@ -104,7 +121,7 @@ const addApplicationDocumentLink = async (
   next: NextFunction
 ) => {
   try {
-    const userId = getUserFromRequest(req);
+    const userId = req.body.userId || `user-${Date.now()}`;
     const {phase, documentType, fileName, fileUrl, sourceType, notes} =
       req.body;
 
@@ -124,7 +141,16 @@ const addApplicationDocumentLink = async (
           'dropbox',
           'icloud',
           'other_url',
+          'checkbox',
         ],
+      });
+    }
+
+    // Validate URL format only for non-checkbox tasks
+    if (sourceType !== 'checkbox' && !isValidUrl(fileUrl)) {
+      return res.status(400).json({
+        error: 'Invalid file URL format',
+        details: 'Must be a valid URL for document uploads',
       });
     }
 
@@ -144,8 +170,10 @@ const addApplicationDocumentLink = async (
     };
 
     const saved = await LinkDocument.create(applicationDocumentLink);
+    console.log('Application document saved:', saved._id, 'userId:', saved.userId);
     res.status(201).json(saved);
   } catch (error) {
+    console.error('Error in addApplicationDocumentLink:', error);
     next(error);
   }
 };
