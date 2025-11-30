@@ -41,30 +41,6 @@ const validationErrors = (req: Request, res: Response, next: NextFunction) => {
 };
 
 
-<<<<<<< HEAD
-=======
-  if (!user) {
-    return res.status(401).json({ error: "Unauthorized" });
-  }
-
-  // Loading user's level, Admin/User/SuperAdmin
-  // const level = await UserLevel.findOne({ user_level_id: user.user_level_id });
-  // if (!level) {
-  //   return res.status(403).json({ error: "Invalid user level" });
-  // }
-  // // Allowing Admin and SuperAdmin
-  // if (level.level_name !== "Admin" && level.level_name !== "SuperAdmin") {
-  //   return res.status(403).json({ error: "Admin access required" });
-  // }
-  // next();
-
-  if (![2, 3].includes(user.user_level_id)) { // Assuming 2 is Admin level
-    return res.status(403).json({ error: "Admin access required" });
-  }
-
-  next();
-};
->>>>>>> dev-test
 
 // Middleware to authenticate the user
 const authenticate = async (
@@ -85,13 +61,7 @@ const authenticate = async (
       process.env.JWT_SECRET as string,
     ) as TokenContent;
 
-<<<<<<< HEAD
     const user = await User.findById(decoded._id);
-=======
-    //const user = await User.findById(decoded._id);
-
-    const user = await User.findById(decoded._id); //--> The story posting was failing so I had to populate the user level here
->>>>>>> dev-test
     if (!user) {
       next(new CustomError('Unauthorized, user not found', 401));
       return;
