@@ -46,7 +46,7 @@ All primary API routes are prefixed by **`/api/v1/`**.
 | `/users` | User creation and general user management. |
 | `/profile` | Fetching and updating the current user's profile and related info. |
 | `/admin` | Admin-specific user and role actions. |
-| `/tips` | TODO: Add a better description here |
+| `/tips` | Exchange student stories management and browsing. |
 
 ### Content Server
 
