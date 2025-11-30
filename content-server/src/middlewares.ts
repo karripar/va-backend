@@ -5,7 +5,7 @@ import CustomError from './classes/CustomError';
 import {NextFunction, Request, Response} from 'express';
 import jwt from 'jsonwebtoken';
 import User from './api/models/userModel';
-import {adminMiddleware as authAdminMiddleware} from '../../auth-server/src/middlewares';
+// don't cross import from another server, it will otherwise create circular dependencies and builds both servers to dist
 import ExchangeStories from './api/models/ExchangeStoryModel';
 
 // Middleware to handle 404 errors
@@ -81,17 +81,31 @@ const requireAuthOrAdmin = async (
 };
 
 // Middleware to check for admin access or role assigned/authorized user
-const adminMiddleware = authAdminMiddleware;
-/* const adminMiddleware = (req: Request, res: Response, next: NextFunction) => {
+//Story updating/deleting/posting --> admin or owner
+const adminMiddleware = async (req: Request, res: Response, next: NextFunction) => {
   const user = res.locals.user;
 
-  if (!user) return res.status(401).json({ error: 'Unauthorized' });
-  if (user.user_level_id !== 2)
-    return res.status(403).json({ error: 'Admin or authorization access required' });
+  if (!user) {
+    return res.status(401).json({ error: "Unauthorized" });
+  }
+
+  // Loading user's level, Admin/User/SuperAdmin
+  // const level = await UserLevel.findOne({ user_level_id: user.user_level_id });
+  // if (!level) {
+  //   return res.status(403).json({ error: "Invalid user level" });
+  // }
+  // // Allowing Admin and SuperAdmin
+  // if (level.level_name !== "Admin" && level.level_name !== "SuperAdmin") {
+  //   return res.status(403).json({ error: "Admin access required" });
+  // }
+  // next();
+
+  if (![2, 3].includes(user.user_level_id)) { // Assuming 2 is Admin level
+    return res.status(403).json({ error: "Admin access required" });
+  }
 
   next();
 };
-*/
 
 // Middleware to authenticate the user
 const authenticate = async (
