@@ -1,5 +1,6 @@
 import * as cheerio from 'cheerio';
 import { getClosestCountry, getCoordinates } from './countryService';
+import { extractSectionWithAI } from './AiDestinationService';
 
 export type SectionData = Record<
   string,
@@ -7,46 +8,37 @@ export type SectionData = Record<
     country: string;
     title: string;
     link: string;
+    studyField?: string;
     coordinates: { lat?: number; lng?: number };
   }[]
 >;
 
-// --- Utility function to normalize colon/semicolon entries ---
-const cleanEntry = (text: string) => {
-  text = text.replace(/\s+/g, ' ').trim();
-
-  // Remove trailing colons
-  text = text.replace(/:$/g, '');
-
-  // Replace multiple colons/semicolons with comma except the first colon
-  const parts = text.split(':').map(p => p.trim());
-  if (parts.length > 1) {
-    const first = parts[0];
-    const rest = parts.slice(1).join(', ');
-    text = `${first}: ${rest}`;
+function cleanField(field: string): string {
+  if (!field) return '';
+  let cleaned = field.trim();
+  for (let i = 1; i <= Math.floor(cleaned.length / 2); i++) {
+    const first = cleaned.slice(0, i);
+    const second = cleaned.slice(i, i * 2);
+    if (first === second) {
+      cleaned = first;
+      break;
+    }
   }
-
-  // Replace remaining semicolons with commas
-  text = text.replace(/;/g, ', ');
-
-  // Clean up multiple commas and spaces
-  text = text.replace(/\s+,/g, ',').replace(/,+/g, ',').trim();
-
-  return text;
-};
+  return cleaned;
+}
 
 export const scrapeDestinations = async (
   html: string,
-  lang: 'en' | 'fi' = 'en'
+  lang: 'en' | 'fi' = 'en',
 ): Promise<SectionData> => {
   const $ = cheerio.load(html);
   const sections: SectionData = {};
 
-  $('div.paragraph--type--accordion').each((_, section) => {
+  for (const section of $('div.paragraph--type--accordion').toArray()) {
     const h2 = $(section).find('h2').first();
-    if (!h2.length) return;
-
+    if (!h2.length) continue;
     const sectionTitle = h2.text().trim();
+
     const skipSections = [
       'Metropolia University of Applied Sciences',
       'Information on the site',
@@ -57,94 +49,67 @@ export const scrapeDestinations = async (
       'Palvelut muualla',
       'Metropolia somessa',
     ];
-    if (skipSections.includes(sectionTitle)) return;
+    if (skipSections.includes(sectionTitle)) continue;
 
     sections[sectionTitle] = [];
 
-    $(section)
-      .find('.accordion-panel')
-      .each((_, panel) => {
-        const id = $(panel).attr('aria-labelledby');
-        let country = id ? $(`#${id}`).text().trim() : 'Unknown';
-        if (country) {
-          const parts = country.split(/\s+/);
-          country = [...new Set(parts)].join(' ');
-        }
+    const panels = $(section).find('.field-item').toArray();
 
-        const isoCode = getClosestCountry(country, lang);
-        const jsonCoords = getCoordinates(isoCode);
+    for (const panel of panels) {
+      const label = $(panel).find('.field-name-field-label').first().text().trim() || 'Unknown';
+      const panelContent = $(panel).find('.field-name-field-content');
 
-        // --- Process each <li> ---
-        $(panel)
-          .find('li')
-          .each((_, li) => {
-            const liContent = $(li).contents().toArray();
+      // Check for multiple-country (health-style) panels
+      if (panelContent.find('p > span').length > 0) {
+        panelContent.find('p > span').each((_, span) => {
+          const country = $(span).text().trim();
+          const ul = $(span).parent().next('ul');
+          if (!ul.length) return;
 
-            const combinedParts: string[] = [];
+          ul.find('li').each((_, li) => {
+            const a = $(li).find('a').first();
+            if (!a.length) return;
 
-            liContent.forEach(node => {
-              if (node.type === 'text') {
-                const txt = $(node).text().trim();
-                if (txt) combinedParts.push(txt);
-              } else if (node.type === 'tag' && node.name === 'a') {
-                const title = $(node).text().trim();
-                const href = $(node).attr('href') ?? '';
-                combinedParts.push(title);
-                combinedParts.push(`__LINK__${href}__`);
-              }
-            });
+            const title = a.text().trim();
+            const link = a.attr('href') || '';
+            const studyField = cleanField(label);
 
-            // Join all text parts
-            let fullText = combinedParts
-              .map(p => p.replace(/^:|:$/g, '').trim())
-              .join(': ');
-
-            // Extract link
-            let link = '';
-            const linkMatch = fullText.match(/__LINK__(.*?)__/);
-            if (linkMatch) {
-              link = linkMatch[1];
-              fullText = fullText.replace(/__LINK__.*?__/, '').trim();
-            }
-
-            fullText = cleanEntry(fullText);
+            const isoCode = getClosestCountry(country, lang);
+            const coords = getCoordinates(isoCode);
 
             sections[sectionTitle].push({
               country,
-              title: fullText,
+              title,
               link,
-              coordinates: { lat: jsonCoords?.lat, lng: jsonCoords?.lng },
+              studyField,
+              coordinates: { lat: coords?.lat, lng: coords?.lng },
             });
           });
+        });
+      } else {
+        // Fallback: normal single-country panel → AI extraction
+        const panelHtml = $(panel).html() ?? '';
+        const fallbackCountry = label;
+        const fallbackStudyField = label;
 
-        // --- Fallback if no <li> exists ---
-        if ($(panel).find('li').length === 0) {
-          $(panel)
-            .find('a')
-            .each((_, linkEl) => {
-              const title = cleanEntry($(linkEl).text().trim());
-              sections[sectionTitle].push({
-                country,
-                title,
-                link: $(linkEl).attr('href') ?? '',
-                coordinates: { lat: jsonCoords?.lat, lng: jsonCoords?.lng },
-              });
-            });
+        const extracted = await extractSectionWithAI(sectionTitle, panelHtml, fallbackCountry, fallbackStudyField);
 
-          if ($(panel).find('a').length === 0) {
-            const plainText = cleanEntry($(panel).text().trim());
-            if (plainText) {
-              sections[sectionTitle].push({
-                country,
-                title: plainText,
-                link: '',
-                coordinates: { lat: jsonCoords?.lat, lng: jsonCoords?.lng },
-              });
-            }
-          }
-        }
-      });
-  });
+        extracted.forEach((item) => {
+          const country = item.country?.trim() || fallbackCountry;
+          const isoCode = getClosestCountry(country, lang);
+          const coords = getCoordinates(isoCode);
+
+          sections[sectionTitle].push({
+            country,
+            title: item.title,
+            link: item.link,
+            studyField: cleanField(item.studyField || fallbackStudyField),
+            coordinates: { lat: coords?.lat, lng: coords?.lng },
+          });
+        });
+      }
+    }
+  }
 
   return sections;
 };

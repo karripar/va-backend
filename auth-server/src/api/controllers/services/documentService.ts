@@ -9,7 +9,7 @@ export const addDocument = async (
   next: NextFunction,
 ) => {
   try {
-    const userId = getUserFromRequest(req);
+    const userId = getUserFromRequest(req, res);
     const {name, url, sourceType, notes} = req.body;
 
     if (!name || !url || !sourceType) {
@@ -22,7 +22,7 @@ export const addDocument = async (
       return res.status(400).json({error: 'Invalid source type'});
     }
 
-    const user = await User.findOne({googleId: userId});
+    const user = await User.findOne({_id: userId});
     if (!user) {
       return res.status(404).json({error: 'User not found'});
     }
@@ -55,7 +55,7 @@ export const removeDocument = async (
   next: NextFunction,
 ) => {
   try {
-    const userId = getUserFromRequest(req);
+    const userId = getUserFromRequest(req, res);
     const {docId} = req.params;
 
     const user = await User.findOne({googleId: userId});

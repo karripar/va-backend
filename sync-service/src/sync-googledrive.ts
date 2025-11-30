@@ -155,6 +155,32 @@ async function syncGoogleDrive() {
           .pipe(destStream);
       });
 
+      // Copy to upload-server/uploads/ai-files for public access
+      // Assuming we are in va-backend/sync-service and upload-server is in va-backend/upload-server
+      const uploadServerDir = path.resolve(
+        process.cwd(),
+        '../upload-server/uploads/ai-files'
+      );
+
+      // Ensure directory exists
+      if (!fs.existsSync(uploadServerDir)) {
+        fs.mkdirSync(uploadServerDir, { recursive: true });
+      }
+
+      if (fs.existsSync(uploadServerDir)) {
+        try {
+          const publicDest = path.join(uploadServerDir, file.name);
+          fs.copyFileSync(dest, publicDest);
+          console.log(`✅ Copied to public uploads: ${file.name}`);
+        } catch (err) {
+          console.error(`❌ Failed to copy to uploads: ${err}`);
+        }
+      } else {
+        console.warn(
+          `⚠️ Upload server directory not found at: ${uploadServerDir}`
+        );
+      }
+
       // Upload to Vector Store
       await vectorStore.uploadFile(process.env.VECTOR_STORE_ID!, dest);
 

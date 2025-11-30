@@ -22,6 +22,7 @@ const userSchema = new mongoose.Schema<UserInfo>({
     type: Number,
     required: true,
     default: 1, // Default 1 = User (2 = Admin)
+    ref: 'UserLevel',
   },
   registeredAt: {
     type: String,

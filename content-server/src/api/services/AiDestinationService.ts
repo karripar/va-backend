@@ -1,62 +1,108 @@
-import OpenAI from "openai";
+import OpenAI from 'openai';
+import dotenv from 'dotenv';
+
+dotenv.config();
 const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
-interface ExtractedItem {
+export interface ExtractedItem {
   country: string;
   title: string;
   link: string;
+  studyField?: string;
 }
 
-async function extractSectionWithAI(
+function safeJsonParse(str: string) {
+  try {
+    return JSON.parse(str);
+  } catch {
+    let fixed = str;
+
+    // Remove code fences
+    fixed = fixed.replace(/```[\s\S]*?```/g, m => m.replace(/```(?:json)?/g, "").replace(/```/g, ""));
+
+    // Replace single quotes with double
+    fixed = fixed.replace(/'/g, '"');
+
+    // Fix trailing commas in arrays or objects
+    fixed = fixed.replace(/,(\s*[}\]])/g, "$1");
+
+    // Remove invalid unescaped backslashes
+    fixed = fixed.replace(/\\(?!["\\/bfnrt])/g, "");
+
+    // Remove newlines inside string values
+    fixed = fixed.replace(/\n+/g, " ");
+
+    return JSON.parse(fixed);
+  }
+}
+
+export async function extractSectionWithAI(
   sectionTitle: string,
-  sectionHtml: string
+  sectionHtml: string,
+  panelCountry: string,
+  studyField: string,
 ): Promise<ExtractedItem[]> {
   const prompt = `
-You are an expert parser. Extract *all destinations* from the following HTML.
-Return ONLY valid JSON.
+You are an expert parser. Extract ALL destinations from the following HTML.
+Return ONLY valid JSON, no backticks.
 
 ### Rules:
-- Each destination must have:
-  - "country": string
-  - "title": string
-  - "link": string (absolute or relative)
-- For each <li>, <a>, or text combo, reconstruct the most human-readable title.
-- Do NOT include colons at the end.
-- If no link exists, return an empty string.
-- Country is the heading (aria-labelledby text) or closest country-like text.
-- Cleanup weird punctuation: merge duplicated colons, semicolons, etc.
+- Each destination must include:
+  "country": string
+  "title": string
+  "link": string
+  "studyField": string
 
-### Input HTML:
+- If HTML does NOT include a study field, use fallback: "${studyField}"
+- If HTML does NOT include country, use fallback: "${panelCountry}"
+- Titles must be clean, readable, and not duplicated.
+- studyField must NOT contain duplicated text.
+- Use "" for missing links.
+
+### HTML:
 ${sectionHtml}
 
-### Output JSON format:
+### JSON output format:
 [
   {
-    "country": "...",
-    "title": "...",
-    "link": "..."
+    "country": "string",
+    "title": "string",
+    "link": "string",
+    "studyField": "string"
   }
 ]
-`;
+  `;
 
   const response = await client.responses.create({
-    model: "gpt-4.1",
+    model: 'gpt-4o',
     input: prompt,
     temperature: 0,
-    top_p: 1,
   });
 
-  const output = response.output[0];
-  if (Array.isArray(output) && output.every(item =>
-    typeof item.country === "string" &&
-    typeof item.title === "string" &&
-    typeof item.link === "string"
-  )) {
-    return output as ExtractedItem[];
-  } else {
-    throw new Error("Invalid response format");
+  const raw = response.output_text.trim();
+
+  let parsed;
+
+  try {
+    parsed = safeJsonParse(raw);
+  } catch {
+    console.error('Failed to parse AI JSON:', raw);
+    throw new Error('AI did not return valid JSON');
   }
+
+  if (
+    !Array.isArray(parsed) ||
+    !parsed.every(
+      (item) =>
+        typeof item.country === 'string' &&
+        typeof item.title === 'string' &&
+        typeof item.link === 'string' &&
+        typeof item.studyField === 'string'
+    )
+  ) {
+    console.error('AI returned an invalid structure:', parsed);
+    throw new Error('Invalid response format from AI');
+  }
+
+  return parsed;
 }
-
-export { extractSectionWithAI, ExtractedItem };
-
