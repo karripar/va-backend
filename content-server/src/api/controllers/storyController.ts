@@ -1,7 +1,8 @@
 import { Request, Response, NextFunction } from "express";
 import ExchangeStory from "../models/ExchangeStoryModel";
 import StoryReaction from "../models/reactionModel";
-import { getUserFromRequest } from "../../../../auth-server/src/utils/authHelpers";
+// don't cross import from another server, it will otherwise create circular dependencies and builds both servers to dist
+import { getUserFromRequest } from "../../utils/authHelpers";
 
 export const getStories = async (req: Request, res: Response, next: NextFunction) => {
   try {
