@@ -7,7 +7,6 @@ import {createStoryHandler,
   updateStoryHandler,
   deleteStoryHandler,
   approveStoryHandler,
-  reactStoryHandler,
   getCountriesHandler,} from '../controllers/ExchangeStoriesController';
 
 /**
@@ -125,42 +124,6 @@ router.get(
   getApprovedStoriesHandler
 );
 
-router.get(
-  /**
-   * @api {get} /stories/:id Get story by ID
-   * @apiName GetStoryById
-   * @apiGroup ExchangeStoriesGroup
-   * @apiVersion 1.0.0
-   * @apiDescription Retrieve a specific story by its ID
-   * @apiPermission none
-   *
-   * @apiParam {String} id Story's unique ID
-   *
-   * @apiSuccess (200) {Object} story Story object
-   * @apiSuccess (200) {String} story.id Story ID
-   * @apiSuccess (200) {String} story.title Story title
-   * @apiSuccess (200) {String} story.content Full story content
-   * @apiSuccess (200) {Object} story.author Author details
-   * @apiSuccess (200) {Object[]} story.photos Story photos
-   * @apiSuccess (200) {Object} story.reactions Likes and saves count
-   *
-   * @apiError (404) {String} error Story not found
-   *
-   * @apiSuccessExample {json} Success-Response:
-   * HTTP/1.1 200 OK
-   * {
-   *   "id": "story123",
-   *   "title": "My Exchange in Paris",
-   *   "content": "Full story content...",
-   *   "author": { "name": "John Doe" },
-   *   "photos": [...],
-   *   "reactions": { "likes": 25, "saves": 10 }
-   * }
-   */
-  "/:id",
-  getStoryByIdHandler
-);
-
 router.post(
   /**
    * @api {post} /stories Create a new story
@@ -211,6 +174,41 @@ router.post(
   validateStory,
   validationErrors,
   createStoryHandler
+);
+
+router.put(
+  /**
+   * @api {put} /stories/:id/approve Approve story
+   * @apiName ApproveStory
+   * @apiGroup ExchangeStoriesGroup
+   * @apiVersion 1.0.0
+   * @apiDescription Approve a pending story (admin only)
+   * @apiPermission admin
+   *
+   * @apiHeader {String} Authorization Bearer JWT token (admin)
+   *
+   * @apiParam {String} id Story's unique ID
+   * @apiBody {String} [reviewNotes] Optional review notes
+   *
+   * @apiSuccess (200) {Object} story Approved story object
+   * @apiSuccess (200) {String} story.status Updated status (approved)
+   *
+   * @apiError (401) {String} error Unauthorized
+   * @apiError (403) {String} error Forbidden - admin only
+   * @apiError (404) {String} error Story not found
+   *
+   * @apiSuccessExample {json} Success-Response:
+   * HTTP/1.1 200 OK
+   * {
+   *   "id": "story123",
+   *   "status": "approved",
+   *   "approvedAt": "2025-11-29T10:00:00.000Z"
+   * }
+   */
+  "/:id/approve",
+  authenticate,
+  adminMiddleware,
+  approveStoryHandler
 );
 
 router.put(
@@ -278,83 +276,40 @@ router.delete(
   deleteStoryHandler
 );
 
-router.put(
+router.get(
   /**
-   * @api {put} /stories/:id/approve Approve story
-   * @apiName ApproveStory
+   * @api {get} /stories/:id Get story by ID
+   * @apiName GetStoryById
    * @apiGroup ExchangeStoriesGroup
    * @apiVersion 1.0.0
-   * @apiDescription Approve a pending story (admin only)
-   * @apiPermission admin
-   *
-   * @apiHeader {String} Authorization Bearer JWT token (admin)
+   * @apiDescription Retrieve a specific story by its ID
+   * @apiPermission none
    *
    * @apiParam {String} id Story's unique ID
-   * @apiBody {String} [reviewNotes] Optional review notes
    *
-   * @apiSuccess (200) {Object} story Approved story object
-   * @apiSuccess (200) {String} story.status Updated status (approved)
+   * @apiSuccess (200) {Object} story Story object
+   * @apiSuccess (200) {String} story.id Story ID
+   * @apiSuccess (200) {String} story.title Story title
+   * @apiSuccess (200) {String} story.content Full story content
+   * @apiSuccess (200) {Object} story.author Author details
+   * @apiSuccess (200) {Object[]} story.photos Story photos
+   * @apiSuccess (200) {Object} story.reactions Likes and saves count
    *
-   * @apiError (401) {String} error Unauthorized
-   * @apiError (403) {String} error Forbidden - admin only
    * @apiError (404) {String} error Story not found
    *
    * @apiSuccessExample {json} Success-Response:
    * HTTP/1.1 200 OK
    * {
    *   "id": "story123",
-   *   "status": "approved",
-   *   "approvedAt": "2025-11-29T10:00:00.000Z"
+   *   "title": "My Exchange in Paris",
+   *   "content": "Full story content...",
+   *   "author": { "name": "John Doe" },
+   *   "photos": [...],
+   *   "reactions": { "likes": 25, "saves": 10 }
    * }
    */
-  "/:id/approve",
-  authenticate,
-  adminMiddleware,
-  approveStoryHandler
-);
-
-router.post(
-  /**
-   * @api {post} /stories/:id/react React to story
-   * @apiName ReactStory
-   * @apiGroup ExchangeStoriesGroup
-   * @apiVersion 1.0.0
-   * @apiDescription Like or save a story (authenticated users)
-   * @apiPermission authenticated
-   *
-   * @apiHeader {String} Authorization Bearer JWT token
-   *
-   * @apiParam {String} id Story's unique ID
-   * @apiBody {String} reactionType Reaction type: 'like' or 'save'
-   *
-   * @apiSuccess (200) {Object} reaction Updated reaction status
-   * @apiSuccess (200) {Boolean} reaction.liked Whether user liked the story
-   * @apiSuccess (200) {Boolean} reaction.saved Whether user saved the story
-   * @apiSuccess (200) {Number} reaction.totalLikes Total likes count
-   * @apiSuccess (200) {Number} reaction.totalSaves Total saves count
-   *
-   * @apiError (400) {String} error Invalid reaction type
-   * @apiError (401) {String} error Unauthorized
-   * @apiError (404) {String} error Story not found
-   *
-   * @apiSuccessExample {json} Success-Response:
-   * HTTP/1.1 200 OK
-   * {
-   *   "liked": true,
-   *   "saved": false,
-   *   "totalLikes": 26,
-   *   "totalSaves": 10
-   * }
-   *
-   * @apiErrorExample {json} Error-Response:
-   * HTTP/1.1 400 Bad Request
-   * {
-   *   "error": "Invalid reaction type. Use 'like' or 'save'"
-   * }
-   */
-  "/:id/react",
-  authenticate,
-  reactStoryHandler
+  "/:id",
+  getStoryByIdHandler
 );
 
 export default router;

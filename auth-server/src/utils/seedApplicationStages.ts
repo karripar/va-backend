@@ -76,7 +76,7 @@ export const seedApplicationStages = async () => {
         externalLinks: [
           {
             title: "Kela",
-            url: "https://www.kela.fi/henkiloasiakkaat",
+            url: "https://www.kela.fi/opinnot-ulkomailla#oletko-lahdossa-vaihtoon",
             description: "Hae opintotukea ulkomaille"
           }
         ],
@@ -99,7 +99,7 @@ export const seedApplicationStages = async () => {
     ];
 
     await ApplicationStage.insertMany(stages);
-    console.log('✅ Application stages seeded successfully');
+    console.log('Application stages seeded successfully');
   } catch (error) {
     console.error('Error seeding application stages:', error);
   }

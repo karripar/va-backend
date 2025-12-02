@@ -62,8 +62,14 @@ const addDocumentLink = async (
   next: NextFunction
 ) => {
   try {
-    const userId = req.body.userId || `user-${Date.now()}`;
-    const {name, url, sourceType, notes} = req.body;
+    const {userId, name, url, sourceType, notes} = req.body;
+
+    if (!userId) {
+      return res.status(401).json({
+        error: 'User authentication required',
+        details: 'userId is required',
+      });
+    }
 
     if (!name || !url || !sourceType) {
       return res.status(400).json({
@@ -121,9 +127,22 @@ const addApplicationDocumentLink = async (
   next: NextFunction
 ) => {
   try {
-    const userId = req.body.userId || `user-${Date.now()}`;
-    const {phase, documentType, fileName, fileUrl, sourceType, notes} =
+    const {userId, applicationId, phase, documentType, fileName, fileUrl, sourceType, notes} =
       req.body;
+
+    if (!userId) {
+      return res.status(401).json({
+        error: 'User authentication required',
+        details: 'userId is required',
+      });
+    }
+
+    if (!applicationId) {
+      return res.status(400).json({
+        error: 'Missing required fields',
+        details: 'applicationId is required to link document to application',
+      });
+    }
 
     if (!phase || !documentType || !fileUrl || !sourceType) {
       return res.status(400).json({
@@ -154,16 +173,23 @@ const addApplicationDocumentLink = async (
       });
     }
 
+    if (!fileName) {
+      return res.status(400).json({
+        error: 'Missing required fields',
+        details: 'fileName is required',
+      });
+    }
+
     const applicationDocumentLink = {
       userId,
-      name: fileName || `document-${Date.now()}.ext`,
+      name: fileName,
       url: fileUrl,
       sourceType,
       addedAt: new Date().toISOString(),
       isAccessible: true,
       accessPermission: 'public',
       notes: notes || null,
-      applicationId: `app-${userId}-${Date.now()}`,
+      applicationId,
       applicationPhase: phase,
       documentType,
       addedBy: userId,

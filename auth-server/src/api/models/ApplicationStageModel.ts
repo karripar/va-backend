@@ -1,40 +1,27 @@
 import mongoose from 'mongoose';
 
-const applicationSchema = new mongoose.Schema({
-  userId: { type: String, required: true },
-  applications: [{
-    phase: String,
-    data: mongoose.Schema.Types.Mixed,
-    documents: [{
-      id: String,
-      applicationId: String,
-      applicationPhase: String,
-      documentType: String,
-      fileName: String,
-      fileUrl: String,
-      sourceType: String,
-      addedAt: String,
-      addedBy: String,
-      isAccessible: Boolean,
-      accessPermission: String,
-      isRequired: Boolean,
-      notes: String
-    }],
-    submittedAt: String,
-    status: String,
-    reviewedBy: String,
-    reviewNotes: String,
-    reviewedAt: String
+const applicationStageSchema = new mongoose.Schema({
+  id: { type: String, required: true, unique: true },
+  phase: { type: String, required: true },
+  title: { type: String, required: true },
+  description: { type: String, required: true },
+  requiredDocuments: [{ type: String }],
+  optionalDocuments: [{ type: String }],
+  externalLinks: [{
+    title: String,
+    url: String,
+    description: String
   }],
-  currentPhase: String
+  deadline: { type: Date },
+  order: { type: Number, required: true }
 }, {
   timestamps: true,
-  collection: 'applications'
+  collection: 'applicationStages'
 });
 
-const Application =
-  mongoose.models.Application ||
-  mongoose.model('Application', applicationSchema);
+const ApplicationStage =
+  mongoose.models.ApplicationStage ||
+  mongoose.model('ApplicationStage', applicationStageSchema);
 
-export default Application;
+export default ApplicationStage;
 

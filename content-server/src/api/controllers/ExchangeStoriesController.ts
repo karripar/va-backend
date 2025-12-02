@@ -13,7 +13,6 @@ function buildQuery(filters: StoryFilters = {}, onlyApproved = true): Record<str
   if (filters.country) query.country = filters.country;
   if (filters.university) query.university = filters.university;
   if (filters.search) query.$text = { $search: filters.search };
-  if (filters.minRating) query['ratings.overall'] = { $gte: Number(filters.minRating) };
   if (filters.isFeatured !== undefined) query.featured = filters.isFeatured;
 
   return query;
@@ -26,14 +25,18 @@ async function fetchStoriesDb(
 ): Promise<ExchangeStory[]> {
   const query = buildQuery(filters, onlyApproved);
 
-  let sort: Record<string, 1 | -1> = { createdAt: -1 };
-  if (filters.sort === 'popular') sort = { 'reactions.length': -1 };
-  if (filters.sort === 'rating') sort = { 'ratings.overall': -1 };
+  // Default sort by newest first
+  const sort: Record<string, 1 | -1> = { createdAt: -1 };
 
   const offset = options.offset ? Number(options.offset) : 0;
   const limit = options.limit ? Number(options.limit) : 12;
 
-  return Story.find(query).sort(sort).skip(offset).limit(limit).lean<ExchangeStory[]>();
+  const stories = await Story.find(query).sort(sort).skip(offset).limit(limit).lean<ExchangeStory[]>();
+
+  return stories.map((story: any) => ({
+    ...story,
+    id: story._id.toString()
+  })) as ExchangeStory[];
 }
 
 // One story
@@ -42,10 +45,13 @@ async function getStoryByIdDb(id: string): Promise<ExchangeStory | null> {
   if (!story) return null;
 
   const { _id, ...rest } = story as any;
-  return { id: _id.toString(), ...rest } as unknown as ExchangeStory;
+
+  return {
+    id: _id.toString(),
+    ...rest
+  } as unknown as ExchangeStory;
 }
 
-// Create a story
 async function createStoryDb(data: CreateStoryRequest, userId: string): Promise<ExchangeStory> {
   const doc = await Story.create({
     ...data,
@@ -70,26 +76,6 @@ async function deleteStoryDb(id: string) {
 // Approve story
 async function approveStoryDb(id: string) {
   return Story.findByIdAndUpdate(id, { isApproved: true }, { new: true }).lean();
-}
-
-// Reaction (like/save)
-async function reactStoryDb(id: string, userId: string, type: 'like' | 'save') {
-  const story = await Story.findById(id);
-  if (!story) return null;
-
-
-  story.set(
-    'reactions',
-    story.reactions.filter(
-      r => !(r.userId.toString() === userId && r.type === type)
-    )
-  );
-
-  story.reactions.push({ userId, type });
-
-  await story.save();
-
-  return story.toObject();
 }
 
 // Country counts
@@ -193,7 +179,13 @@ const getAllStoriesHandler = async (req: Request, res: Response) => {
 
 const getStoryByIdHandler = async (req: Request, res: Response) => {
   try {
-    const story = await getStoryByIdDb(req.params.id);
+    const { id } = req.params;
+
+    if (!id || id === 'undefined' || id === 'null') {
+      return res.status(400).json({ error: 'Invalid story ID provided' });
+    }
+
+    const story = await getStoryByIdDb(id);
     if (!story) return res.status(404).json({ error: 'Story not found' });
     res.json({ story });
   } catch (error) {
@@ -204,7 +196,18 @@ const getStoryByIdHandler = async (req: Request, res: Response) => {
 
 const updateStoryHandler = async (req: Request, res: Response) => {
   try {
-    const updated = await updateStoryDb(req.params.id, req.body);
+    const { id } = req.params;
+
+    if (!id || id === 'undefined' || id === 'null') {
+      return res.status(400).json({ error: 'Invalid story ID provided' });
+    }
+
+    const updated = await updateStoryDb(id, req.body);
+
+    if (!updated) {
+      return res.status(404).json({ error: 'Story not found' });
+    }
+
     res.json({ story: updated });
   } catch (error) {
     console.error('updateStoryHandler error:', error);
@@ -214,7 +217,18 @@ const updateStoryHandler = async (req: Request, res: Response) => {
 
 const deleteStoryHandler = async (req: Request, res: Response) => {
   try {
-    const deleted = await deleteStoryDb(req.params.id);
+    const { id } = req.params;
+
+    if (!id || id === 'undefined' || id === 'null') {
+      return res.status(400).json({ error: 'Invalid story ID provided' });
+    }
+
+    const deleted = await deleteStoryDb(id);
+
+    if (!deleted) {
+      return res.status(404).json({ error: 'Story not found' });
+    }
+
     res.json({ story: deleted });
   } catch (error) {
     console.error('deleteStoryHandler error:', error);
@@ -224,27 +238,21 @@ const deleteStoryHandler = async (req: Request, res: Response) => {
 
 const approveStoryHandler = async (req: Request, res: Response) => {
   try {
-    const approved = await approveStoryDb(req.params.id);
+    const { id } = req.params;
+
+    if (!id || id === 'undefined' || id === 'null') {
+      return res.status(400).json({ error: 'Invalid story ID provided' });
+    }
+
+    const approved = await approveStoryDb(id);
+
+    if (!approved) {
+      return res.status(404).json({ error: 'Story not found' });
+    }
+
     res.json({ story: approved });
   } catch (error) {
     console.error('approveStoryHandler error:', error);
-    res.status(500).json({ error: (error as Error).message });
-  }
-};
-
-const reactStoryHandler = async (req: Request, res: Response) => {
-  try {
-    const userId = res.locals.user?._id?.toString();
-    const { type } = req.body;
-
-    if (!userId) {
-      return res.status(401).json({ error: 'User authentication required' });
-    }
-
-    const story = await reactStoryDb(req.params.id, userId, type);
-    res.json({ story });
-  } catch (error) {
-    console.error('reactStoryHandler error:', error);
     res.status(500).json({ error: (error as Error).message });
   }
 };
@@ -269,6 +277,5 @@ export {
   updateStoryHandler,
   deleteStoryHandler,
   approveStoryHandler,
-  reactStoryHandler,
   getCountriesHandler,
 };

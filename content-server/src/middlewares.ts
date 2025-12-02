@@ -65,14 +65,21 @@ const adminMiddleware = (
     hasUser: !!user,
     userId: user?._id,
     userLevelId: user?.user_level_id,
-    email: user?.email
+    email: user?.email,
+    fullUser: user
   });
 
   // Check user_level_id: 1 = User, 2 = Admin, 3 = Elevated Admin
   // Allow both level 2 and 3 as admins
-  if (!user || (user.user_level_id !== 2 && user.user_level_id !== 3)) {
-    console.log('Admin access denied - user_level_id:', user?.user_level_id);
-    return res.status(403).json({ error: "Admin access required" });
+  // Also check if user_level_id exists and convert to number if it's a string
+  const userLevel = user?.user_level_id ? Number(user.user_level_id) : 1;
+
+  if (!user || (userLevel !== 2 && userLevel !== 3)) {
+    console.log('Admin access denied - user_level_id:', userLevel);
+    return res.status(403).json({
+      error: "Admin access required",
+      details: `Your user level is ${userLevel}. Admin access requires level 2 or 3.`
+    });
   }
 
   console.log('Admin access granted');
@@ -98,7 +105,7 @@ const authenticate = async (
 
   console.log('JWT decoded:', { _id: decoded._id });
 
-  const user = await User.findById(decoded._id);
+  const user = await User.findById(decoded._id).lean();
   console.log('User found in DB:', {
     found: !!user,
     userId: user?._id,
@@ -116,7 +123,12 @@ const authenticate = async (
       return;
     }
 
-    res.locals.user = user;
+    // Store user with proper type conversion
+    res.locals.user = {
+      ...user,
+      _id: user._id.toString(),
+      user_level_id: Number(user.user_level_id)
+    };
     next();
   } catch (error) {
     console.error('Authentication error:', error);
