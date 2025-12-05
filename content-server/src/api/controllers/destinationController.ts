@@ -2,7 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 import CustomError from '../../classes/CustomError';
 import dotenv from 'dotenv';
 import DestinationModel from '../models/destinationModel';
-import { scrapeDestinations } from '../services/scraperService';
+import { scrapeDestinations, scrapeTableDestinations, scrapeHealthDestinations} from '../services/scraperService';
 import DestinationUrlModel from '../models/destinationUrlModel';
 
 dotenv.config();
@@ -165,11 +165,11 @@ const getDestinations = async (
         ? (req.query.field as string)
         : 'tech';
 
-    // seven day cache to reduce OpenAI api calls and scraping load
-    const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+    // 30 day cache to reduce OpenAI api calls and scraping load
+    const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
     const cached = await DestinationModel.findOne({ field, lang });
 
-    if (cached && cached.lastUpdated > sevenDaysAgo) {
+    if (cached && cached.lastUpdated > thirtyDaysAgo) {
       console.log('Using cached data');
       return res.status(200).json({ destinations: cached.sections });
     }
@@ -184,6 +184,28 @@ const getDestinations = async (
     const url = destinationUrlEntry.url;
     const response = await fetch(url);
     const htmlDoc = await response.text();
+    if (field === 'business' ) {
+      const sections = await scrapeTableDestinations(htmlDoc, lang as 'en' | 'fi');
+      await DestinationModel.findOneAndUpdate(
+        { field, lang },
+        { sections, lastUpdated: new Date() },
+        { upsert: true, new: true }
+      );
+
+      return res.status(200).json({ destinations: sections });
+    }
+
+    if (field === 'health' ) {
+      const sections = await scrapeHealthDestinations(htmlDoc, lang as 'en' | 'fi');
+      await DestinationModel.findOneAndUpdate(
+        { field, lang },
+        { sections, lastUpdated: new Date() },
+        { upsert: true, new: true }
+      );
+
+      return res.status(200).json({ destinations: sections });
+    }
+
     const sections = await scrapeDestinations(htmlDoc, lang as 'en' | 'fi');
 
     await DestinationModel.findOneAndUpdate(

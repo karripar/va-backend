@@ -38,7 +38,7 @@ export const initializeDatabase = async () => {
     await Story.collection.createIndex({ createdBy: 1 });
     await Story.collection.createIndex({ createdAt: -1 });
 
-    await User.collection.createIndex({ googleId: 1 }, { unique: true });
+    //await User.collection.createIndex({ googleId: 1 }, { unique: true }); removed because of duplicate indexes error
     await User.collection.createIndex({ email: 1 }, { unique: true });
     await User.collection.createIndex({ user_level_id: 1 });
 
