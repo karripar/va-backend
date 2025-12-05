@@ -137,6 +137,17 @@ const updateDestinationUrl = async (
   }
 };
 
+interface Destination {
+  country: string;
+  title: string;
+  link: string;
+  coordinates: {
+    lat: number;
+    lng: number;
+  };
+}
+
+
 /**
  * @function getDestinations
  * @description Retrieves destination data for a given field and language.
@@ -156,86 +167,110 @@ const updateDestinationUrl = async (
  * // GET /api/v1/destinations/metropolia/destinations?field=tech&lang=en
  * getDestinations(req, res, next);
  */
-const getDestinations = async (
+const isValidDestination = (dest: Destination) =>
+  dest &&
+  typeof dest.country === 'string' &&
+  typeof dest.title === 'string' &&
+  typeof dest.link === 'string' &&
+  dest.coordinates &&
+  typeof dest.coordinates.lat === 'number' &&
+  typeof dest.coordinates.lng === 'number';
+
+  const getDestinations = async (
   req: Request<{}, {}, {lang?: string; field?: string}>,
   res: Response,
   next: NextFunction,
-) => {
+  ) => {
   try {
-    const lang = 'en';
-    const validFields = ['tech', 'health', 'business', 'culture'];
-    const field =
-      req.query.field && validFields.includes(req.query.field as string)
-        ? (req.query.field as string)
-        : 'tech';
+  const lang = 'en';
+  const validFields = ['tech', 'health', 'business', 'culture'];
+  const field =
+  req.query.field && validFields.includes(req.query.field as string)
+  ? (req.query.field as string)
+  : 'tech';
 
-    // 30 day cache to reduce OpenAI API calls and scraping load
-    const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
-    const cached = await DestinationModel.findOne({field, lang});
+  // 30 day cache to reduce scraping load
+  const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+  const cached = await DestinationModel.findOne({field, lang});
 
-    if (cached && cached.lastUpdated && cached.lastUpdated > thirtyDaysAgo) {
-      console.log('Using cached data');
-      return res.status(200).json({destinations: cached.sections || {}});
-    }
-
-    const destinationUrlEntry = await DestinationUrlModel.findOne({
-      field,
-      lang,
-    });
-    if (!destinationUrlEntry) {
-      return next(
-        new CustomError(
-          'No URL configured for the requested field and language',
-          404,
-        ),
-      );
-    }
-
-    const url = destinationUrlEntry.url;
-    const response = await fetch(url);
-    const htmlDoc = await response.text();
-    if (field === 'business') {
-      const sections = await scrapeTableDestinations(
-        htmlDoc,
-        lang as 'en' | 'fi',
-      );
-      await DestinationModel.findOneAndUpdate(
-        {field, lang},
-        {sections, lastUpdated: new Date()},
-        {upsert: true, new: true},
-      );
-
-      return res.status(200).json({destinations: sections});
-    }
-
-    if (field === 'health') {
-      const sections = await scrapeHealthDestinations(
-        htmlDoc,
-        lang as 'en' | 'fi',
-      );
-      await DestinationModel.findOneAndUpdate(
-        {field, lang},
-        {sections, lastUpdated: new Date()},
-        {upsert: true, new: true},
-      );
-
-      return res.status(200).json({destinations: sections});
-    }
-
-    const sections = await scrapeDestinations(htmlDoc, lang as 'en' | 'fi');
-
-    await DestinationModel.findOneAndUpdate(
-      {field, lang},
-      {sections, lastUpdated: new Date()},
-      {upsert: true, new: true},
-    );
-
-    res.status(200).json({destinations: sections});
-  } catch (error) {
-    console.error('Error fetching or parsing data:', error);
-    next(new CustomError('Failed to fetch destinations', 500));
+  if (cached && cached.lastUpdated && cached.lastUpdated > thirtyDaysAgo) {
+    console.log('Using cached data');
+    return res.status(200).json({destinations: cached.sections || {}});
   }
-};
+
+  const destinationUrlEntry = await DestinationUrlModel.findOne({
+    field,
+    lang,
+  });
+  if (!destinationUrlEntry) {
+    return next(
+      new CustomError(
+        'No URL configured for the requested field and language',
+        404,
+      ),
+    );
+  }
+
+  const url = destinationUrlEntry.url;
+  const response = await fetch(url);
+  const htmlDoc = await response.text();
+
+  let sections: Record<string, Destination[]> = {};
+
+  if (field === 'business') {
+    sections = (await scrapeTableDestinations(htmlDoc, lang as 'en' | 'fi')) as Record<string, Destination[]>;
+    for (const section in sections) {
+      sections[section] = sections[section].map(dest => ({
+        ...dest,
+        coordinates: {
+          lat: dest.coordinates.lat ?? 0,
+          lng: dest.coordinates.lng ?? 0,
+        },
+      }));
+    }
+  } else if (field === 'health') {
+    sections = (await scrapeHealthDestinations(htmlDoc, lang as 'en' | 'fi')) as Record<string, Destination[]>;
+    for (const section in sections) {
+      sections[section] = sections[section].map(dest => ({
+        ...dest,
+        coordinates: {
+          lat: dest.coordinates.lat ?? 0,
+          lng: dest.coordinates.lng ?? 0,
+        },
+      }));
+    }
+  } else {
+    sections = (await scrapeDestinations(htmlDoc, lang as 'en' | 'fi')) as Record<string, Destination[]>;
+    for (const section in sections) {
+      sections[section] = sections[section].map(dest => ({
+        ...dest,
+        coordinates: {
+          lat: dest.coordinates.lat ?? 0,
+          lng: dest.coordinates.lng ?? 0,
+        },
+      }));
+    }
+  }
+
+  // Validate sections
+  const sectionsValidated: Record<string, Destination[]> = {};
+  for (const [sectionTitle, dests] of Object.entries(sections)) {
+    sectionsValidated[sectionTitle] = dests.filter(isValidDestination);
+  }
+
+  await DestinationModel.findOneAndUpdate(
+    {field, lang},
+    {sections: sectionsValidated, lastUpdated: new Date()},
+    {upsert: true, new: true},
+  );
+
+  res.status(200).json({destinations: sectionsValidated});
+
+  } catch (error) {
+  console.error('Error fetching or parsing data:', error);
+  next(new CustomError('Failed to fetch destinations', 500));
+  }
+  };
 
 export {
   getDestinations,
