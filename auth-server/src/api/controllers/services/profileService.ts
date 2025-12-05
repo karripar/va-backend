@@ -37,6 +37,8 @@ export const addFavorite = async (
 
     const {destination} = req.body;
 
+    console.log('Adding favorite destination:', destination);
+
     if (!destination) {
       return res.status(400).json({error: 'Destination is required'});
     }
@@ -48,6 +50,7 @@ export const addFavorite = async (
 
     res.json(user);
   } catch (error) {
+    console.log('Error adding favorite:', error);
     next(error);
   }
 };
