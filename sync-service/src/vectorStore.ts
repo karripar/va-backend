@@ -73,7 +73,7 @@ export class VectorStoreService {
         file_id: file.id,
       });
 
-      console.log(`✅ Uploaded: ${fileName} (${file.id})`);
+      console.log(`==> Uploaded: ${fileName} (${file.id})`);
       return file.id;
     } catch (error) {
       console.error(`❌ Error uploading ${filePath}:`, error);
@@ -96,7 +96,7 @@ export class VectorStoreService {
         vector_store_id: vectorStoreId,
       });
 
-      console.log(`✅ Removed: ${fileName}`);
+      console.log(`==> Removed: ${fileName}`);
     } catch (error) {
       console.error(`❌ Error removing ${fileName}:`, error);
       throw error;

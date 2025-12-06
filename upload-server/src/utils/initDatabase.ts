@@ -6,7 +6,7 @@ import LinkDocument from '../api/models/linkUploadModel';
  */
 export const initializeDatabase = async () => {
   try {
-    console.log('🔧 Initializing database collections and indexes...');
+    console.log('==> Initializing database collections and indexes...');
 
     if (!mongoose.connection.db) {
       throw new Error('Database connection not established');
@@ -18,9 +18,9 @@ export const initializeDatabase = async () => {
 
     if (!collectionNames.includes('linkDocuments')) {
       await mongoose.connection.db.createCollection('linkDocuments');
-      console.log('✅ Created collection: linkDocuments');
+      console.log('==> Created collection: linkDocuments');
     } else {
-      console.log('✓ Collection already exists: linkDocuments');
+      console.log('✓: Collection already exists: linkDocuments');
     }
 
     // Create indexes for better query performance
@@ -28,15 +28,15 @@ export const initializeDatabase = async () => {
     await LinkDocument.collection.createIndex({ applicationId: 1 });
     await LinkDocument.collection.createIndex({ applicationPhase: 1 });
     await LinkDocument.collection.createIndex({ userId: 1, applicationPhase: 1 });
-    
-    console.log('✅ Database indexes created successfully');
+
+    console.log('==> Database indexes created successfully');
 
     // Log collection count
     const count = await LinkDocument.collection.countDocuments();
-    console.log(`📊 linkDocuments collection: ${count} documents`);
+    console.log(`==> linkDocuments collection: ${count} documents`);
 
   } catch (error) {
-    console.error('❌ Error initializing database:', error);
+    console.error('ERROR: Error initializing database:', error);
     throw error;
   }
 };

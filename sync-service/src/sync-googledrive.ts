@@ -95,14 +95,14 @@ async function syncGoogleDrive() {
           modifiedTime: file.modifiedTime!,
         })) || [];
 
-    console.log(`✅ Found ${gdriveFiles.length} files in Google Drive`);
+    console.log(`==> Found ${gdriveFiles.length} files in Google Drive`);
 
     // Get current files in vector store
     const vectorStoreFiles = await vectorStore.getVectorStoreFiles(
       process.env.VECTOR_STORE_ID!
     );
 
-    console.log(`\n📊 Sync Status:`);
+    console.log(`\n==> Sync Status:`);
     console.log(`   Google Drive files: ${gdriveFiles.length}`);
     console.log(`   Vector Store files: ${vectorStoreFiles.size}`);
 
@@ -129,7 +129,7 @@ async function syncGoogleDrive() {
 
       if (fileSize > maxSize) {
         console.log(
-          `⚠️  Skipping ${file.name} (too large: ${(
+          `==>  Skipping ${file.name} (too large: ${(
             fileSize /
             1024 /
             1024
@@ -139,7 +139,7 @@ async function syncGoogleDrive() {
       }
 
       // Download from Google Drive
-      console.log(`📥 Downloading: ${file.name}`);
+      console.log(`==> Downloading: ${file.name}`);
       const dest = path.join(TEMP_DIR, file.name);
 
       const destStream = fs.createWriteStream(dest);
@@ -171,13 +171,13 @@ async function syncGoogleDrive() {
         try {
           const publicDest = path.join(uploadServerDir, file.name);
           fs.copyFileSync(dest, publicDest);
-          console.log(`✅ Copied to public uploads: ${file.name}`);
+          console.log(`==> Copied to public uploads: ${file.name}`);
         } catch (err) {
-          console.error(`❌ Failed to copy to uploads: ${err}`);
+          console.error(`ERROR: Failed to copy to uploads: ${err}`);
         }
       } else {
         console.warn(
-          `⚠️ Upload server directory not found at: ${uploadServerDir}`
+          `WARNING: Upload server directory not found at: ${uploadServerDir}`
         );
       }
 
@@ -197,13 +197,13 @@ async function syncGoogleDrive() {
       );
     }
 
-    console.log('\n✅ Sync completed successfully!');
+    console.log('\n==> Sync completed successfully!');
 
     // Get updated vector store info
     const info = await vectorStore.getVectorStoreInfo(
       process.env.VECTOR_STORE_ID!
     );
-    console.log(`\n📦 Vector Store Status:`);
+    console.log(`\n==> Vector Store Status:`);
     console.log(`   ID: ${info.id}`);
     console.log(`   Name: ${info.name}`);
     console.log(`   File count: ${info.file_counts.total}`);
