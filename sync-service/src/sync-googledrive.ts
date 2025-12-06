@@ -117,7 +117,7 @@ async function syncGoogleDrive() {
       ([name]) => !gdriveFileNames.has(name)
     );
 
-    console.log(`\n📝 Changes to apply:`);
+    console.log(`\nNOTICE: Changes to apply:`);
     console.log(`   Files to upload: ${filesToUpload.length}`);
     console.log(`   Files to remove: ${filesToRemove.length}`);
 
@@ -208,7 +208,7 @@ async function syncGoogleDrive() {
     console.log(`   Name: ${info.name}`);
     console.log(`   File count: ${info.file_counts.total}`);
   } catch (error) {
-    console.error('\n❌ Sync failed:', error);
+    console.error('\nERROR: Sync failed:', error);
     throw error;
   } finally {
     // Clean up temp directory
