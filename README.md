@@ -32,7 +32,6 @@ This project is built using a **microservices**-inspired architecture, divided i
 
 | Service | Function | Note |
 | :--- | :--- | :--- |
-| `proxy-server` | Handles requests for AI/OpenAI features (e.g., vector store access). | **Paid/Credit Card Required** |
 | `sync-service` | Responsible for synchronizing data, such as refreshing the OpenAI vector store. | **Paid/Credit Card Required** |
 
 ---
@@ -136,6 +135,7 @@ Choose **one** of the following options:
 * **`.env` File:** Required variables are found in the **`.env.sample`** file in *each server's subfolder*.
     * Copy the content of the sample file and create a new **`.env`** file.
     * ***IMPORTANT:*** Each server has its own unique set of required variables.
+    * ***IMPORTANT:*** Each PM2 process is run from the server/service root where the environment variables are located.
 
 ### Google API Client
 
