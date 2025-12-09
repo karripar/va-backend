@@ -4,7 +4,7 @@ Backend repository for the **Vaihtoaktivaattori** project (Media Service Project
 
 **[Frontend Repository](https://github.com/karripar/va-frontend)**<br>
 **[AI Chat Service Repository](https://github.com/samukan/va-chat-service)**<br>
-**[TypeScript Hybrid Types Module](https://github.com/samukan/va-hybrid-types)**
+**[TypeScript Hybrid Types Module](https://github.com/karripar/va-hybrid-types)**
 
 ---
 
