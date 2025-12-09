@@ -49,6 +49,7 @@ router.get(
    * @apiSuccess {String} [avatarUrl] URL of user's profile picture.
    * @apiSuccess {String} [linkedinUrl] URL of user's LinkedIn profile.
    * @apiSuccess {Boolean} [exchangeBadge] Exchange student badge status.
+   * @apiSuccess {Boolean} [isBlocked] Indicates if the user is blocked.
    * @apiSuccess {String[]} [favorites] Array of favorite destination IDs.
    * @apiSuccess {Object[]} [documents] Array of user documents.
    *
@@ -64,6 +65,7 @@ router.get(
    *       "linkedinUrl": "https://linkedin.com/in/johndoe",
    *       "exchangeBadge": true,
    *       "favorites": ["dest1", "dest2"],
+   *       "isBlocked": false,
    *       "documents": []
    *     }
    *
@@ -103,6 +105,7 @@ router.get(
    * @apiSuccess {String} users.userName User's display name.
    * @apiSuccess {String} users.email Email address of the user.
    * @apiSuccess {String} users.registeredAt Registration date in ISO format.
+   * @apiSuccess {Boolean} users.isBlocked Indicates if the user is blocked.
    * @apiSuccess {Number} users.user_level_id User's role level (1 = user, 2 = admin).
    *
    * @apiSuccessExample {json} Success-Response:
@@ -114,7 +117,8 @@ router.get(
    *           "userName": "John Doe",
    *           "email": "johndoe@metropolia.fi",
    *           "registeredAt": "2024-01-01T00:00:00.000Z",
-   *           "user_level_id": 1
+   *           "user_level_id": 1,
+   *           "isBlocked": false
    *         }
    *       ]
    *     }
@@ -250,6 +254,7 @@ router.get(
    * @apiSuccess {String} users.id User's unique identifier.
    * @apiSuccess {String} users.userName User's display name.
    * @apiSuccess {String} users.email Email address of the user.
+   * @apiSuccess {Boolean} users.isBlocked Indicates the user is blocked.
    * @apiSuccess {String} users.registeredAt Registration date in ISO format.
    * @apiSuccess {Number} users.user_level_id User's role level (1 = user, 2 = admin).
    *
@@ -262,7 +267,8 @@ router.get(
    *           "userName": "John Doe",
    *           "email": "user@email.com",
    *           "registeredAt": "2024-01-01T00:00:00.000Z",
-   *           "user_level_id": 1
+   *           "user_level_id": 1,
+   *           "isBlocked": true
    *         }
    *       ]
    *     }
