@@ -16,9 +16,13 @@ This project is built using a **microservices**-inspired architecture, divided i
 * **Authentication:** Google Sign-In (OAuth 2.0) and custom local authentication.
 * **Testing:** Vitest + Supertest.
 
-### Service Structure
+### Service Structure and Instructions
 
 **[Service structure in Draw.io format](https://drive.google.com/file/d/1OXwYz6CcNq0LxBoS2yffzkEfYRRD2bbf/view?usp=sharing)**
+
+**[Service instructions for Admins](https://metropoliafi-my.sharepoint.com/:w:/g/personal/karripar_metropolia_fi/IQD7dpuTswCNRqPJ7Q9JW1c5AT8gULAZKcMUEhrIll6l16E?e=Pig878)**
+
+**Sensitive credentials and information are provided privately**
 
 ### Core Servers (Microservices)
 
