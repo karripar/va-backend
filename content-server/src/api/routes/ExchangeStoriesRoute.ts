@@ -22,7 +22,7 @@ const router = Router();
 
 router.get(
   /**
-   * @api {get} /stories/countries Get countries with story counts
+   * @api {get} /exchange-stories/countries Get countries with story counts
    * @apiName GetCountries
    * @apiGroup ExchangeStoriesGroup
    * @apiVersion 1.0.0
@@ -50,7 +50,7 @@ router.get(
 
 router.get(
   /**
-   * @api {get} /stories/all Get all stories (admin only)
+   * @api {get} /exhange-stories/all Get all stories (admin only)
    * @apiName GetAllStories
    * @apiGroup ExchangeStoriesGroup
    * @apiVersion 1.0.0
@@ -87,7 +87,7 @@ router.get(
 
 router.get(
   /**
-   * @api {get} /stories Get approved stories
+   * @api {get} /exhange-stories Get approved stories
    * @apiName GetApprovedStories
    * @apiGroup ExchangeStoriesGroup
    * @apiVersion 1.0.0
@@ -126,7 +126,7 @@ router.get(
 
 router.post(
   /**
-   * @api {post} /stories Create a new story
+   * @api {post} /exhange-stories Create a new story
    * @apiName CreateStory
    * @apiGroup ExchangeStoriesGroup
    * @apiVersion 1.0.0
@@ -178,7 +178,7 @@ router.post(
 
 router.put(
   /**
-   * @api {put} /stories/:id/approve Approve story
+   * @api {put} /exhange-stories/:id/approve Approve story
    * @apiName ApproveStory
    * @apiGroup ExchangeStoriesGroup
    * @apiVersion 1.0.0
@@ -213,7 +213,7 @@ router.put(
 
 router.put(
   /**
-   * @api {put} /stories/:id Update story
+   * @api {put} /exhange-stories/:id Update story
    * @apiName UpdateStory
    * @apiGroup ExchangeStoriesGroup
    * @apiVersion 1.0.0
@@ -247,7 +247,7 @@ router.put(
 
 router.delete(
   /**
-   * @api {delete} /stories/:id Delete story
+   * @api {delete} /exhange-stories/:id Delete story
    * @apiName DeleteStory
    * @apiGroup ExchangeStoriesGroup
    * @apiVersion 1.0.0
@@ -278,7 +278,7 @@ router.delete(
 
 router.get(
   /**
-   * @api {get} /stories/:id Get story by ID
+   * @api {get} /exhange-stories/:id Get story by ID
    * @apiName GetStoryById
    * @apiGroup ExchangeStoriesGroup
    * @apiVersion 1.0.0
