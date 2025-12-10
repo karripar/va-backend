@@ -2,6 +2,7 @@ import { Router } from "express";
 import {getBudgetCategories, createOrUpdateBudgetEstimate, getBudgetEstimate,
 saveOrUpdateBudget, getUserBudget, getBudgetHistory, deleteBudget,} from "../controllers/profileController";
 import {saveCalculatorHistory, getCalculatorHistory} from "../controllers/services/budgetCalculatorService";
+import { authenticate } from "../../middlewares";
 
 /**
  * @apiDefine BudgetsGroup Budgets
@@ -17,7 +18,8 @@ router.get(
    * @apiGroup BudgetsGroup
    * @apiVersion 1.0.0
    * @apiDescription Retrieve all available budget categories
-   * @apiPermission none
+   *
+   * @apiPermission None - public endpoint
    *
    * @apiSuccess (200) {Object[]} categories List of budget categories
    * @apiSuccess (200) {String} categories.id Category ID
@@ -45,7 +47,10 @@ router.post(
    * @apiGroup BudgetsGroup
    * @apiVersion 1.0.0
    * @apiDescription Save budget calculator calculation to history
-   * @apiPermission authenticated
+   *
+   * @apiPermission Authenticated user JWT token required
+   *
+   * @apiHeader {String} Authorization Bearer JWT token
    *
    * @apiBody {Object} calculation Calculator data
    * @apiBody {Object} calculation.categories Budget breakdown by category
@@ -56,6 +61,9 @@ router.post(
    * @apiSuccess (201) {String} history.id History entry ID
    * @apiSuccess (201) {String} history.createdAt Creation timestamp
    *
+   * @apiError (400) BadRequest Missing required fields
+   * @apiError (401) Unauthorized Missing or invalid authentication token
+   *
    * @apiSuccessExample {json} Success-Response:
    * HTTP/1.1 201 Created
    * {
@@ -63,8 +71,15 @@ router.post(
    *   "calculation": {...},
    *   "createdAt": "2025-11-29T10:00:00.000Z"
    * }
+   *
+   * @apiErrorExample {json} Error-Response:
+   * HTTP/1.1 400 Bad Request
+   * {
+   *   "error": "Missing required fields"
+   * }
    */
   "/calculator/history",
+  authenticate,
   saveCalculatorHistory
 );
 
@@ -75,7 +90,10 @@ router.get(
    * @apiGroup BudgetsGroup
    * @apiVersion 1.0.0
    * @apiDescription Retrieve budget calculator history for a user
-   * @apiPermission authenticated
+   *
+   * @apiPermission Authenticated user JWT token required
+   *
+   * @apiHeader {String} Authorization Bearer JWT token
    *
    * @apiParam {String} userId User's unique ID
    *
@@ -83,6 +101,9 @@ router.get(
    * @apiSuccess (200) {String} history.id Entry ID
    * @apiSuccess (200) {Object} history.calculation Calculation data
    * @apiSuccess (200) {String} history.createdAt Creation timestamp
+   *
+   * @apiError (401) Unauthorized Missing or invalid authentication token
+   * @apiError (404) NotFound User not found
    *
    * @apiSuccessExample {json} Success-Response:
    * HTTP/1.1 200 OK
@@ -93,8 +114,15 @@ router.get(
    *     "createdAt": "2025-11-29T10:00:00.000Z"
    *   }
    * ]
+   *
+   * @apiErrorExample {json} Error-Response:
+   * HTTP/1.1 404 Not Found
+   * {
+   *   "error": "User not found"
+   * }
    */
   "/calculator/history/:userId",
+  authenticate,
   getCalculatorHistory
 );
 
@@ -105,7 +133,10 @@ router.post(
    * @apiGroup BudgetsGroup
    * @apiVersion 1.0.0
    * @apiDescription Create or update a budget estimate for the user
-   * @apiPermission authenticated
+   *
+   * @apiPermission Authenticated user JWT token required
+   *
+   * @apiHeader {String} Authorization Bearer JWT token
    *
    * @apiBody {Object} estimate Budget estimate data
    * @apiBody {Number} estimate.amount Estimated budget amount
@@ -113,6 +144,9 @@ router.post(
    * @apiBody {Object} estimate.breakdown Budget breakdown by category
    *
    * @apiSuccess (201) {Object} estimate Created/updated estimate
+   *
+   * @apiError (400) BadRequest Missing required fields
+   * @apiError (401) Unauthorized Missing or invalid authentication token
    *
    * @apiSuccessExample {json} Success-Response:
    * HTTP/1.1 201 Created
@@ -122,8 +156,15 @@ router.post(
    *   "currency": "EUR",
    *   "breakdown": {...}
    * }
+   *
+   * @apiErrorExample {json} Error-Response:
+   * HTTP/1.1 400 Bad Request
+   * {
+   *   "error": "Missing required fields"
+   * }
    */
   "/estimate",
+  authenticate,
   createOrUpdateBudgetEstimate
 );
 
@@ -134,11 +175,17 @@ router.get(
    * @apiGroup BudgetsGroup
    * @apiVersion 1.0.0
    * @apiDescription Retrieve the current budget estimate for the user
-   * @apiPermission authenticated
+   *
+   * @apiPermission Authenticated user JWT token required
+   *
+   * @apiHeader {String} Authorization Bearer JWT token
    *
    * @apiSuccess (200) {Object} estimate Budget estimate object
    * @apiSuccess (200) {Number} estimate.amount Estimated amount
    * @apiSuccess (200) {String} estimate.currency Currency code
+   *
+   * @apiError (401) Unauthorized Missing or invalid authentication token
+   * @apiError (404) NotFound Estimate not found
    *
    * @apiSuccessExample {json} Success-Response:
    * HTTP/1.1 200 OK
@@ -147,8 +194,15 @@ router.get(
    *   "amount": 5000,
    *   "currency": "EUR"
    * }
+   *
+   * @apiErrorExample {json} Error-Response:
+   * HTTP/1.1 404 Not Found
+   * {
+   *   "error": "Estimate not found"
+   * }
    */
   "/estimate",
+  authenticate,
   getBudgetEstimate
 );
 
@@ -159,7 +213,10 @@ router.post(
    * @apiGroup BudgetsGroup
    * @apiVersion 1.0.0
    * @apiDescription Save or update a budget record
-   * @apiPermission authenticated
+   *
+   * @apiPermission Authenticated user JWT token required
+   *
+   * @apiHeader {String} Authorization Bearer JWT token
    *
    * @apiBody {Object} budget Budget data
    * @apiBody {String} budget.period Budget period (monthly/semester/year)
@@ -167,6 +224,9 @@ router.post(
    * @apiBody {Number} budget.total Total budget amount
    *
    * @apiSuccess (201) {Object} budget Created/updated budget
+   *
+   * @apiError (400) BadRequest Missing required fields
+   * @apiError (401) Unauthorized Missing or invalid authentication token
    *
    * @apiSuccessExample {json} Success-Response:
    * HTTP/1.1 201 Created
@@ -176,8 +236,15 @@ router.post(
    *   "period": "semester",
    *   "total": 5000
    * }
+   *
+   * @apiErrorExample {json} Error-Response:
+   * HTTP/1.1 400 Bad Request
+   * {
+   *   "error": "Missing required fields"
+   * }
    */
   "/",
+  authenticate,
   saveOrUpdateBudget
 );
 
@@ -188,7 +255,10 @@ router.get(
    * @apiGroup BudgetsGroup
    * @apiVersion 1.0.0
    * @apiDescription Retrieve budget history for a user
-   * @apiPermission authenticated
+   *
+   * @apiPermission Authenticated user JWT token required
+   *
+   * @apiHeader {String} Authorization Bearer JWT token
    *
    * @apiParam {String} userId User's unique ID
    *
@@ -197,6 +267,9 @@ router.get(
    * @apiSuccess (200) {String} budgets.period Budget period
    * @apiSuccess (200) {Number} budgets.total Total amount
    * @apiSuccess (200) {String} budgets.createdAt Creation timestamp
+   *
+   * @apiError (401) Unauthorized Missing or invalid authentication token
+   * @apiError (404) NotFound User not found
    *
    * @apiSuccessExample {json} Success-Response:
    * HTTP/1.1 200 OK
@@ -208,8 +281,15 @@ router.get(
    *     "createdAt": "2025-11-29T10:00:00.000Z"
    *   }
    * ]
+   *
+   * @apiErrorExample {json} Error-Response:
+   * HTTP/1.1 404 Not Found
+   * {
+   *   "error": "User not found"
+   * }
    */
   "/:userId/history",
+  authenticate,
   getBudgetHistory
 );
 
@@ -220,7 +300,10 @@ router.get(
    * @apiGroup BudgetsGroup
    * @apiVersion 1.0.0
    * @apiDescription Get the current budget for a specific user
-   * @apiPermission authenticated
+   *
+   * @apiPermission Authenticated user JWT token required
+   *
+   * @apiHeader {String} Authorization Bearer JWT token
    *
    * @apiParam {String} userId User's unique ID
    *
@@ -228,6 +311,9 @@ router.get(
    * @apiSuccess (200) {String} budget.id Budget ID
    * @apiSuccess (200) {Object} budget.categories Category breakdown
    * @apiSuccess (200) {Number} budget.total Total amount
+   *
+   * @apiError (401) Unauthorized Missing or invalid authentication token
+   * @apiError (404) NotFound Budget not found
    *
    * @apiSuccessExample {json} Success-Response:
    * HTTP/1.1 200 OK
@@ -237,8 +323,15 @@ router.get(
    *   "categories": {...},
    *   "total": 5000
    * }
+   *
+   * @apiErrorExample {json} Error-Response:
+   * HTTP/1.1 404 Not Found
+   * {
+   *   "error": "Budget not found"
+   * }
    */
   "/:userId",
+  authenticate,
   getUserBudget
 );
 
@@ -249,22 +342,35 @@ router.delete(
    * @apiGroup BudgetsGroup
    * @apiVersion 1.0.0
    * @apiDescription Delete a budget record
-   * @apiPermission authenticated
+   *
+   * @apiPermission Authenticated user JWT token required
+   *
+   * @apiHeader {String} Authorization Bearer JWT token
    *
    * @apiParam {String} budgetId Budget's unique ID
    *
    * @apiSuccess (200) {String} message Success message
    *
-   * @apiError (404) {String} error Budget not found
+   * @apiError (401) Unauthorized Missing or invalid authentication token
+   * @apiError (404) NotFound Budget not found
    *
    * @apiSuccessExample {json} Success-Response:
    * HTTP/1.1 200 OK
    * {
    *   "message": "Budget deleted successfully"
    * }
+   *
+   * @apiErrorExample {json} Error-Response:
+   * HTTP/1.1 404 Not Found
+   * {
+   *   "error": "Budget not found"
+   * }
    */
   "/:budgetId",
+  authenticate,
   deleteBudget
 );
+
+
 
 export default router;

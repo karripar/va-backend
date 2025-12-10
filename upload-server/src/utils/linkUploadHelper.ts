@@ -1,7 +1,6 @@
 export const platformInstructions = {
   google_drive: {
     name: "Google Drive",
-    icon: "📁",
     instructions: [
       "1. Open your file in Google Drive",
       "2. Click the 'Share' button",
@@ -14,7 +13,6 @@ export const platformInstructions = {
   },
   onedrive: {
     name: "OneDrive",
-    icon: "☁️",
     instructions: [
       "1. Right-click your file in OneDrive",
       "2. Click 'Share'",
@@ -27,7 +25,6 @@ export const platformInstructions = {
   },
   dropbox: {
     name: "Dropbox",
-    icon: "📦",
     instructions: [
       "1. Right-click your file in Dropbox",
       "2. Click 'Share'",
@@ -40,7 +37,6 @@ export const platformInstructions = {
   },
   icloud: {
     name: "iCloud",
-    icon: "☁️",
     instructions: [
       "1. Select your file in iCloud",
       "2. Click the share icon",
