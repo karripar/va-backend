@@ -128,9 +128,9 @@ router
      *     }
      */
     "/contacts",
-    body("name").isString().withMessage("Name must be a string"),
-    body("title").isString().withMessage("Title must be a string"),
-    body("email").isEmail().withMessage("Email must be a valid email address"),
+    body("name").isString().withMessage("Name must be a string").isLength({ min: 2, max: 100 }).withMessage("Name must be between 2 and 100 characters"),
+    body("title").isString().withMessage("Title must be a string").isLength({ min: 2, max: 100 }).withMessage("Title must be between 5 and 100 characters"),
+    body("email").isEmail().withMessage("Email must be a valid email address").isLength({ max: 100 }).withMessage("Email must be at most 100 characters"),
     validationErrors,
     authenticate,
     addContact

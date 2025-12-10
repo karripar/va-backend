@@ -2,7 +2,9 @@
 
 Backend repository for the **Vaihtoaktivaattori** project (Media Service Project course). <br>
 
-**[Frontend Repository](https://github.com/karripar/va-frontend)** 
+**[Frontend Repository](https://github.com/karripar/va-frontend)**<br>
+**[AI Chat Service Repository](https://github.com/samukan/va-chat-service)**<br>
+**[TypeScript Hybrid Types Module](https://github.com/karripar/va-hybrid-types)**
 
 ---
 
@@ -12,7 +14,15 @@ This project is built using a **microservices**-inspired architecture, divided i
 
 * **Core Technologies:** **Node.js**, **Express**, and **MongoDB** (Mongoose ORM).
 * **Authentication:** Google Sign-In (OAuth 2.0) and custom local authentication.
-* **Testing:** Vitest + Supertest.
+* **Testing:** Vitest + Supertest (Found in *`test`* folder)
+
+### Service Structure and Instructions
+
+**[Service structure in Draw.io format](https://drive.google.com/file/d/1OXwYz6CcNq0LxBoS2yffzkEfYRRD2bbf/view?usp=sharing)**
+
+**[Service instructions for Admins](https://metropoliafi-my.sharepoint.com/:w:/g/personal/karripar_metropolia_fi/IQD7dpuTswCNRqPJ7Q9JW1c5AT8gULAZKcMUEhrIll6l16E?e=Pig878)**
+
+**Sensitive credentials and information are provided privately**
 
 ### Core Servers (Microservices)
 
@@ -26,7 +36,6 @@ This project is built using a **microservices**-inspired architecture, divided i
 
 | Service | Function | Note |
 | :--- | :--- | :--- |
-| `proxy-server` | Handles requests for AI/OpenAI features (e.g., vector store access). | **Paid/Credit Card Required** |
 | `sync-service` | Responsible for synchronizing data, such as refreshing the OpenAI vector store. | **Paid/Credit Card Required** |
 
 ---
@@ -46,7 +55,10 @@ All primary API routes are prefixed by **`/api/v1/`**.
 | `/users` | User creation and general user management. |
 | `/profile` | Fetching and updating the current user's profile and related info. |
 | `/admin` | Admin-specific user and role actions. |
-| `/tips` | Exchange student stories management and browsing. |
+| `/applications` | Application handling routes. | 
+| `/budgets` | Handling budgeting for planning an exchange period. |
+| `/grants` | Information about grants students are eligible to |
+| `/ai/chat` | AI Chat and RAG handling |   
 
 ### Content Server
 
@@ -63,6 +75,7 @@ All primary API routes are prefixed by **`/api/v1/`**.
 | `/destinations` | Accessing and managing exchange destination data and scraping url storage |
 | `/instructions` | Application instructions |
 | `/contact` | Contact information storage and modification. |
+| `/exchange-stories` | Handling adding/deleting/modifying student exchange stories | 
 
 ### Upload Server
 
@@ -73,23 +86,36 @@ All primary API routes are prefixed by **`/api/v1/`**.
 
 | Route Group | Description |
 | :--- | :--- |
-| `/upload` | Single file upload endpoints |
+| `/upload` | Single file upload endpoints, story photos |
 | `/uploads` | File listing and management endpoints. |
+| `/linkUploads` | Endpoints for handling link based uploads (links to user's documents) | 
 
 ---
 
 ## Project Documentation
 
-In addition to this `.md` documentation, the project includes two types of automatically generated documentation:
+In addition to this `.md` documentation, the project includes two types of automatically generated documentation for each server.
 
 | Documentation Type | Content Focus | Generation Command | Access Path (Local) |
 | :--- | :--- | :--- | :--- |
-| **ApiDoc** | Documents the available **API routes** (endpoints). | `npm run apidoc` | `/docs/api` |
-| **TypeDoc** | Documents **controllers** and core code (e.g., CRUD operations). | `npm run typedoc` | `/docs/typedoc` |
+| **Auth ApiDoc** | Documents the available **API routes** (endpoints). | `npm run apidoc` | `/docs/apidoc/index.html` |
+| **Auth TypeDoc** | Documents **controllers** and core code (e.g., CRUD operations). | `npm run typedoc` | `/docs/typedoc/index.html` |
 
-* To generate all documentation and build the server, run: `npm run build`
-* **TODO:** Add live links to the documentation here when the application is launched.
+All available documentation routes:
 
+| Server | Documentation Type |Access Path (Local) |
+| :--- | :--- | :--- |
+| **auth-server** | **Apidoc** | `/auth/docs/apidoc/index.html` |
+| **auth-server** | **TypeDoc** | `/auth/docs/typedoc/index.html` |
+| **content-server** | **Apidoc** | `/content/docs/apidoc/index.html` |
+| **content-server** | **TypeDoc** | `/content/docs/typedoc/index.html` |
+| **upload-server** | **Apidoc** | `/upload/docs/apidoc/index.html` |
+| **upload-server** | **TypeDoc** | `/upload/docs/typedoc/index.html` |
+
+By default, all documentation are protected with a **username/password** combination:
+| Default Username | Default Password |
+| :--- | :--- |
+| `admin` | `defaultPassword` |
 ---
 
 ## Project Installation Guide
@@ -130,6 +156,7 @@ Choose **one** of the following options:
 * **`.env` File:** Required variables are found in the **`.env.sample`** file in *each server's subfolder*.
     * Copy the content of the sample file and create a new **`.env`** file.
     * ***IMPORTANT:*** Each server has its own unique set of required variables.
+    * ***IMPORTANT:*** Each PM2 process is run from the server/service root where the environment variables are located.
 
 ### Google API Client
 
@@ -144,3 +171,8 @@ Choose **one** of the following options:
 * **Validation:** Thorough validation on all inputs using **`express-validator`**.
 * **Rate Limiting:** Implemented with **`express-rate-limit`** to mitigate abuse and denial-of-service vectors.
 * **Data Caching:** Scraping data is aggressively cached, limited to running **once per week** maximum, to reduce external load and increase response speed.
+
+## CI/CD Pipeline
+
+* Because the hosting virtual machine is behind a firewall in a private network, a **`Smee.io`** webhook was used for the backend and frontend both. 
+* **`.Github/worklows`** includes the basic Github Actions Pipeline which handles installing Node packages, building the applications and running tests if present.

@@ -1,8 +1,12 @@
-import { Request, Response, NextFunction } from 'express';
+import {Request, Response, NextFunction} from 'express';
 import CustomError from '../../classes/CustomError';
 import dotenv from 'dotenv';
 import DestinationModel from '../models/destinationModel';
-import { scrapeDestinations } from '../services/scraperService';
+import {
+  scrapeDestinations,
+  scrapeTableDestinations,
+  scrapeHealthDestinations,
+} from '../services/scraperService';
 import DestinationUrlModel from '../models/destinationUrlModel';
 
 dotenv.config();
@@ -33,11 +37,11 @@ dotenv.config();
 const getDestinationUrls = async (
   req: Request<{}, {}, {}>,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) => {
   try {
     const urls = await DestinationUrlModel.find();
-    res.status(200).json({ urls });
+    res.status(200).json({urls});
   } catch (error) {
     console.error('Error fetching destination URLs:', error);
     next(new CustomError('Failed to fetch destination URLs', 500));
@@ -63,12 +67,12 @@ const getDestinationUrls = async (
  * deleteDestinationUrl(req, res, next);
  */
 const deleteDestinationUrl = async (
-  req: Request<{ id: string }, {}, {}>,
+  req: Request<{id: string}, {}, {}>,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) => {
   try {
-    const { id } = req.params;
+    const {id} = req.params;
     const adminUser = res.locals.user;
     if (!adminUser || ![2, 3].includes(adminUser.user_level_id)) {
       return next(new CustomError('Unauthorized, admin access required', 403));
@@ -79,7 +83,7 @@ const deleteDestinationUrl = async (
       return next(new CustomError('Destination URL not found', 404));
     }
 
-    res.status(200).json({ message: 'Destination URL deleted successfully' });
+    res.status(200).json({message: 'Destination URL deleted successfully'});
   } catch (error) {
     console.error('Error deleting destination URL:', error);
     next(new CustomError('Failed to delete destination URL', 500));
@@ -106,21 +110,21 @@ const deleteDestinationUrl = async (
  * updateDestinationUrl(req, res, next);
  */
 const updateDestinationUrl = async (
-  req: Request<{}, {}, { field: string; lang: string; url: string }>,
+  req: Request<{}, {}, {field: string; lang: string; url: string}>,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) => {
   try {
-    const { field, lang, url } = req.body;
+    const {field, lang, url} = req.body;
     const adminUser = res.locals.user;
     if (!adminUser || ![2, 3].includes(adminUser.user_level_id)) {
       return next(new CustomError('Unauthorized, admin access required', 403));
     }
 
     const updatedEntry = await DestinationUrlModel.findOneAndUpdate(
-      { field, lang },
-      { url, lastModified: new Date(), updatedBy: adminUser._id },
-      { upsert: true, new: true }
+      {field, lang},
+      {url, lastModified: new Date(), updatedBy: adminUser._id},
+      {upsert: true, new: true},
     );
 
     res.status(200).json({
@@ -132,6 +136,17 @@ const updateDestinationUrl = async (
     next(new CustomError('Failed to update destination URL', 500));
   }
 };
+
+interface Destination {
+  country: string;
+  title: string;
+  link: string;
+  coordinates: {
+    lat: number;
+    lng: number;
+  };
+}
+
 
 /**
  * @function getDestinations
@@ -152,51 +167,114 @@ const updateDestinationUrl = async (
  * // GET /api/v1/destinations/metropolia/destinations?field=tech&lang=en
  * getDestinations(req, res, next);
  */
-const getDestinations = async (
-  req: Request<{}, {}, { lang?: string; field?: string }>,
+const isValidDestination = (dest: Destination) =>
+  dest &&
+  typeof dest.country === 'string' &&
+  typeof dest.title === 'string' &&
+  typeof dest.link === 'string' &&
+  dest.coordinates &&
+  typeof dest.coordinates.lat === 'number' &&
+  typeof dest.coordinates.lng === 'number';
+
+  const getDestinations = async (
+  req: Request<{}, {}, {lang?: string; field?: string}>,
   res: Response,
-  next: NextFunction
-) => {
+  next: NextFunction,
+  ) => {
   try {
-    const lang = 'en';
-    const validFields = ['tech', 'health', 'business', 'culture'];
-    const field =
-      req.query.field && validFields.includes(req.query.field as string)
-        ? (req.query.field as string)
-        : 'tech';
+  const lang = 'en';
+  const validFields = ['tech', 'health', 'business', 'culture'];
+  const field =
+  req.query.field && validFields.includes(req.query.field as string)
+  ? (req.query.field as string)
+  : 'tech';
 
-    // seven day cache to reduce OpenAI api calls and scraping load
-    const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
-    const cached = await DestinationModel.findOne({ field, lang });
+  // 30 day cache to reduce scraping load
+  const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+  const cached = await DestinationModel.findOne({field, lang});
 
-    if (cached && cached.lastUpdated > sevenDaysAgo) {
-      console.log('Using cached data');
-      return res.status(200).json({ destinations: cached.sections });
-    }
-
-    const destinationUrlEntry = await DestinationUrlModel.findOne({ field, lang });
-    if (!destinationUrlEntry) {
-      return next(
-        new CustomError('No URL configured for the requested field and language', 404)
-      );
-    }
-
-    const url = destinationUrlEntry.url;
-    const response = await fetch(url);
-    const htmlDoc = await response.text();
-    const sections = await scrapeDestinations(htmlDoc, lang as 'en' | 'fi');
-
-    await DestinationModel.findOneAndUpdate(
-      { field, lang },
-      { sections, lastUpdated: new Date() },
-      { upsert: true, new: true }
-    );
-
-    res.status(200).json({ destinations: sections });
-  } catch (error) {
-    console.error('Error fetching or parsing data:', error);
-    next(new CustomError('Failed to fetch destinations', 500));
+  if (cached && cached.lastUpdated && cached.lastUpdated > thirtyDaysAgo) {
+    console.log('Using cached data');
+    return res.status(200).json({destinations: cached.sections || {}});
   }
-};
 
-export { getDestinations, updateDestinationUrl, getDestinationUrls, deleteDestinationUrl };
+  const destinationUrlEntry = await DestinationUrlModel.findOne({
+    field,
+    lang,
+  });
+  if (!destinationUrlEntry) {
+    return next(
+      new CustomError(
+        'No URL configured for the requested field and language',
+        404,
+      ),
+    );
+  }
+
+  const url = destinationUrlEntry.url;
+  const response = await fetch(url);
+  const htmlDoc = await response.text();
+
+  let sections: Record<string, Destination[]> = {};
+
+  if (field === 'business') {
+    sections = (await scrapeTableDestinations(htmlDoc, lang as 'en' | 'fi')) as Record<string, Destination[]>;
+    for (const section in sections) {
+      sections[section] = sections[section].map(dest => ({
+        ...dest,
+        coordinates: {
+          lat: dest.coordinates.lat ?? 0,
+          lng: dest.coordinates.lng ?? 0,
+        },
+      }));
+    }
+  } else if (field === 'health') {
+    sections = (await scrapeHealthDestinations(htmlDoc, lang as 'en' | 'fi')) as Record<string, Destination[]>;
+    for (const section in sections) {
+      sections[section] = sections[section].map(dest => ({
+        ...dest,
+        coordinates: {
+          lat: dest.coordinates.lat ?? 0,
+          lng: dest.coordinates.lng ?? 0,
+        },
+      }));
+    }
+  } else {
+    sections = (await scrapeDestinations(htmlDoc, lang as 'en' | 'fi')) as Record<string, Destination[]>;
+    for (const section in sections) {
+      sections[section] = sections[section].map(dest => ({
+        ...dest,
+        coordinates: {
+          lat: dest.coordinates.lat ?? 0,
+          lng: dest.coordinates.lng ?? 0,
+        },
+      }));
+    }
+  }
+
+  // Validate sections
+  const sectionsValidated: Record<string, Destination[]> = {};
+  for (const [sectionTitle, dests] of Object.entries(sections)) {
+    sectionsValidated[sectionTitle] = dests.filter(isValidDestination);
+  }
+
+  await DestinationModel.findOneAndUpdate(
+    {field, lang},
+    {sections: sectionsValidated, lastUpdated: new Date()},
+    {upsert: true, new: true},
+  );
+
+  res.status(200).json({destinations: sectionsValidated});
+
+  } catch (error) {
+  console.error('Error fetching or parsing data:', error);
+  next(new CustomError('Failed to fetch destinations', 500));
+  }
+  };
+
+export {
+  getDestinations,
+  updateDestinationUrl,
+  getDestinationUrls,
+  deleteDestinationUrl,
+};

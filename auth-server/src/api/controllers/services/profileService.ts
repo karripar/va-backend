@@ -5,22 +5,20 @@ import {isValidEmail} from '../../../utils/authHelpers';
 export const updateProfile = async (req: Request, res: Response) => {
   try {
     if (req.body.email && !isValidEmail(req.body.email)) {
-      return res.status(400).json({ error: "Invalid email format" });
+      return res.status(400).json({error: 'Invalid email format'});
     }
 
-    const profile = await User.findByIdAndUpdate(
-      req.params.id,
-      req.body,
-      { new: true }
-    );
+    const profile = await User.findByIdAndUpdate(req.params.id, req.body, {
+      new: true,
+    });
 
     if (!profile) {
-      return res.status(404).json({ error: "Profile not found" });
+      return res.status(404).json({error: 'Profile not found'});
     }
 
     res.json(profile);
   } catch {
-    res.status(500).json({ error: 'Failed to update profile' });
+    res.status(500).json({error: 'Failed to update profile'});
   }
 };
 
@@ -30,15 +28,23 @@ export const addFavorite = async (
   next: NextFunction,
 ) => {
   try {
-    const user = res.locals.user;
-    if (!user) {
+    const userData = res.locals.user;
+    if (!userData) {
       return res.status(401).json({error: 'User not authenticated'});
     }
 
     const {destination} = req.body;
 
+    console.log('Adding favorite destination:', destination);
+
     if (!destination) {
-      return res.status(400).json({error: 'Destination is required'});
+      return res.status(400).json({error: 'Destination not found'});
+    }
+
+    // fetch user from db to add the favorite
+    const user = await User.findById(userData._id);
+    if (!user) {
+      return res.status(404).json({error: 'User not found'});
     }
 
     if (!user.favorites.includes(destination)) {
@@ -48,6 +54,7 @@ export const addFavorite = async (
 
     res.json(user);
   } catch (error) {
+    console.log('Error adding favorite:', error);
     next(error);
   }
 };
@@ -58,8 +65,8 @@ export const removeFavorite = async (
   next: NextFunction,
 ) => {
   try {
-    const user = res.locals.user;
-    if (!user) {
+    const userData = res.locals.user;
+    if (!userData) {
       return res.status(401).json({error: 'User not authenticated'});
     }
 
@@ -67,6 +74,11 @@ export const removeFavorite = async (
 
     if (!destination) {
       return res.status(400).json({error: 'Destination is required'});
+    }
+
+    const user = await User.findById(userData._id);
+    if (!user) {
+      return res.status(404).json({error: 'User not found'});
     }
 
     user.favorites = user.favorites.filter(

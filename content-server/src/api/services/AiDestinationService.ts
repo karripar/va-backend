@@ -3,7 +3,13 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
-const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+const apiKey = process.env.OPENAI_API_KEY;
+
+if (!apiKey) {
+  throw new Error('OPENAI_API_KEY is not set in environment variables');
+}
+
+const client = new OpenAI({ apiKey });
 
 export interface ExtractedItem {
   country: string;
@@ -19,19 +25,21 @@ function safeJsonParse(str: string) {
     let fixed = str;
 
     // Remove code fences
-    fixed = fixed.replace(/```[\s\S]*?```/g, m => m.replace(/```(?:json)?/g, "").replace(/```/g, ""));
+    fixed = fixed.replace(/```[\s\S]*?```/g, (m) =>
+      m.replace(/```(?:json)?/g, '').replace(/```/g, ''),
+    );
 
     // Replace single quotes with double
     fixed = fixed.replace(/'/g, '"');
 
     // Fix trailing commas in arrays or objects
-    fixed = fixed.replace(/,(\s*[}\]])/g, "$1");
+    fixed = fixed.replace(/,(\s*[}\]])/g, '$1');
 
     // Remove invalid unescaped backslashes
-    fixed = fixed.replace(/\\(?!["\\/bfnrt])/g, "");
+    fixed = fixed.replace(/\\(?!["\\/bfnrt])/g, '');
 
     // Remove newlines inside string values
-    fixed = fixed.replace(/\n+/g, " ");
+    fixed = fixed.replace(/\n+/g, ' ');
 
     return JSON.parse(fixed);
   }
@@ -44,35 +52,46 @@ export async function extractSectionWithAI(
   studyField: string,
 ): Promise<ExtractedItem[]> {
   const prompt = `
-You are an expert parser. Extract ALL destinations from the following HTML.
-Return ONLY valid JSON, no backticks.
+  You are an expert HTML data extractor.
 
-### Rules:
-- Each destination must include:
-  "country": string
-  "title": string
-  "link": string
-  "studyField": string
+  Your job: Extract ALL individual destination items from the HTML.
+  A destination = one unique combination of title + link (or similar clickable entity).
 
-- If HTML does NOT include a study field, use fallback: "${studyField}"
-- If HTML does NOT include country, use fallback: "${panelCountry}"
-- Titles must be clean, readable, and not duplicated.
-- studyField must NOT contain duplicated text.
-- Use "" for missing links.
+  ### STRICT RULES:
+  1. DO NOT invent, merge, summarize, or reorganize items.
+  2. Each HTML link or heading referring to a destination MUST produce exactly ONE item.
+  3. No duplicates. If two items have the same title+link, keep only one.
+  4. For each extracted item:
+      - "country":
+          * If explicitly shown in the HTML near this item → use it.
+          * Otherwise → use fallback: "${panelCountry}"
+      - "title": must be the exact title text for that item, cleaned.
+      - "link": must be the href URL (or "" if none).
+      - "studyField":
+          * If a study field is present ANYWHERE near the item, extract it.
+          * Otherwise use fallback: "${studyField}"
+          * NEVER return "unknown".
 
-### HTML:
-${sectionHtml}
+  ### Additional rules:
+  - You MUST check ALL parent/child/sibling HTML tags related to each item to find study fields.
+  - Do NOT reuse study fields from unrelated items.
+  - Do NOT duplicate country names or study fields.
+  - Output must be ONLY valid JSON. No commentary.
 
-### JSON output format:
-[
-  {
-    "country": "string",
-    "title": "string",
-    "link": "string",
-    "studyField": "string"
-  }
-]
+  ### HTML to parse:
+  ${sectionHtml}
+
+  ### Final output format:
+  [
+    {
+      "country": "string",
+      "title": "string",
+      "link": "string",
+      "studyField": "string"
+    }
+  ]
   `;
+
 
   const response = await client.responses.create({
     model: 'gpt-4o',
@@ -98,7 +117,7 @@ ${sectionHtml}
         typeof item.country === 'string' &&
         typeof item.title === 'string' &&
         typeof item.link === 'string' &&
-        typeof item.studyField === 'string'
+        typeof item.studyField === 'string',
     )
   ) {
     console.error('AI returned an invalid structure:', parsed);

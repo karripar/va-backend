@@ -16,6 +16,7 @@ type DestinationUrlEntry = {
   field: string;
   lang: string;
   url: string;
+  studyField: string;
   lastModified?: string;
   updatedBy?: string;
 };

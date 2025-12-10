@@ -163,6 +163,25 @@ const removeAdminStatus = async (
 };
 
 
+/** * @function makeAdminElevated
+ * @description Grants elevated admin rights to an existing admin user.
+ * Only users with `user_level_id` 3 (super admins) are allowed to perform this action.
+ *
+ * @param {Request<{ id: string }>} req - Express request object containing the user's id in `req.params`.
+ * @param {Response} res - Express response object used to send JSON responses.
+ * @param {NextFunction} next - Express next middleware function for error handling.
+ *
+ * @returns {Promise<void>} Responds with:
+ * - 200: When the user is successfully promoted to elevated admin.
+ * - 400: If the id parameter is invalid or if the user is already an elevated admin.
+ * - 403: If the current user is not a super admin.
+ * - 404: If no user with the given id exists.
+ *
+ * @example
+ * // PUT /api/v1/admin/make-elevated-admin/:id
+ * // Requires res.locals.user to be a super admin (user_level_id 3)
+ * makeAdminElevated(req, res, next);
+ */
 const makeAdminElevated = async (
   req: Request<{id: string}, {}, {}>,
   res: Response,
