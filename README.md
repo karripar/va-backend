@@ -154,3 +154,8 @@ Choose **one** of the following options:
 * **Validation:** Thorough validation on all inputs using **`express-validator`**.
 * **Rate Limiting:** Implemented with **`express-rate-limit`** to mitigate abuse and denial-of-service vectors.
 * **Data Caching:** Scraping data is aggressively cached, limited to running **once per week** maximum, to reduce external load and increase response speed.
+
+## CI/CD Pipeline
+
+* Because the hosting virtual machine is behind a firewall in a private network, a **`Smee.io`** webhook was used for the backend and frontend both. 
+* **`.Github/worklows`** includes the basic Github Actions Pipeline which handles installing Node packages, building the applications and running tests if present.
