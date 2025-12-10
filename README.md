@@ -14,7 +14,7 @@ This project is built using a **microservices**-inspired architecture, divided i
 
 * **Core Technologies:** **Node.js**, **Express**, and **MongoDB** (Mongoose ORM).
 * **Authentication:** Google Sign-In (OAuth 2.0) and custom local authentication.
-* **Testing:** Vitest + Supertest.
+* **Testing:** Vitest + Supertest (Found in *`test`* folder)
 
 ### Service Structure and Instructions
 
@@ -55,7 +55,10 @@ All primary API routes are prefixed by **`/api/v1/`**.
 | `/users` | User creation and general user management. |
 | `/profile` | Fetching and updating the current user's profile and related info. |
 | `/admin` | Admin-specific user and role actions. |
-| `/tips` | Exchange student stories management and browsing. |
+| `/applications` | Application handling routes. | 
+| `/budgets` | Handling budgeting for planning an exchange period. |
+| `/grants` | Information about grants students are eligible to |
+| `/ai/chat` | AI Chat and RAG handling |   
 
 ### Content Server
 
@@ -72,6 +75,7 @@ All primary API routes are prefixed by **`/api/v1/`**.
 | `/destinations` | Accessing and managing exchange destination data and scraping url storage |
 | `/instructions` | Application instructions |
 | `/contact` | Contact information storage and modification. |
+| `/exchange-stories` | Handling adding/deleting/modifying student exchange stories | 
 
 ### Upload Server
 
@@ -82,8 +86,9 @@ All primary API routes are prefixed by **`/api/v1/`**.
 
 | Route Group | Description |
 | :--- | :--- |
-| `/upload` | Single file upload endpoints |
+| `/upload` | Single file upload endpoints, story photos |
 | `/uploads` | File listing and management endpoints. |
+| `/linkUploads` | Endpoints for handling link based uploads (links to user's documents) | 
 
 ---
 
