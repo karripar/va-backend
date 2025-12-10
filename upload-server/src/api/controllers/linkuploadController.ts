@@ -62,9 +62,7 @@ const addDocumentLink = async (
   next: NextFunction
 ) => {
   try {
-    // Get userId from authenticated user
-    const userId = res.locals.user?.id;
-    const {name, url, sourceType, notes} = req.body;
+    const {userId, name, url, sourceType, notes} = req.body;
 
     if (!userId) {
       return res.status(401).json({
@@ -129,9 +127,7 @@ const addApplicationDocumentLink = async (
   next: NextFunction
 ) => {
   try {
-    // Get userId from authenticated user
-    const userId = res.locals.user?.id;
-    const {applicationId, phase, documentType, fileName, fileUrl, sourceType, notes} =
+    const {userId, applicationId, phase, documentType, fileName, fileUrl, sourceType, notes} =
       req.body;
 
     if (!userId) {
@@ -298,67 +294,10 @@ const getPlatformInstructions = async (
   }
 };
 
-// Delete a document link
-const deleteDocumentLink = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-) => {
-  try {
-    const userId = res.locals.user?.id;
-    const {id} = req.params;
-
-    if (!userId) {
-      return res.status(401).json({
-        error: 'User authentication required',
-        details: 'userId is required',
-      });
-    }
-
-    if (!id) {
-      return res.status(400).json({
-        error: 'Missing required parameter',
-        details: 'Document ID is required',
-      });
-    }
-
-    // Find the document
-    const document = await LinkDocument.findById(id);
-
-    if (!document) {
-      return res.status(404).json({
-        error: 'Document not found',
-        details: 'No document exists with the provided ID',
-      });
-    }
-
-    // Check if user owns this document
-    if (document.userId !== userId) {
-      return res.status(403).json({
-        error: 'Permission denied',
-        details: 'You can only delete your own documents',
-      });
-    }
-
-    // Delete the document
-    await LinkDocument.findByIdAndDelete(id);
-    console.log('Document deleted:', id, 'by user:', userId);
-
-    res.json({
-      message: 'Document deleted successfully',
-      deletedId: id,
-    });
-  } catch (error) {
-    console.error('Error in deleteDocumentLink:', error);
-    next(error);
-  }
-};
-
 export {
   getDocuments,
   addDocumentLink,
   addApplicationDocumentLink,
   validateDocumentLink,
   getPlatformInstructions,
-  deleteDocumentLink,
 };

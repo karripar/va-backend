@@ -1,7 +1,7 @@
 import express from 'express';
 import { addDocumentLink, validateDocumentLink,
-getPlatformInstructions, getDocuments, addApplicationDocumentLink, deleteDocumentLink} from "../controllers/linkuploadController";
-import { authenticate } from '../../middlewares';
+getPlatformInstructions, getDocuments, addApplicationDocumentLink} from "../controllers/linkuploadController";
+//import { authenticate } from '../../middlewares';
 
 /**
  * @apiDefine LinkUploadGroup Link Upload
@@ -162,20 +162,18 @@ router.post(
    * }
    */
   '/documents/link',
-  authenticate,
   addDocumentLink
 );
 
 router.post(
   /**
-   * @api {post} /linkUploads/documents/application Add application document link
+   * @api {post} /linkUploads/documents:1 Add application document link
    * @apiName AddApplicationDocumentLink
    * @apiGroup LinkUploadGroup
    * @apiVersion 1.0.0
    * @apiDescription Add a document link for application phase
    * @apiPermission authenticated
    *
-   * @apiBody {String} applicationId Application ID
    * @apiBody {String} phase Application phase
    * @apiBody {String} documentType Document type
    * @apiBody {String} fileName File name
@@ -188,47 +186,8 @@ router.post(
    * @apiError (400) {String} error Error message
    * @apiError (401) {String} error User not authenticated
    */
-  '/documents/application',
-  authenticate,
+  '/documents',
   addApplicationDocumentLink
-);
-
-router.delete(
-  /**
-   * @api {delete} /linkUploads/documents/:id Delete document link
-   * @apiName DeleteDocumentLink
-   * @apiGroup LinkUploadGroup
-   * @apiVersion 1.0.0
-   * @apiDescription Delete a document link by ID. Only the owner can delete their documents.
-   * @apiPermission authenticated
-   *
-   * @apiParam {String} id Document ID
-   *
-   * @apiSuccess (200) {String} message Success message
-   * @apiSuccess (200) {String} deletedId ID of the deleted document
-   *
-   * @apiError (400) {String} error Error message for missing ID
-   * @apiError (401) {String} error User not authenticated
-   * @apiError (403) {String} error Permission denied (not document owner)
-   * @apiError (404) {String} error Document not found
-   *
-   * @apiSuccessExample {json} Success-Response:
-   * HTTP/1.1 200 OK
-   * {
-   *   "message": "Document deleted successfully",
-   *   "deletedId": "507f1f77bcf86cd799439011"
-   * }
-   *
-   * @apiErrorExample {json} Error-Response:
-   * HTTP/1.1 404 Not Found
-   * {
-   *   "error": "Document not found",
-   *   "details": "No document exists with the provided ID"
-   * }
-   */
-  '/documents/:id',
-  authenticate,
-  deleteDocumentLink
 );
 
 
