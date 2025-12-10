@@ -1,11 +1,27 @@
 import express from 'express';
 import { addDocumentLink, validateDocumentLink,
-getPlatformInstructions, getDocuments, addApplicationDocumentLink, deleteDocumentLink} from "../controllers/linkuploadController";
-import { authenticate } from '../../middlewares';
+getPlatformInstructions, getDocuments, addApplicationDocumentLink} from "../controllers/linkuploadController";
+//import { authenticate } from '../../middlewares';
 
 /**
  * @apiDefine LinkUploadGroup Link Upload
  * Document link upload and management routes
+ */
+
+/**
+ * @apiDefine token
+ * @apiHeader {String} Authorization Bearer JWT token
+ * @apiHeaderExample {String} Authorization Header Example
+ *   Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+ */
+
+/**
+ * @apiDefine unauthorized
+ * @apiError (401) {String} Unauthorized Missing or invalid authentication token
+ * @apiErrorExample {json} Unauthorized:
+ * {
+ *  "message": "Unauthorized"
+ * }
  */
 
 const router = express.Router();
@@ -87,28 +103,25 @@ router.post(
    *
    * @apiSuccess (200) {Boolean} isValid Whether the URL format is valid for the platform
    * @apiSuccess (200) {Boolean} isAccessible Whether the URL is accessible
-   * @apiSuccess (200) {String} errorMessage Error message if validation failed
+   * @apiSuccess (200) {String} errorMessage Error message if validation failed (null if valid)
    * @apiSuccess (200) {String} checkedAt Timestamp of validation check
    * @apiSuccess (200) {String} platform Source platform type
-   *
-   * @apiError (400) {String} error Error message
-   * @apiError (400) {String} details Details about missing fields
    *
    * @apiSuccessExample {json} Success-Response:
    * HTTP/1.1 200 OK
    * {
-   *   "isValid": true,
-   *   "isAccessible": true,
-   *   "errorMessage": null,
-   *   "checkedAt": "2025-11-29T10:00:00.000Z",
-   *   "platform": "google_drive"
+   *  "isValid": true,
+   *  "isAccessible": true,
+   *  "errorMessage": null,
+   *  "checkedAt": "2025-11-29T10:00:00.000Z",
+   *  "platform": "google_drive"
    * }
    *
-   * @apiErrorExample {json} Error-Response:
-   * HTTP/1.1 400 Bad Request
+   * @apiError (400) {String} BadRequest Missing required fields or invalid source type
+   * @apiErrorExample {json} BadRequest:
    * {
-   *   "error": "Missing required fields",
-   *   "details": "url and sourceType are required"
+   *  "message": "Missing required fields",
+   *  "details": "url and sourceType are required"
    * }
    */
   '/documents/validate',
@@ -122,113 +135,116 @@ router.post(
    * @apiGroup LinkUploadGroup
    * @apiVersion 1.0.0
    * @apiDescription Add a new document link from cloud storage or external URL
-   * @apiPermission authenticated
+   * @apiPermission token
    *
+   * @apiUse token
+   *
+   * @apiBody {String} userId User ID (required)
    * @apiBody {String} name Document name
    * @apiBody {String} url Document URL
-   * @apiBody {String} sourceType Source platform type (google_drive, onedrive, dropbox, icloud, other_url)
+   * @apiBody {String} sourceType Source platform type (google_drive, onedrive, dropbox, icloud, other_url, checkbox)
    * @apiBody {String} [notes] Optional notes about the document
    *
-   * @apiSuccess (201) {Object} document Created document object
-   * @apiSuccess (201) {String} document.userId User ID who added the document
-   * @apiSuccess (201) {String} document.name Document name
-   * @apiSuccess (201) {String} document.url Document URL
-   * @apiSuccess (201) {String} document.sourceType Source platform type
-   * @apiSuccess (201) {String} document.addedAt Date when document was added
-   * @apiSuccess (201) {Boolean} document.isAccessible Whether document is accessible
-   * @apiSuccess (201) {String} document.accessPermission Access permission level
-   *
-   * @apiError (400) {String} error Error message
-   * @apiError (400) {String} details Details about missing fields or invalid source type
-   * @apiError (401) {String} error User not authenticated
+   * @apiSuccess (201) {String} _id Document ID
+   * @apiSuccess (201) {String} userId User ID who added the document
+   * @apiSuccess (201) {String} name Document name
+   * @apiSuccess (201) {String} url Document URL
+   * @apiSuccess (201) {String} sourceType Source platform type
+   * @apiSuccess (201) {String} addedAt Date when document was added
+   * @apiSuccess (201) {Boolean} isAccessible Whether document is accessible
+   * @apiSuccess (201) {String} accessPermission Access permission level
+   * @apiSuccess (201) {String} [notes] Document notes
    *
    * @apiSuccessExample {json} Success-Response:
    * HTTP/1.1 201 Created
    * {
-   *   "userId": "123",
-   *   "name": "My Document",
-   *   "url": "https://drive.google.com/...",
-   *   "sourceType": "google_drive",
-   *   "addedAt": "2025-11-29T10:00:00.000Z",
-   *   "isAccessible": true,
-   *   "accessPermission": "public"
+   *  "_id": "doc123",
+   *  "userId": "123",
+   *  "name": "My Document",
+   *  "url": "https://drive.google.com/...",
+   *  "sourceType": "google_drive",
+   *  "addedAt": "2025-11-29T10:00:00.000Z",
+   *  "isAccessible": true,
+   *  "accessPermission": "public",
+   *  "notes": null
    * }
    *
-   * @apiErrorExample {json} Error-Response:
-   * HTTP/1.1 400 Bad Request
+   * @apiError (400) {String} BadRequest Missing required fields or invalid source type
+   * @apiErrorExample {json} BadRequest:
    * {
-   *   "error": "Invalid source type",
-   *   "validTypes": ["google_drive", "onedrive", "dropbox", "icloud", "other_url"]
+   *  "message": "Invalid source type",
+   *  "validTypes": ["google_drive", "onedrive", "dropbox", "icloud", "other_url", "checkbox"]
    * }
+   *
+   * @apiUse unauthorized
    */
   '/documents/link',
-  authenticate,
   addDocumentLink
 );
 
 router.post(
   /**
-   * @api {post} /linkUploads/documents/application Add application document link
+   * @api {post} /linkUploads/documents Add application document link
    * @apiName AddApplicationDocumentLink
    * @apiGroup LinkUploadGroup
    * @apiVersion 1.0.0
    * @apiDescription Add a document link for application phase
-   * @apiPermission authenticated
+   * @apiPermission token
    *
-   * @apiBody {String} applicationId Application ID
+   * @apiUse token
+   *
+   * @apiBody {String} userId User ID (required)
+   * @apiBody {String} applicationId Application ID (required)
    * @apiBody {String} phase Application phase
    * @apiBody {String} documentType Document type
    * @apiBody {String} fileName File name
    * @apiBody {String} fileUrl File URL
-   * @apiBody {String} sourceType Source platform type
+   * @apiBody {String} sourceType Source platform type (google_drive, onedrive, dropbox, icloud, other_url, checkbox)
    * @apiBody {String} [notes] Optional notes
    *
-   * @apiSuccess (201) {Object} document Created document object
-   *
-   * @apiError (400) {String} error Error message
-   * @apiError (401) {String} error User not authenticated
-   */
-  '/documents/application',
-  authenticate,
-  addApplicationDocumentLink
-);
-
-router.delete(
-  /**
-   * @api {delete} /linkUploads/documents/:id Delete document link
-   * @apiName DeleteDocumentLink
-   * @apiGroup LinkUploadGroup
-   * @apiVersion 1.0.0
-   * @apiDescription Delete a document link by ID. Only the owner can delete their documents.
-   * @apiPermission authenticated
-   *
-   * @apiParam {String} id Document ID
-   *
-   * @apiSuccess (200) {String} message Success message
-   * @apiSuccess (200) {String} deletedId ID of the deleted document
-   *
-   * @apiError (400) {String} error Error message for missing ID
-   * @apiError (401) {String} error User not authenticated
-   * @apiError (403) {String} error Permission denied (not document owner)
-   * @apiError (404) {String} error Document not found
+   * @apiSuccess (201) {String} _id Document ID
+   * @apiSuccess (201) {String} userId User ID who added the document
+   * @apiSuccess (201) {String} name Document name (fileName)
+   * @apiSuccess (201) {String} url Document URL (fileUrl)
+   * @apiSuccess (201) {String} sourceType Source platform type
+   * @apiSuccess (201) {String} addedAt Date when document was added
+   * @apiSuccess (201) {Boolean} isAccessible Whether document is accessible
+   * @apiSuccess (201) {String} accessPermission Access permission level
+   * @apiSuccess (201) {String} [notes] Document notes
+   * @apiSuccess (201) {String} applicationId Application ID
+   * @apiSuccess (201) {String} applicationPhase Application phase
+   * @apiSuccess (201) {String} documentType Document type
+   * @apiSuccess (201) {String} addedBy User ID who added the document
    *
    * @apiSuccessExample {json} Success-Response:
-   * HTTP/1.1 200 OK
+   * HTTP/1.1 201 Created
    * {
-   *   "message": "Document deleted successfully",
-   *   "deletedId": "507f1f77bcf86cd799439011"
+   *  "_id": "doc123",
+   *  "userId": "123",
+   *  "name": "Passport.pdf",
+   *  "url": "https://drive.google.com/...",
+   *  "sourceType": "google_drive",
+   *  "addedAt": "2025-11-29T10:00:00.000Z",
+   *  "isAccessible": true,
+   *  "accessPermission": "public",
+   *  "notes": null,
+   *  "applicationId": "app123",
+   *  "applicationPhase": "preparation",
+   *  "documentType": "identification",
+   *  "addedBy": "123"
    * }
    *
-   * @apiErrorExample {json} Error-Response:
-   * HTTP/1.1 404 Not Found
+   * @apiError (400) {String} BadRequest Missing required fields or invalid source type
+   * @apiErrorExample {json} BadRequest:
    * {
-   *   "error": "Document not found",
-   *   "details": "No document exists with the provided ID"
+   *  "message": "Missing required fields",
+   *  "details": "applicationId is required to link document to application"
    * }
+   *
+   * @apiUse unauthorized
    */
-  '/documents/:id',
-  authenticate,
-  deleteDocumentLink
+  '/documents',
+  addApplicationDocumentLink
 );
 
 

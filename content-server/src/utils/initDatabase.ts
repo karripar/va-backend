@@ -2,6 +2,7 @@ import mongoose from 'mongoose';
 import Story from '../api/models/storyModel';
 import User from '../api/models/userModel';
 
+
 /**
  * Initialize database collections and indexes
  */
