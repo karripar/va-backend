@@ -16,7 +16,8 @@ router.post(
    * @apiGroup ProfileGroup
    * @apiVersion 1.0.0
    * @apiDescription Add an item to user's favorites
-   * @apiPermission authenticated
+   *
+   * @apiPermission Authenticated user JWT token required
    *
    * @apiHeader {String} Authorization Bearer JWT token
    *
@@ -28,8 +29,8 @@ router.post(
    * @apiSuccess (200) {String} favorite.itemType Item type
    * @apiSuccess (200) {String} favorite.addedAt Timestamp when added
    *
-   * @apiError (401) {String} error Unauthorized
-   * @apiError (400) {String} error Missing required fields
+   * @apiError (401) Unauthorized Missing or invalid authentication token
+   * @apiError (400) BadRequest Missing required fields
    *
    * @apiSuccessExample {json} Success-Response:
    * HTTP/1.1 200 OK
@@ -44,6 +45,12 @@ router.post(
    * {
    *   "error": "Unauthorized"
    * }
+   *
+   * @apiErrorExample {json} BadRequest-Response:
+   * HTTP/1.1 400 Bad Request
+   * {
+   *   "error": "Missing required fields"
+   * }
    */
   "/favorites",
   authenticate,
@@ -57,7 +64,8 @@ router.delete(
    * @apiGroup ProfileGroup
    * @apiVersion 1.0.0
    * @apiDescription Remove an item from user's favorites
-   * @apiPermission authenticated
+   *
+   * @apiPermission Authenticated user JWT token required
    *
    * @apiHeader {String} Authorization Bearer JWT token
    *
@@ -66,13 +74,19 @@ router.delete(
    *
    * @apiSuccess (200) {String} message Success message
    *
-   * @apiError (401) {String} error Unauthorized
-   * @apiError (404) {String} error Favorite not found
+   * @apiError (401) Unauthorized Missing or invalid authentication token
+   * @apiError (404) NotFound Favorite not found
    *
    * @apiSuccessExample {json} Success-Response:
    * HTTP/1.1 200 OK
    * {
    *   "message": "Favorite removed successfully"
+   * }
+   *
+   * @apiErrorExample {json} Error-Response:
+   * HTTP/1.1 404 Not Found
+   * {
+   *   "error": "Favorite not found"
    * }
    */
   "/favorites",
@@ -87,7 +101,8 @@ router.post(
    * @apiGroup ProfileGroup
    * @apiVersion 1.0.0
    * @apiDescription Add a document to user's profile
-   * @apiPermission authenticated
+   *
+   * @apiPermission Authenticated user JWT token required
    *
    * @apiHeader {String} Authorization Bearer JWT token
    *
@@ -101,8 +116,8 @@ router.post(
    * @apiSuccess (201) {String} document.name Document name
    * @apiSuccess (201) {String} document.url Document URL
    *
-   * @apiError (401) {String} error Unauthorized
-   * @apiError (400) {String} error Missing required fields
+   * @apiError (401) Unauthorized Missing or invalid authentication token
+   * @apiError (400) BadRequest Missing required fields
    *
    * @apiSuccessExample {json} Success-Response:
    * HTTP/1.1 201 Created
@@ -111,6 +126,12 @@ router.post(
    *   "name": "Passport",
    *   "type": "identification",
    *   "url": "https://..."
+   * }
+   *
+   * @apiErrorExample {json} Error-Response:
+   * HTTP/1.1 400 Bad Request
+   * {
+   *   "error": "Missing required fields"
    * }
    */
   "/documents",
@@ -125,7 +146,8 @@ router.delete(
    * @apiGroup ProfileGroup
    * @apiVersion 1.0.0
    * @apiDescription Remove a document from user's profile
-   * @apiPermission authenticated
+   *
+   * @apiPermission Authenticated user JWT token required
    *
    * @apiHeader {String} Authorization Bearer JWT token
    *
@@ -133,13 +155,19 @@ router.delete(
    *
    * @apiSuccess (200) {String} message Success message
    *
-   * @apiError (401) {String} error Unauthorized
-   * @apiError (404) {String} error Document not found
+   * @apiError (401) Unauthorized Missing or invalid authentication token
+   * @apiError (404) NotFound Document not found
    *
    * @apiSuccessExample {json} Success-Response:
    * HTTP/1.1 200 OK
    * {
    *   "message": "Document removed successfully"
+   * }
+   *
+   * @apiErrorExample {json} Error-Response:
+   * HTTP/1.1 404 Not Found
+   * {
+   *   "error": "Document not found"
    * }
    */
   "/documents/:docId",
@@ -154,7 +182,8 @@ router.put(
    * @apiGroup ProfileGroup
    * @apiVersion 1.0.0
    * @apiDescription Update user profile information
-   * @apiPermission authenticated
+   *
+   * @apiPermission Authenticated user JWT token required
    *
    * @apiHeader {String} Authorization Bearer JWT token
    *
@@ -170,9 +199,9 @@ router.put(
    * @apiSuccess (200) {String} user.userName User name
    * @apiSuccess (200) {String} user.email Email address
    *
-   * @apiError (401) {String} error Unauthorized
-   * @apiError (403) {String} error Forbidden - cannot update other user's profile
-   * @apiError (404) {String} error User not found
+   * @apiError (401) Unauthorized Missing or invalid authentication token
+   * @apiError (403) Forbidden Cannot update another user's profile
+   * @apiError (404) NotFound User not found
    *
    * @apiSuccessExample {json} Success-Response:
    * HTTP/1.1 200 OK
@@ -187,6 +216,12 @@ router.put(
    * HTTP/1.1 403 Forbidden
    * {
    *   "error": "Cannot update another user's profile"
+   * }
+   *
+   * @apiErrorExample {json} NotFound-Response:
+   * HTTP/1.1 404 Not Found
+   * {
+   *   "error": "User not found"
    * }
    */
   "/:id",

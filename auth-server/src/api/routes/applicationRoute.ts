@@ -17,7 +17,10 @@ router.get(
    * @apiGroup ApplicationsGroup
    * @apiVersion 1.0.0
    * @apiDescription Retrieve all application stages with user progress
-   * @apiPermission authenticated
+   *
+   * @apiPermission Authenticated user JWT token required
+   *
+   * @apiHeader {String} Authorization Bearer JWT token
    *
    * @apiSuccess (200) {Object[]} stages List of application stages
    * @apiSuccess (200) {String} stages.id Stage unique ID
@@ -25,6 +28,8 @@ router.get(
    * @apiSuccess (200) {Number} stages.order Stage order
    * @apiSuccess (200) {String} stages.status User's status for this stage
    * @apiSuccess (200) {String} stages.completedAt Completion timestamp
+   *
+   * @apiError (401) Unauthorized Missing or invalid authentication token
    *
    * @apiSuccessExample {json} Success-Response:
    * HTTP/1.1 200 OK
@@ -39,6 +44,12 @@ router.get(
    *     }
    *   ]
    * }
+   *
+   * @apiErrorExample {json} Error-Response:
+   * HTTP/1.1 401 Unauthorized
+   * {
+   *   "error": "Unauthorized"
+   * }
    */
   "/stages",
   authenticate,
@@ -52,7 +63,10 @@ router.put(
    * @apiGroup ApplicationsGroup
    * @apiVersion 1.0.0
    * @apiDescription Update the status of a specific application stage
-   * @apiPermission authenticated
+   *
+   * @apiPermission Authenticated user JWT token required
+   *
+   * @apiHeader {String} Authorization Bearer JWT token
    *
    * @apiParam {String} stageId Stage's unique ID
    * @apiBody {String} status New status for the stage
@@ -60,8 +74,9 @@ router.put(
    * @apiSuccess (200) {Object} stage Updated stage object
    * @apiSuccess (200) {String} message Success message
    *
-   * @apiError (400) {String} error Invalid status or stage ID
-   * @apiError (404) {String} error Stage not found
+   * @apiError (400) BadRequest Invalid status or stage ID
+   * @apiError (401) Unauthorized Missing or invalid authentication token
+   * @apiError (404) NotFound Stage not found
    *
    * @apiSuccessExample {json} Success-Response:
    * HTTP/1.1 200 OK
@@ -71,6 +86,12 @@ router.put(
    *     "status": "completed"
    *   },
    *   "message": "Stage status updated successfully"
+   * }
+   *
+   * @apiErrorExample {json} Error-Response:
+   * HTTP/1.1 404 Not Found
+   * {
+   *   "error": "Stage not found"
    * }
    */
   "/stages/:stageId",
@@ -85,12 +106,17 @@ router.get(
    * @apiGroup ApplicationsGroup
    * @apiVersion 1.0.0
    * @apiDescription Retrieve all applications for the authenticated user
-   * @apiPermission authenticated
+   *
+   * @apiPermission Authenticated user JWT token required
+   *
+   * @apiHeader {String} Authorization Bearer JWT token
    *
    * @apiSuccess (200) {Object} applications User applications object
    * @apiSuccess (200) {String} applications.userId User ID
    * @apiSuccess (200) {String} applications.currentPhase Current application phase
    * @apiSuccess (200) {Object[]} applications.applications List of application phases
+   *
+   * @apiError (401) Unauthorized Missing or invalid authentication token
    *
    * @apiSuccessExample {json} Success-Response:
    * HTTP/1.1 200 OK
@@ -98,6 +124,12 @@ router.get(
    *   "userId": "123",
    *   "currentPhase": "academic_year",
    *   "applications": []
+   * }
+   *
+   * @apiErrorExample {json} Error-Response:
+   * HTTP/1.1 401 Unauthorized
+   * {
+   *   "error": "Unauthorized"
    * }
    */
   "/",
@@ -112,14 +144,18 @@ router.post(
    * @apiGroup ApplicationsGroup
    * @apiVersion 1.0.0
    * @apiDescription Create a new application or update existing one for a specific phase
-   * @apiPermission authenticated
+   *
+   * @apiPermission Authenticated user JWT token required
+   *
+   * @apiHeader {String} Authorization Bearer JWT token
    *
    * @apiBody {String} phase Application phase (academic_year, semester, required_documents, etc.)
    * @apiBody {Object} data Phase-specific application data
    *
    * @apiSuccess (201) {Object} application Created/updated application
    *
-   * @apiError (400) {String} error Missing required fields
+   * @apiError (400) BadRequest Missing required fields
+   * @apiError (401) Unauthorized Missing or invalid authentication token
    *
    * @apiSuccessExample {json} Success-Response:
    * HTTP/1.1 201 Created
@@ -134,6 +170,12 @@ router.post(
    *     }
    *   ]
    * }
+   *
+   * @apiErrorExample {json} Error-Response:
+   * HTTP/1.1 400 Bad Request
+   * {
+   *   "error": "Missing required fields"
+   * }
    */
   "/",
   authenticate,
@@ -147,14 +189,18 @@ router.put(
    * @apiGroup ApplicationsGroup
    * @apiVersion 1.0.0
    * @apiDescription Update data for a specific application phase
-   * @apiPermission authenticated
+   *
+   * @apiPermission Authenticated user JWT token required
+   *
+   * @apiHeader {String} Authorization Bearer JWT token
    *
    * @apiParam {String} phase Application phase identifier
    * @apiBody {Object} data Updated phase data
    *
    * @apiSuccess (200) {Object} application Updated application object
    *
-   * @apiError (404) {String} error Application or phase not found
+   * @apiError (401) Unauthorized Missing or invalid authentication token
+   * @apiError (404) NotFound Application or phase not found
    *
    * @apiSuccessExample {json} Success-Response:
    * HTTP/1.1 200 OK
@@ -162,6 +208,12 @@ router.put(
    *   "userId": "123",
    *   "currentPhase": "semester",
    *   "applications": [...]
+   * }
+   *
+   * @apiErrorExample {json} Error-Response:
+   * HTTP/1.1 404 Not Found
+   * {
+   *   "error": "Application or phase not found"
    * }
    */
   "/:phase",
@@ -175,14 +227,18 @@ router.post(
    * @apiGroup ApplicationsGroup
    * @apiVersion 1.0.0
    * @apiDescription Submit an application phase for review (validates required documents)
-   * @apiPermission authenticated
+   *
+   * @apiPermission Authenticated user JWT token required
+   *
+   * @apiHeader {String} Authorization Bearer JWT token
    *
    * @apiParam {String} phase Application phase identifier
    *
    * @apiSuccess (200) {Object} application Updated application with submitted status
    *
-   * @apiError (400) {String} error Missing required documents
-   * @apiError (404) {String} error Application or phase not found
+   * @apiError (400) BadRequest Missing required documents
+   * @apiError (401) Unauthorized Missing or invalid authentication token
+   * @apiError (404) NotFound Application or phase not found
    *
    * @apiSuccessExample {json} Success-Response:
    * HTTP/1.1 200 OK
@@ -215,7 +271,10 @@ router.post(
    * @apiGroup ApplicationsGroup
    * @apiVersion 1.0.0
    * @apiDescription Approve a submitted application (admin only)
-   * @apiPermission admin
+   *
+   * @apiPermission Admin JWT token required
+   *
+   * @apiHeader {String} Authorization Bearer JWT token (admin)
    *
    * @apiParam {String} id User's unique ID
    * @apiBody {String} phase Application phase to approve
@@ -223,8 +282,9 @@ router.post(
    *
    * @apiSuccess (200) {Object} application Updated application with approved status
    *
-   * @apiError (404) {String} error Application not found
-   * @apiError (403) {String} error Unauthorized
+   * @apiError (401) Unauthorized Missing or invalid authentication token
+   * @apiError (403) Forbidden Not an admin user
+   * @apiError (404) NotFound Application not found
    *
    * @apiSuccessExample {json} Success-Response:
    * HTTP/1.1 200 OK
@@ -239,6 +299,12 @@ router.post(
    *     }
    *   ]
    * }
+   *
+   * @apiErrorExample {json} Error-Response:
+   * HTTP/1.1 403 Forbidden
+   * {
+   *   "error": "Unauthorized, not an admin"
+   * }
    */
   "/:id/approve",
   approveApplication
@@ -251,7 +317,10 @@ router.get(
    * @apiGroup ApplicationsGroup
    * @apiVersion 1.0.0
    * @apiDescription Retrieve all documents for a specific application phase
-   * @apiPermission authenticated
+   *
+   * @apiPermission Authenticated user JWT token required
+   *
+   * @apiHeader {String} Authorization Bearer JWT token
    *
    * @apiParam {String} phase Application phase identifier
    *
@@ -263,7 +332,8 @@ router.get(
    * @apiSuccess (200) {String} documents.sourceType Source type (upload/link)
    * @apiSuccess (200) {String} documents.addedAt Date added
    *
-   * @apiError (404) {String} error Application or phase not found
+   * @apiError (401) Unauthorized Missing or invalid authentication token
+   * @apiError (404) NotFound Application or phase not found
    *
    * @apiSuccessExample {json} Success-Response:
    * HTTP/1.1 200 OK
@@ -277,6 +347,12 @@ router.get(
    *     "addedAt": "2025-11-29T10:00:00.000Z"
    *   }
    * ]
+   *
+   * @apiErrorExample {json} Error-Response:
+   * HTTP/1.1 404 Not Found
+   * {
+   *   "error": "Application or phase not found"
+   * }
    */
   "/:phase/documents",
   getApplicationDocuments
@@ -289,7 +365,8 @@ router.get(
    * @apiGroup ApplicationsGroup
    * @apiVersion 1.0.0
    * @apiDescription Get the list of required documents for a specific application phase
-   * @apiPermission none
+   *
+   * @apiPermission None - public endpoint
    *
    * @apiParam {String} phase Application phase identifier
    *
@@ -297,7 +374,7 @@ router.get(
    * @apiSuccess (200) {String} documents.type Document type identifier
    * @apiSuccess (200) {String} documents.name Display name of document
    *
-   * @apiError (404) {String} error Phase not found
+   * @apiError (404) NotFound Phase not found
    *
    * @apiSuccessExample {json} Success-Response:
    * HTTP/1.1 200 OK
@@ -311,6 +388,12 @@ router.get(
    *     "name": "Academic Transcript"
    *   }
    * ]
+   *
+   * @apiErrorExample {json} Error-Response:
+   * HTTP/1.1 404 Not Found
+   * {
+   *   "error": "Phase not found"
+   * }
    */
   "/:phase/required-documents",
   getRequiredDocuments
@@ -323,7 +406,10 @@ router.post(
    * @apiGroup ApplicationsGroup
    * @apiVersion 1.0.0
    * @apiDescription Add a document link to an application phase
-   * @apiPermission authenticated
+   *
+   * @apiPermission Authenticated user JWT token required
+   *
+   * @apiHeader {String} Authorization Bearer JWT token
    *
    * @apiBody {String} phase Application phase
    * @apiBody {String} documentType Type of document
@@ -337,7 +423,8 @@ router.post(
    * @apiSuccess (201) {String} document.documentType Document type
    * @apiSuccess (201) {String} document.fileUrl File URL
    *
-   * @apiError (400) {String} error Missing required fields or invalid source type
+   * @apiError (400) BadRequest Missing required fields or invalid source type
+   * @apiError (401) Unauthorized Missing or invalid authentication token
    *
    * @apiSuccessExample {json} Success-Response:
    * HTTP/1.1 201 Created
@@ -348,6 +435,12 @@ router.post(
    *   "fileUrl": "https://drive.google.com/...",
    *   "sourceType": "google_drive",
    *   "addedAt": "2025-11-29T10:00:00.000Z"
+   * }
+   *
+   * @apiErrorExample {json} Error-Response:
+   * HTTP/1.1 400 Bad Request
+   * {
+   *   "error": "Missing required fields"
    * }
    */
   "/documents",
@@ -361,16 +454,26 @@ router.delete(
    * @apiGroup ApplicationsGroup
    * @apiVersion 1.0.0
    * @apiDescription Remove a document from an application
-   * @apiPermission authenticated
+   *
+   * @apiPermission Authenticated user JWT token required
+   *
+   * @apiHeader {String} Authorization Bearer JWT token
    *
    * @apiParam {String} documentId Document's unique ID
    *
    * @apiSuccess (204) No content
    *
-   * @apiError (404) {String} error Document not found
+   * @apiError (401) Unauthorized Missing or invalid authentication token
+   * @apiError (404) NotFound Document not found
    *
    * @apiSuccessExample {json} Success-Response:
    * HTTP/1.1 204 No Content
+   *
+   * @apiErrorExample {json} Error-Response:
+   * HTTP/1.1 404 Not Found
+   * {
+   *   "error": "Document not found"
+   * }
    */
   "/documents/:documentId",
   removeApplicationDocument
