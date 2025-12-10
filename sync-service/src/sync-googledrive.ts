@@ -23,7 +23,7 @@ interface GDriveFile {
 }
 
 async function syncGoogleDrive() {
-  console.log('🔄 Starting Google Drive to Vector Store sync...\n');
+  console.log('Starting Google Drive to Vector Store sync...\n');
 
   // Validate environment variables
   if (!process.env.OPENAI_API_KEY || !process.env.VECTOR_STORE_ID) {
@@ -61,7 +61,7 @@ async function syncGoogleDrive() {
       throw new Error('Missing GOOGLE_DRIVE_FOLDER_ID');
     }
 
-    console.log(`📂 Fetching files from Google Drive folder: ${folderId}`);
+    console.log(`Fetching files from Google Drive folder: ${folderId}`);
 
     // Allowed MIME types for Google Drive
     const allowedMimeTypes = [
