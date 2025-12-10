@@ -94,7 +94,7 @@ All primary API routes are prefixed by **`/api/v1/`**.
 
 ## Project Documentation
 
-In addition to this `.md` documentation, the project includes two types of automatically generated documentation for each server:
+In addition to this `.md` documentation, the project includes two types of automatically generated documentation for each server.
 
 | Documentation Type | Content Focus | Generation Command | Access Path (Local) |
 | :--- | :--- | :--- | :--- |
@@ -111,6 +111,11 @@ All available documentation routes:
 | **content-server** | **TypeDoc** | `/content/docs/typedoc/index.html` |
 | **upload-server** | **Apidoc** | `/upload/docs/apidoc/index.html` |
 | **upload-server** | **TypeDoc** | `/upload/docs/typedoc/index.html` |
+
+By default, all documentation are protected with a **username/password** combination:
+| Default Username | Default Password |
+| :--- | :--- |
+| `admin` | `defaultPassword` |
 ---
 
 ## Project Installation Guide
