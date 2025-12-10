@@ -94,16 +94,23 @@ All primary API routes are prefixed by **`/api/v1/`**.
 
 ## Project Documentation
 
-In addition to this `.md` documentation, the project includes two types of automatically generated documentation:
+In addition to this `.md` documentation, the project includes two types of automatically generated documentation for each server:
 
 | Documentation Type | Content Focus | Generation Command | Access Path (Local) |
 | :--- | :--- | :--- | :--- |
-| **ApiDoc** | Documents the available **API routes** (endpoints). | `npm run apidoc` | `/docs/api` |
-| **TypeDoc** | Documents **controllers** and core code (e.g., CRUD operations). | `npm run typedoc` | `/docs/typedoc` |
+| **Auth ApiDoc** | Documents the available **API routes** (endpoints). | `npm run apidoc` | `/docs/apidoc/index.html` |
+| **Auth TypeDoc** | Documents **controllers** and core code (e.g., CRUD operations). | `npm run typedoc` | `/docs/typedoc/index.html` |
 
-* To generate all documentation and build the server, run: `npm run build`
-* **TODO:** Add live links to the documentation here when the application is launched.
+All available documentation routes:
 
+| Server | Documentation Type |Access Path (Local) |
+| :--- | :--- | :--- |
+| **auth-server** | **Apidoc** | `/auth/docs/apidoc/index.html` |
+| **auth-server** | **TypeDoc** | `/auth/docs/typedoc/index.html` |
+| **content-server** | **Apidoc** | `/content/docs/apidoc/index.html` |
+| **content-server** | **TypeDoc** | `/content/docs/typedoc/index.html` |
+| **upload-server** | **Apidoc** | `/upload/docs/apidoc/index.html` |
+| **upload-server** | **TypeDoc** | `/upload/docs/typedoc/index.html` |
 ---
 
 ## Project Installation Guide
