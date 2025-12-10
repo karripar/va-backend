@@ -1,18 +1,13 @@
 import mongoose from 'mongoose';
 import Story from '../api/models/storyModel';
 import User from '../api/models/userModel';
-import { InstructionLink } from '../api/models/instructionModel';
 
 /**
  * Initialize database collections and indexes
  */
 export const initializeDatabase = async () => {
   try {
-<<<<<<< HEAD
-    console.log(' Initializing database collections and indexes...');
-=======
     console.log('==> Initializing database collections and indexes...');
->>>>>>> b86a9ce81d039e744dd27e979e116eed320fe429
 
     if (!mongoose.connection.db) {
       throw new Error('Database connection not established');
@@ -24,26 +19,16 @@ export const initializeDatabase = async () => {
 
     if (!collectionNames.includes('exchangeStories')) {
       await mongoose.connection.db.createCollection('exchangeStories');
-<<<<<<< HEAD
-      console.log(' Created collection: exchangeStories');
-=======
       console.log('==> Created collection: exchangeStories');
->>>>>>> b86a9ce81d039e744dd27e979e116eed320fe429
     } else {
       console.log('NOTICE: Collection already exists: exchangeStories');
     }
 
     if (!collectionNames.includes('users')) {
       await mongoose.connection.db.createCollection('users');
-<<<<<<< HEAD
-      console.log(' Created collection: users');
-    } else {
-      console.log(' Collection already exists: users');
-=======
       console.log('==> Created collection: users');
     } else {
       console.log('NOTICE: Collection already exists: users');
->>>>>>> b86a9ce81d039e744dd27e979e116eed320fe429
     }
 
     // Create indexes for better query performance
@@ -57,43 +42,17 @@ export const initializeDatabase = async () => {
     await User.collection.createIndex({ email: 1 }, { unique: true });
     await User.collection.createIndex({ user_level_id: 1 });
 
-<<<<<<< HEAD
-    console.log(' Database indexes created successfully');
-
-    // Migrating old instruction links from /grants to /profile/hakemukset?tab=budget
-    try {
-      const result = await InstructionLink.updateMany(
-        { stepIndex: 8, href: '/grants' },
-        { $set: { href: '/profile/hakemukset?tab=budget' } }
-      );
-      if (result.modifiedCount > 0) {
-        console.log(` Migrated ${result.modifiedCount} instruction link(s) from /grants to /profile/hakemukset?tab=budget`);
-      }
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    } catch (migrationError) {
-      console.warn(' Instruction link migration skipped (collection may not exist yet)');
-    }
-=======
     console.log('==> Database indexes created successfully');
->>>>>>> b86a9ce81d039e744dd27e979e116eed320fe429
 
     // Log collection counts
     const storyCount = await Story.collection.countDocuments();
     const userCount = await User.collection.countDocuments();
 
-<<<<<<< HEAD
-    console.log(` exchangeStories collection: ${storyCount} documents`);
-    console.log(` users collection: ${userCount} documents`);
-
-  } catch (error) {
-    console.error(' Error initializing database:', error);
-=======
     console.log(`==> exchangeStories collection: ${storyCount} documents`);
     console.log(`==> users collection: ${userCount} documents`);
 
   } catch (error) {
     console.error('ERROR: Error initializing database:', error);
->>>>>>> b86a9ce81d039e744dd27e979e116eed320fe429
     throw error;
   }
 };
