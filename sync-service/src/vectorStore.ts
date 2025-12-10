@@ -34,7 +34,7 @@ export class VectorStoreService {
             fileMap.set(fileDetails.filename, file.id);
           } catch (e) {
             console.warn(
-              `⚠️ Could not retrieve details for file ${file.id}`,
+              `WARNING: Could not retrieve details for file ${file.id}`,
               e
             );
           }
@@ -49,7 +49,7 @@ export class VectorStoreService {
 
       return fileMap;
     } catch (error) {
-      console.error('❌ Error fetching vector store files:', error);
+      console.error('ERROR: Error fetching vector store files:', error);
       throw error;
     }
   }
@@ -60,7 +60,7 @@ export class VectorStoreService {
   async uploadFile(vectorStoreId: string, filePath: string): Promise<string> {
     try {
       const fileName = path.basename(filePath);
-      console.log(`📤 Uploading to vector store: ${fileName}`);
+      console.log(`NOTICE: Uploading to vector store: ${fileName}`);
 
       // Upload file to OpenAI
       const file = await this.openai.files.create({
@@ -73,10 +73,10 @@ export class VectorStoreService {
         file_id: file.id,
       });
 
-      console.log(`✅ Uploaded: ${fileName} (${file.id})`);
+      console.log(`==> Uploaded: ${fileName} (${file.id})`);
       return file.id;
     } catch (error) {
-      console.error(`❌ Error uploading ${filePath}:`, error);
+      console.error(`ERROR: Error uploading ${filePath}:`, error);
       throw error;
     }
   }
@@ -90,15 +90,15 @@ export class VectorStoreService {
     fileName: string
   ): Promise<void> {
     try {
-      console.log(`🗑️  Removing from vector store: ${fileName}`);
+      console.log(`NOTICE: Removing from vector store: ${fileName}`);
 
       await this.openai.vectorStores.files.delete(fileId, {
         vector_store_id: vectorStoreId,
       });
 
-      console.log(`✅ Removed: ${fileName}`);
+      console.log(`==> Removed: ${fileName}`);
     } catch (error) {
-      console.error(`❌ Error removing ${fileName}:`, error);
+      console.error(`ERROR: Error removing ${fileName}:`, error);
       throw error;
     }
   }
@@ -113,7 +113,7 @@ export class VectorStoreService {
       );
       return vectorStore;
     } catch (error) {
-      console.error('❌ Error fetching vector store info:', error);
+      console.error('ERROR: Error fetching vector store info:', error);
       throw error;
     }
   }

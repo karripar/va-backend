@@ -89,7 +89,7 @@ const verifyGoogleToken = async (
       return;
     }
 
-    console.log('Google payload:', payload);
+    //console.log('Google payload:', payload);
 
     const googleResponse: GoogleResponse = {
       googleId: payload.sub || '',

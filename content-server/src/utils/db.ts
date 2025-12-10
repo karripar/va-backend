@@ -13,7 +13,11 @@ const mangustiConnection = async () => {
     const connection = await mongoose.connect(process.env.DB_URL);
     const dbName = mongoose.connection.db?.databaseName || 'unknown';
     console.log("MongoDB connected successfully to", process.env.DB_URL.split('@')[1]?.split('/')[0] || 'database');
+<<<<<<< HEAD
     console.log(` Using database: ${dbName}`);
+=======
+    console.log(`==> Using database: ${dbName}`);
+>>>>>>> b86a9ce81d039e744dd27e979e116eed320fe429
     return connection;
   } catch (error) {
     console.error("MongoDB connection error:", error);

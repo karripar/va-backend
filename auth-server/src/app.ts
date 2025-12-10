@@ -27,16 +27,20 @@ app.use(
 
 app.use('/api/v1', api);
 
-app.use(
-  '/auth/docs',
+const docsRouter = express.Router();
+
+docsRouter.use(
   basicAuth({
     users: { admin: process.env.DOCS_PASSWORD || 'defaultPassword' },
     challenge: true,
   })
 );
 
-app.use('/auth/docs/typedoc', express.static(path.join(process.cwd(), 'docs')));
-app.use('/auth/docs/apidoc', express.static(path.join(process.cwd(), 'apidocs')));
+docsRouter.use('/typedoc', express.static(path.join(process.cwd(), 'docs'), { index: false }));
+docsRouter.use('/apidoc', express.static(path.join(process.cwd(), 'apidocs'), { index: false }));
+
+
+app.use('/auth/docs', docsRouter);
 
 app.use(notFound);
 app.use(errorHandler);

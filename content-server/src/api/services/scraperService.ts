@@ -1,6 +1,5 @@
 import * as cheerio from 'cheerio';
-import { getClosestCountry, getCoordinates } from './countryService';
-import { extractSectionWithAI } from './AiDestinationService';
+import {getClosestCountry, getCoordinates} from './countryService';
 
 export type SectionData = Record<
   string,
@@ -9,10 +8,11 @@ export type SectionData = Record<
     title: string;
     link: string;
     studyField?: string;
-    coordinates: { lat?: number; lng?: number };
+    coordinates: {lat?: number; lng?: number};
   }[]
 >;
 
+// Remove repeated text in studyField
 function cleanField(field: string): string {
   if (!field) return '';
   let cleaned = field.trim();
@@ -52,27 +52,41 @@ export const scrapeDestinations = async (
     if (skipSections.includes(sectionTitle)) continue;
 
     sections[sectionTitle] = [];
+    const addedKeys = new Set<string>();
 
-    const panels = $(section).find('.field-item').toArray();
+    for (const panel of $(section).find('.field-item').toArray()) {
+      const headingText = $(panel)
+        .find('h3 .field-name-field-label')
+        .first()
+        .text()
+        .trim();
+      const panelContent = $(panel)
+        .find('.accordion-panel .field-item')
+        .first();
+      if (!panelContent.length) continue;
 
-    for (const panel of panels) {
-      const label = $(panel).find('.field-name-field-label').first().text().trim() || 'Unknown';
-      const panelContent = $(panel).find('.field-name-field-content');
+      const studyField = cleanField(headingText) || sectionTitle;
 
-      // Check for multiple-country (health-style) panels
-      if (panelContent.find('p > span').length > 0) {
-        panelContent.find('p > span').each((_, span) => {
-          const country = $(span).text().trim();
-          const ul = $(span).parent().next('ul');
-          if (!ul.length) return;
+      let currentCountry = headingText; // fallback for Erasmus-style
 
-          ul.find('li').each((_, li) => {
-            const a = $(li).find('a').first();
-            if (!a.length) return;
+      panelContent.contents().each((_, el) => {
+        const $el = $(el);
 
-            const title = a.text().trim();
-            const link = a.attr('href') || '';
-            const studyField = cleanField(label);
+        // If <p> contains a country name, update currentCountry
+        if ($el.is('p') && $el.text().trim()) {
+          currentCountry = $el.text().trim();
+          return;
+        }
+
+        // Handle <ul><li><a>
+        if ($el.is('ul')) {
+          $el.find('li a').each((_, a) => {
+            const title = $(a).text().trim();
+            const link = $(a).attr('href') || '';
+            const country = currentCountry;
+            const key = `${country}|${title}|${studyField}`;
+            if (addedKeys.has(key)) return;
+            addedKeys.add(key);
 
             const isoCode = getClosestCountry(country, lang);
             const coords = getCoordinates(isoCode);
@@ -82,32 +96,161 @@ export const scrapeDestinations = async (
               title,
               link,
               studyField,
-              coordinates: { lat: coords?.lat, lng: coords?.lng },
+              coordinates: {lat: coords?.lat, lng: coords?.lng},
             });
           });
-        });
-      } else {
-        // Fallback: normal single-country panel → AI extraction
-        const panelHtml = $(panel).html() ?? '';
-        const fallbackCountry = label;
-        const fallbackStudyField = label;
+          return;
+        }
 
-        const extracted = await extractSectionWithAI(sectionTitle, panelHtml, fallbackCountry, fallbackStudyField);
+        // Handle <p><a> directly inside panel
+        $el.find('a').each((_, a) => {
+          const title = $(a).text().trim();
+          const link = $(a).attr('href') || '';
+          const country = currentCountry;
+          const key = `${country}|${title}|${studyField}`;
+          if (addedKeys.has(key)) return;
+          addedKeys.add(key);
 
-        extracted.forEach((item) => {
-          const country = item.country?.trim() || fallbackCountry;
           const isoCode = getClosestCountry(country, lang);
           const coords = getCoordinates(isoCode);
 
           sections[sectionTitle].push({
             country,
-            title: item.title,
-            link: item.link,
-            studyField: cleanField(item.studyField || fallbackStudyField),
-            coordinates: { lat: coords?.lat, lng: coords?.lng },
+            title,
+            link,
+            studyField,
+            coordinates: {lat: coords?.lat, lng: coords?.lng},
           });
         });
-      }
+      });
+    }
+  }
+
+  return sections;
+};
+
+export const scrapeHealthDestinations = async (
+  html: string,
+  lang: 'en' | 'fi' = 'en',
+): Promise<SectionData> => {
+  const $ = cheerio.load(html);
+  const sections: SectionData = {};
+
+  for (const section of $('div.paragraph--type--accordion').toArray()) {
+    const h2 = $(section).find('h2').first();
+    if (!h2.length) continue;
+    const sectionTitle = h2.text().trim();
+
+    const skipSections = [
+      'Metropolia University of Applied Sciences',
+      'Information on the site',
+      'Other services',
+      'Metropolia in social media',
+      'Metropolia Ammattikorkeakoulu',
+      'Tietoa sivustosta',
+      'Palvelut muualla',
+      'Metropolia somessa',
+    ];
+    if (skipSections.includes(sectionTitle)) continue;
+
+    sections[sectionTitle] = [];
+    const addedKeys = new Set<string>();
+
+    // Each accordion item = a study field
+    for (const panel of $(section).find('.field-item').toArray()) {
+      // Get the study field from the <h3> heading of this accordion item
+      const studyField =
+        cleanField(
+          $(panel).find('h3 .field-name-field-label').first().text().trim(),
+        ) || 'Unknown';
+
+      // The content panel contains the countries + universities
+      const panelContent = $(panel)
+        .find('.accordion-panel .field-item')
+        .first();
+      if (!panelContent.length) continue;
+
+      // Each <p><span>Country</span></p> + <ul> structure
+      panelContent.find('p > span').each((_, span) => {
+        const country = $(span).text().trim();
+        const ul = $(span).parent().next('ul');
+        if (!ul.length) return;
+
+        ul.find('li').each((_, li) => {
+          const a = $(li).find('a').first();
+          if (!a.length) return;
+
+          const title = a.text().trim();
+          const link = a.attr('href') || '';
+          const key = `${country}|${title}|${studyField}`;
+          if (addedKeys.has(key)) return;
+          addedKeys.add(key);
+
+          const isoCode = getClosestCountry(country, lang);
+          const coords = getCoordinates(isoCode);
+
+          sections[sectionTitle].push({
+            country,
+            title,
+            link,
+            studyField,
+            coordinates: {lat: coords?.lat, lng: coords?.lng},
+          });
+        });
+      });
+    }
+  }
+
+  return sections;
+};
+
+export const scrapeTableDestinations = async (
+  html: string,
+  lang: 'en' | 'fi' = 'en',
+): Promise<SectionData> => {
+  const $ = cheerio.load(html);
+  const sections: SectionData = {};
+
+  for (const section of $('div.paragraph--type--accordion').toArray()) {
+    const h2 = $(section).find('h2').first();
+    if (!h2.length) continue;
+    const sectionTitle = h2.text().trim();
+    sections[sectionTitle] = [];
+
+    const addedKeys = new Set<string>();
+
+    for (const panel of $(section).find('.field-item').toArray()) {
+      const country = $(panel)
+        .find('h3 .field-name-field-label')
+        .first()
+        .text()
+        .trim();
+      const table = $(panel).find('table').first();
+      if (!table.length) continue;
+
+      table.find('tr').each((_, tr) => {
+        const a = $(tr).find('td a').first();
+        if (!a.length) return;
+
+        const title = a.text().trim();
+        const link = a.attr('href') || '';
+        const studyField = sectionTitle;
+
+        const key = `${country}|${title}|${studyField}`;
+        if (addedKeys.has(key)) return;
+        addedKeys.add(key);
+
+        const isoCode = getClosestCountry(country, lang);
+        const coords = getCoordinates(isoCode);
+
+        sections[sectionTitle].push({
+          country,
+          title,
+          link,
+          studyField,
+          coordinates: {lat: coords?.lat, lng: coords?.lng},
+        });
+      });
     }
   }
 

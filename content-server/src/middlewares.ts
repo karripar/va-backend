@@ -1,10 +1,10 @@
 import {TokenContent} from 'va-hybrid-types/DBTypes';
 /* eslint-disable @typescript-eslint/no-unused-vars */
-import { validationResult, body} from "express-validator";
-import CustomError from "./classes/CustomError";
-import { NextFunction, Request, Response } from "express";
-import jwt from "jsonwebtoken";
-import User from "./api/models/userModel";
+import {validationResult, body} from 'express-validator';
+import CustomError from './classes/CustomError';
+import {NextFunction, Request, Response} from 'express';
+import jwt from 'jsonwebtoken';
+import User from './api/models/userModel';
 import ExchangeStories from './api/models/storyModel';
 
 // Middleware to handle 404 errors
@@ -48,17 +48,21 @@ const validateStory = [
     .notEmpty()
     .withMessage('country is required'),
   body('city').isString().trim().notEmpty().withMessage('city is required'),
-  body('university').isString().trim().notEmpty().withMessage('university is required'),
+  body('university')
+    .isString()
+    .trim()
+    .notEmpty()
+    .withMessage('university is required'),
   body('title').isString().trim().notEmpty().withMessage('title is required'),
-  body('content').isString().trim().notEmpty().withMessage('content is required'),
+  body('content')
+    .isString()
+    .trim()
+    .notEmpty()
+    .withMessage('content is required'),
 ];
 
 //Story CRUD operations --> admin only
-const adminMiddleware = (
-  req: Request,
-  res: Response,
-  next: NextFunction
-) => {
+const adminMiddleware = (req: Request, res: Response, next: NextFunction) => {
   const user = res.locals.user;
 
   console.log('Admin middleware check:', {
@@ -66,7 +70,7 @@ const adminMiddleware = (
     userId: user?._id,
     userLevelId: user?.user_level_id,
     email: user?.email,
-    fullUser: user
+    fullUser: user,
   });
 
   // Check user_level_id: 1 = User, 2 = Admin, 3 = Elevated Admin
@@ -77,8 +81,8 @@ const adminMiddleware = (
   if (!user || (userLevel !== 2 && userLevel !== 3)) {
     console.log('Admin access denied - user_level_id:', userLevel);
     return res.status(403).json({
-      error: "Admin access required",
-      details: `Your user level is ${userLevel}. Admin access requires level 2 or 3.`
+      error: 'Admin access required',
+      details: `Your user level is ${userLevel}. Admin access requires level 2 or 3.`,
     });
   }
 
@@ -100,23 +104,26 @@ const authenticate = async (
       return;
     }
 
-  // decode the user_id from the token
-  const decoded = jwt.verify(token, process.env.JWT_SECRET as string) as TokenContent;
+    // decode the user_id from the token
+    const decoded = jwt.verify(
+      token,
+      process.env.JWT_SECRET as string,
+    ) as TokenContent;
 
-  console.log('JWT decoded:', { _id: decoded._id });
+    console.log('JWT decoded:', {_id: decoded._id});
 
-  const user = await User.findById(decoded._id).lean();
-  console.log('User found in DB:', {
-    found: !!user,
-    userId: user?._id,
-    email: user?.email,
-    user_level_id: user?.user_level_id
-  });
+    const user = await User.findById(decoded._id).lean();
+    console.log('User found in DB:', {
+      found: !!user,
+      userId: user?._id,
+      email: user?.email,
+      user_level_id: user?.user_level_id,
+    });
 
-  if (!user) {
-    next(new CustomError('Unauthorized, user not found', 401));
-    return;
-  }
+    if (!user) {
+      next(new CustomError('Unauthorized, user not found', 401));
+      return;
+    }
 
     if (user.isBlocked) {
       next(new CustomError('User is blocked', 403));
@@ -127,7 +134,7 @@ const authenticate = async (
     res.locals.user = {
       ...user,
       _id: user._id.toString(),
-      user_level_id: Number(user.user_level_id)
+      user_level_id: Number(user.user_level_id),
     };
     next();
   } catch (error) {
@@ -136,4 +143,11 @@ const authenticate = async (
   }
 };
 
-export {notFound, errorHandler, validationErrors, authenticate, adminMiddleware, validateStory};
+export {
+  notFound,
+  errorHandler,
+  validationErrors,
+  authenticate,
+  adminMiddleware,
+  validateStory,
+};

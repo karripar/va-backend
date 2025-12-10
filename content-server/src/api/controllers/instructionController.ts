@@ -12,8 +12,9 @@ import CustomError from '../../classes/CustomError';
  * including fetching, updating links, and toggling step visibility for admin users.
  */
 
-const uploadServerUrl =
-  process.env.PUBLIC_UPLOADS_URL || 'http://localhost:3003/uploads';
+console.log(process.env.PUBLIC_UPLOADS_URL);
+
+const uploadServerUrl = process.env.PUBLIC_UPLOADS_URL || 'http://localhost:3003/uploads';
 
 /**
  * @function getInstructionLinks

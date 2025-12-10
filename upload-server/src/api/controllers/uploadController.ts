@@ -13,6 +13,7 @@ import {MessageResponse} from 'va-hybrid-types/MessageTypes';
 
 const UPLOAD_DIR = process.env.UPLOAD_PATH || './uploads';
 
+
 // create uploads directory if it doesn't exist
 fs.mkdirSync(UPLOAD_DIR, {recursive: true});
 
