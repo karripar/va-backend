@@ -9,6 +9,24 @@ import { authenticate } from "../../middlewares";
  * Grant application and management (Erasmus+, Kela, etc.)
  */
 
+/**
+ * @apiDefine token Token is required in the form of Bearer token
+ * @apiHeader {String} Authorization Bearer token
+ * @apiHeaderExample {json} Header-Example:
+ * {
+ *  "Authorization": "Bearer <token>"
+ * }
+ */
+
+/**
+ * @apiDefine unauthorized Unauthorized
+ * @apiError (401) {String} Unauthorized Missing or invalid authentication token
+ * @apiErrorExample {json} Unauthorized:
+ * {
+ *  "message": "Unauthorized"
+ * }
+ */
+
 const router = Router();
 
 router.get(
@@ -18,18 +36,17 @@ router.get(
    * @apiGroup GrantsGroup
    * @apiVersion 1.0.0
    * @apiDescription Retrieve budget categories relevant to grant applications
-   *
-   * @apiPermission None - public endpoint
+   * @apiPermission none
    *
    * @apiSuccess (200) {Object[]} categories List of budget categories
    *
    * @apiSuccessExample {json} Success-Response:
    * HTTP/1.1 200 OK
    * [
-   *   {
-   *     "id": "travel",
-   *     "name": "Travel Expenses"
-   *   }
+   *  {
+   *    "id": "travel",
+   *    "name": "Travel Expenses"
+   *  }
    * ]
    */
   "/budget/categories",
@@ -43,8 +60,7 @@ router.get(
    * @apiGroup GrantsGroup
    * @apiVersion 1.0.0
    * @apiDescription Retrieve available Erasmus+ grant types
-   *
-   * @apiPermission None - public endpoint
+   * @apiPermission none
    *
    * @apiSuccess (200) {Object[]} types List of Erasmus+ grant types
    * @apiSuccess (200) {String} types.id Grant type ID
@@ -55,12 +71,12 @@ router.get(
    * @apiSuccessExample {json} Success-Response:
    * HTTP/1.1 200 OK
    * [
-   *   {
-   *     "id": "studies",
-   *     "name": "Studies Grant",
-   *     "description": "Grant for study mobility",
-   *     "amount": 600
-   *   }
+   *  {
+   *    "id": "studies",
+   *    "name": "Studies Grant",
+   *    "description": "Grant for study mobility",
+   *    "amount": 600
+   *  }
    * ]
    */
   "/erasmus/types",
@@ -74,10 +90,9 @@ router.post(
    * @apiGroup GrantsGroup
    * @apiVersion 1.0.0
    * @apiDescription Submit an application for Erasmus+ grant
+   * @apiPermission token
    *
-   * @apiPermission Authenticated user JWT token required
-   *
-   * @apiHeader {String} Authorization Bearer JWT token
+   * @apiUse token
    *
    * @apiBody {String} grantType Type of Erasmus+ grant
    * @apiBody {String} destination Destination country
@@ -88,23 +103,22 @@ router.post(
    * @apiSuccess (201) {String} grant.id Grant application ID
    * @apiSuccess (201) {String} grant.status Application status
    *
-   * @apiError (400) BadRequest Missing required fields
-   * @apiError (401) Unauthorized Missing or invalid authentication token
-   *
    * @apiSuccessExample {json} Success-Response:
    * HTTP/1.1 201 Created
    * {
-   *   "id": "grant123",
-   *   "grantType": "studies",
-   *   "destination": "France",
-   *   "status": "pending"
+   *  "id": "grant123",
+   *  "grantType": "studies",
+   *  "destination": "France",
+   *  "status": "pending"
    * }
    *
-   * @apiErrorExample {json} Error-Response:
-   * HTTP/1.1 400 Bad Request
+   * @apiError (400) {String} BadRequest Missing required fields
+   * @apiErrorExample {json} BadRequest:
    * {
-   *   "error": "Missing required fields"
+   *  "message": "Missing required fields"
    * }
+   *
+   * @apiUse unauthorized
    */
   "/erasmus/apply",
   authenticate,
@@ -118,31 +132,29 @@ router.put(
    * @apiGroup GrantsGroup
    * @apiVersion 1.0.0
    * @apiDescription Update an existing Erasmus+ grant application
+   * @apiPermission token
    *
-   * @apiPermission Authenticated user JWT token required
-   *
-   * @apiHeader {String} Authorization Bearer JWT token
+   * @apiUse token
    *
    * @apiParam {String} grantId Erasmus+ grant unique ID
    * @apiBody {Object} updates Updated grant data
    *
    * @apiSuccess (200) {Object} grant Updated grant application
    *
-   * @apiError (401) Unauthorized Missing or invalid authentication token
-   * @apiError (404) NotFound Grant not found
-   *
    * @apiSuccessExample {json} Success-Response:
    * HTTP/1.1 200 OK
    * {
-   *   "id": "grant123",
-   *   "status": "approved",
-   *   "updatedAt": "2025-11-29T10:00:00.000Z"
+   *  "id": "grant123",
+   *  "status": "approved",
+   *  "updatedAt": "2025-11-29T10:00:00.000Z"
    * }
    *
-   * @apiErrorExample {json} Error-Response:
-   * HTTP/1.1 404 Not Found
+   * @apiUse unauthorized
+   *
+   * @apiError (404) {String} NotFound Grant not found
+   * @apiErrorExample {json} NotFound:
    * {
-   *   "error": "Grant not found"
+   *  "message": "Grant not found"
    * }
    */
   "/erasmus/:grantId",
@@ -157,33 +169,26 @@ router.get(
    * @apiGroup GrantsGroup
    * @apiVersion 1.0.0
    * @apiDescription Retrieve all Erasmus+ grants for the authenticated user
+   * @apiPermission token
    *
-   * @apiPermission Authenticated user JWT token required
-   *
-   * @apiHeader {String} Authorization Bearer JWT token
+   * @apiUse token
    *
    * @apiSuccess (200) {Object[]} grants List of user's Erasmus+ grants
    * @apiSuccess (200) {String} grants.id Grant ID
    * @apiSuccess (200) {String} grants.grantType Grant type
    * @apiSuccess (200) {String} grants.status Application status
    *
-   * @apiError (401) Unauthorized Missing or invalid authentication token
-   *
    * @apiSuccessExample {json} Success-Response:
    * HTTP/1.1 200 OK
    * [
-   *   {
-   *     "id": "grant123",
-   *     "grantType": "studies",
-   *     "status": "approved"
-   *   }
+   *  {
+   *    "id": "grant123",
+   *    "grantType": "studies",
+   *    "status": "approved"
+   *  }
    * ]
    *
-   * @apiErrorExample {json} Error-Response:
-   * HTTP/1.1 401 Unauthorized
-   * {
-   *   "error": "Unauthorized"
-   * }
+   * @apiUse unauthorized
    */
   "/erasmus",
   authenticate,
@@ -197,10 +202,9 @@ router.post(
    * @apiGroup GrantsGroup
    * @apiVersion 1.0.0
    * @apiDescription Submit an application for Kela study support
+   * @apiPermission token
    *
-   * @apiPermission Authenticated user JWT token required
-   *
-   * @apiHeader {String} Authorization Bearer JWT token
+   * @apiUse token
    *
    * @apiBody {String} supportType Type of Kela support
    * @apiBody {Object} financialInfo Financial information
@@ -210,22 +214,21 @@ router.post(
    * @apiSuccess (201) {String} support.id Application ID
    * @apiSuccess (201) {String} support.status Application status
    *
-   * @apiError (400) BadRequest Missing required fields
-   * @apiError (401) Unauthorized Missing or invalid authentication token
-   *
    * @apiSuccessExample {json} Success-Response:
    * HTTP/1.1 201 Created
    * {
-   *   "id": "kela123",
-   *   "supportType": "study_grant",
-   *   "status": "pending"
+   *  "id": "kela123",
+   *  "supportType": "study_grant",
+   *  "status": "pending"
    * }
    *
-   * @apiErrorExample {json} Error-Response:
-   * HTTP/1.1 400 Bad Request
+   * @apiError (400) {String} BadRequest Missing required fields
+   * @apiErrorExample {json} BadRequest:
    * {
-   *   "error": "Missing required fields"
+   *  "message": "Missing required fields"
    * }
+   *
+   * @apiUse unauthorized
    */
   "/kela/apply",
   authenticate,
@@ -239,31 +242,29 @@ router.put(
    * @apiGroup GrantsGroup
    * @apiVersion 1.0.0
    * @apiDescription Update an existing Kela support application
+   * @apiPermission token
    *
-   * @apiPermission Authenticated user JWT token required
-   *
-   * @apiHeader {String} Authorization Bearer JWT token
+   * @apiUse token
    *
    * @apiParam {String} kelaId Kela support unique ID
    * @apiBody {Object} updates Updated support data
    *
    * @apiSuccess (200) {Object} support Updated Kela support application
    *
-   * @apiError (401) Unauthorized Missing or invalid authentication token
-   * @apiError (404) NotFound Kela support not found
-   *
    * @apiSuccessExample {json} Success-Response:
    * HTTP/1.1 200 OK
    * {
-   *   "id": "kela123",
-   *   "status": "approved",
-   *   "updatedAt": "2025-11-29T10:00:00.000Z"
+   *  "id": "kela123",
+   *  "status": "approved",
+   *  "updatedAt": "2025-11-29T10:00:00.000Z"
    * }
    *
-   * @apiErrorExample {json} Error-Response:
-   * HTTP/1.1 404 Not Found
+   * @apiUse unauthorized
+   *
+   * @apiError (404) {String} NotFound Kela support not found
+   * @apiErrorExample {json} NotFound:
    * {
-   *   "error": "Kela support not found"
+   *  "message": "Kela support not found"
    * }
    */
   "/kela/:kelaId",
@@ -278,33 +279,26 @@ router.get(
    * @apiGroup GrantsGroup
    * @apiVersion 1.0.0
    * @apiDescription Retrieve Kela support applications for the authenticated user
+   * @apiPermission token
    *
-   * @apiPermission Authenticated user JWT token required
-   *
-   * @apiHeader {String} Authorization Bearer JWT token
+   * @apiUse token
    *
    * @apiSuccess (200) {Object[]} support List of Kela support applications
    * @apiSuccess (200) {String} support.id Support ID
    * @apiSuccess (200) {String} support.supportType Support type
    * @apiSuccess (200) {String} support.status Application status
    *
-   * @apiError (401) Unauthorized Missing or invalid authentication token
-   *
    * @apiSuccessExample {json} Success-Response:
    * HTTP/1.1 200 OK
    * [
-   *   {
-   *     "id": "kela123",
-   *     "supportType": "study_grant",
-   *     "status": "approved"
-   *   }
+   *  {
+   *    "id": "kela123",
+   *    "supportType": "study_grant",
+   *    "status": "approved"
+   *  }
    * ]
    *
-   * @apiErrorExample {json} Error-Response:
-   * HTTP/1.1 401 Unauthorized
-   * {
-   *   "error": "Unauthorized"
-   * }
+   * @apiUse unauthorized
    */
   "/kela",
   authenticate,
@@ -318,10 +312,9 @@ router.post(
    * @apiGroup GrantsGroup
    * @apiVersion 1.0.0
    * @apiDescription Calculate total available grants based on user criteria
+   * @apiPermission token
    *
-   * @apiPermission Authenticated user JWT token required
-   *
-   * @apiHeader {String} Authorization Bearer JWT token
+   * @apiUse token
    *
    * @apiBody {Object} criteria Calculation criteria
    * @apiBody {String} criteria.destination Destination country
@@ -333,22 +326,21 @@ router.post(
    * @apiSuccess (200) {Number} calculation.totalKela Total Kela support
    * @apiSuccess (200) {Number} calculation.grandTotal Grand total
    *
-   * @apiError (400) BadRequest Missing required fields
-   * @apiError (401) Unauthorized Missing or invalid authentication token
-   *
    * @apiSuccessExample {json} Success-Response:
    * HTTP/1.1 200 OK
    * {
-   *   "totalErasmus": 3600,
-   *   "totalKela": 2500,
-   *   "grandTotal": 6100
+   *  "totalErasmus": 3600,
+   *  "totalKela": 2500,
+   *  "grandTotal": 6100
    * }
    *
-   * @apiErrorExample {json} Error-Response:
-   * HTTP/1.1 400 Bad Request
+   * @apiError (400) {String} BadRequest Missing required fields
+   * @apiErrorExample {json} BadRequest:
    * {
-   *   "error": "Missing required fields"
+   *  "message": "Missing required fields"
    * }
+   *
+   * @apiUse unauthorized
    */
   "/calculator",
   authenticate,
@@ -362,8 +354,7 @@ router.get(
    * @apiGroup GrantsGroup
    * @apiVersion 1.0.0
    * @apiDescription Search for available grants based on criteria
-   *
-   * @apiPermission None - public endpoint
+   * @apiPermission none
    *
    * @apiQuery {String} [country] Filter by destination country
    * @apiQuery {String} [type] Filter by grant type
@@ -377,11 +368,11 @@ router.get(
    * @apiSuccessExample {json} Success-Response:
    * HTTP/1.1 200 OK
    * [
-   *   {
-   *     "id": "grant1",
-   *     "name": "Erasmus+ Studies",
-   *     "amount": 600
-   *   }
+   *  {
+   *    "id": "grant1",
+   *    "name": "Erasmus+ Studies",
+   *    "amount": 600
+   *  }
    * ]
    */
   "/search",
@@ -395,10 +386,9 @@ router.get(
    * @apiGroup GrantsGroup
    * @apiVersion 1.0.0
    * @apiDescription Get a summary of all grants for the authenticated user
+   * @apiPermission token
    *
-   * @apiPermission Authenticated user JWT token required
-   *
-   * @apiHeader {String} Authorization Bearer JWT token
+   * @apiUse token
    *
    * @apiSuccess (200) {Object} summary Grant summary
    * @apiSuccess (200) {Number} summary.totalErasmus Total Erasmus+ amount
@@ -406,22 +396,16 @@ router.get(
    * @apiSuccess (200) {Number} summary.grandTotal Grand total
    * @apiSuccess (200) {Number} summary.pendingApplications Number of pending applications
    *
-   * @apiError (401) Unauthorized Missing or invalid authentication token
-   *
    * @apiSuccessExample {json} Success-Response:
    * HTTP/1.1 200 OK
    * {
-   *   "totalErasmus": 3600,
-   *   "totalKela": 2500,
-   *   "grandTotal": 6100,
-   *   "pendingApplications": 2
+   *  "totalErasmus": 3600,
+   *  "totalKela": 2500,
+   *  "grandTotal": 6100,
+   *  "pendingApplications": 2
    * }
    *
-   * @apiErrorExample {json} Error-Response:
-   * HTTP/1.1 401 Unauthorized
-   * {
-   *   "error": "Unauthorized"
-   * }
+   * @apiUse unauthorized
    */
   "/summary",
   authenticate,
